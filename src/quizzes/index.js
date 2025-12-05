@@ -4,7 +4,7 @@ import week3 from "./week-3-protocols";
 import week4 from "./week-4-acme";
 import week5 from "./week-5-trustcore";
 import week6 from "./week-6-dns";
-import week6 from "./week-7-tlm-part-1";
+import week7 from "./week-7-tlm-part-1";
 
 export const quizzes = {
   [week1.id]: week1,
