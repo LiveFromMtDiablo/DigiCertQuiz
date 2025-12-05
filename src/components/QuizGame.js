@@ -60,10 +60,25 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
 
   function shuffleQuestionsAndOptions(srcQuestions) {
     const remapped = srcQuestions.map((q) => {
-      const indices = Array.from({ length: q.options.length }, (_, i) => i);
-      const shuffledIdx = shuffleArray(indices);
-      const newOptions = shuffledIdx.map((i) => q.options[i]);
-      const newCorrect = shuffledIdx.indexOf(q.correctAnswer);
+      const options = q.options || [];
+      const indices = Array.from({ length: options.length }, (_, i) => i);
+      const allOfTheAboveIndex = options.findIndex(
+        (opt) =>
+          typeof opt === "string" &&
+          opt.trim().toLowerCase() === "all of the above"
+      );
+
+      let finalIndexOrder;
+      if (allOfTheAboveIndex >= 0 && options.length > 1) {
+        const indicesToShuffle = indices.filter((i) => i !== allOfTheAboveIndex);
+        const shuffledIdx = shuffleArray(indicesToShuffle);
+        finalIndexOrder = [...shuffledIdx, allOfTheAboveIndex];
+      } else {
+        finalIndexOrder = shuffleArray(indices);
+      }
+
+      const newOptions = finalIndexOrder.map((i) => options[i]);
+      const newCorrect = finalIndexOrder.indexOf(q.correctAnswer);
       return { ...q, options: newOptions, correctAnswer: newCorrect };
     });
     return shuffleArray(remapped);
