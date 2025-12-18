@@ -1,6 +1,6 @@
 const quiz = {
   id: "week-9-dns-part-2",
-  title: "DigiCert Weekly Product Quiz #8",
+  title: "DigiCert Weekly Product Quiz #9",
   intro: "This week's focus: DNS, Part 2",
   maxTime: 100,
   questions: [
