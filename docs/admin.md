@@ -77,6 +77,21 @@ Where to Find a Player’s UID
 - You can match by `name` and `score` to identify the correct record.
 
 Notes
-- The device fingerprint stored is a salted SHA‑256 hash (no raw device data).
+- The device fingerprint stored is a salted SHA-256 hash (no raw device data).
 - Reads are public; writes require anonymous auth and pass rules checks.
 
+Restore / Manually Add a Leaderboard Entry
+1) In Firebase Console → Realtime Database → Data, identify the quizId (it’s the string used in the URL after `/quiz/`).
+2) Pick the `uid` key for the record:
+   - Best: use the original uid (if `nameIndex/{quizId}/{nameSlug}` still exists, its value is the uid).
+   - If you don’t know it, create a new key like `manual-restore-2025-12-17` (note: this won’t be tied to the original player/device locks).
+3) Create/update `leaderboard/{quizId}/{uid}` with at least these fields:
+   - v1 rules: `{ name, score, timestamp }`
+   - v2 rules: `{ name, nameSlug, score, timestamp, fp }`
+   Notes:
+   - `timestamp` is milliseconds since epoch (a number). Use “now” if you don’t know the original.
+   - `nameSlug` is: trim/collapse spaces, lowercase, strip punctuation (keep a–z/0–9/spaces), then replace spaces with `-`.
+4) If you’re on v2, also restore the indexes so uniqueness/anti-replay behavior matches the app:
+   - `nameIndex/{quizId}/{nameSlug}` = `uid`
+   - `fingerprints/{quizId}/{fp}` = `uid`
+   - `machinePrints/{quizId}/{fpMachine}` = `uid` (optional/observe-only unless you enforce it)
