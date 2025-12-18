@@ -28,7 +28,7 @@ const quiz = {
       question:
         "Which DNS record type maps a domain name to an IP address?",
       options: [
-        "MX,
+        "MX",
         "A / AAAA",
         "CNAME",
         "TXT",
