@@ -54,8 +54,8 @@ const quiz = {
         "Enforce algorithm and validity rules",
         "Control usage by team or pipeline",
         "Discover Keys on Build Servers",
-        "B, C, and D"
-        "A, B, and C"
+        "B, C, and D",
+        "A, B, and C",
       ],
       correctAnswer: 5,
     },

@@ -36,7 +36,7 @@ const quiz = {
       options: ["Answer A", "Answer B", "Answer C", "Answer D"],
       correctAnswer: 1,                         // Index of correct option (0-based)
     },
-    // Add 4–5 total questions
+    // Add 4-5 total questions
   ],
 };
 
@@ -49,9 +49,9 @@ export default quiz;
 | --- | --- | --- |
 | `id` | string | Unique, lowercase, hyphenated slug (`week-3-pki-fundamentals`). Must stay in sync with file name and registry entry. |
 | `title` | string | Appears on the intro and leaderboard screens. |
-| `intro` | string (optional) | Short description of the week’s theme; shown on the intro screen. |
+| `intro` | string (optional) | Short description of the week's theme; shown on the intro screen. |
 | `maxTime` | number | Countdown (seconds) per question. Leave at 100 unless a different pace is desired. |
-| `questions` | array | Each entry needs `question` (string), `options` (array of 4), and `correctAnswer` (0–3). |
+| `questions` | array | Each entry needs `question` (string), `options` (array of 4–6), and `correctAnswer` (0–`options.length - 1`). |
 
 ### 3. Register the Quiz
 

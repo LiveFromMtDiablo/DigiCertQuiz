@@ -62,7 +62,8 @@ describe("Quiz registry consistency", () => {
         expect(question.question.length).toBeGreaterThan(0);
 
         expect(Array.isArray(question.options)).toBe(true);
-        expect(question.options.length).toBe(4);
+        expect(question.options.length).toBeGreaterThanOrEqual(4);
+        expect(question.options.length).toBeLessThanOrEqual(6);
 
         question.options.forEach((option) => {
           expect(typeof option).toBe("string");
