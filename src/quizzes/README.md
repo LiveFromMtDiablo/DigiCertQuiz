@@ -109,8 +109,19 @@ Leaderboard entries enforce unique display names per quiz to keep scores attribu
 
 ## Troubleshooting
 
-- **`npm run test:quizzes` fails**: read the error message—it typically reports the file or field that’s missing.
+- **`npm run test:quizzes` fails**: read the error message-it typically reports the file or field that's missing.
 - **Quiz 404s in the browser**: ensure the quiz ID matches in the file name, `id` field, and registry entry.
 - **Timer appears incorrect**: verify the `maxTime` value in your quiz file.
+
+## Option Shuffling Exceptions
+
+By default, questions and their options are shuffled per session.
+
+Option order is preserved (not shuffled) when:
+
+- An option is a grouped reference like `A, B, and C` (or `B, C, and D`), since shuffling would change the meaning.
+- You set `shuffleOptions: false` on a question.
+
+The existing `"All of the above"` behavior still applies: when shuffling is enabled, that option is kept last.
 
 For additional questions, refer to [`QUIZ_ARCHITECTURE_PLAN.md`](../../QUIZ_ARCHITECTURE_PLAN.md) or reach out to the engineering team.

@@ -58,6 +58,26 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
     return a;
   }
 
+  function isGroupedOptionReference(optionText, maxOptionCount) {
+    if (typeof optionText !== "string") return false;
+
+    const normalized = optionText
+      .trim()
+      .toUpperCase()
+      .replace(/&/g, " AND ")
+      .replace(/,/g, " ")
+      .replace(/\b(AND|OR)\b/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const tokens = normalized ? normalized.split(" ") : [];
+    if (tokens.length < 2) return false;
+
+    const max = Math.max(0, Math.min(6, Number(maxOptionCount) || 0));
+    const allowed = new Set("ABCDEF".slice(0, max).split(""));
+    return tokens.every((token) => token.length === 1 && allowed.has(token));
+  }
+
   function shuffleQuestionsAndOptions(srcQuestions) {
     const remapped = srcQuestions.map((q) => {
       const options = q.options || [];
@@ -68,8 +88,14 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
           opt.trim().toLowerCase() === "all of the above"
       );
 
+      const shouldPreserveOptionOrder =
+        q.shuffleOptions === false ||
+        options.some((opt) => isGroupedOptionReference(opt, options.length));
+
       let finalIndexOrder;
-      if (allOfTheAboveIndex >= 0 && options.length > 1) {
+      if (shouldPreserveOptionOrder) {
+        finalIndexOrder = indices;
+      } else if (allOfTheAboveIndex >= 0 && options.length > 1) {
         const indicesToShuffle = indices.filter((i) => i !== allOfTheAboveIndex);
         const shuffledIdx = shuffleArray(indicesToShuffle);
         finalIndexOrder = [...shuffledIdx, allOfTheAboveIndex];
