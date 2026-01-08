@@ -50,10 +50,10 @@ const quiz = {
     {
       question: "What is a key benefit of keypair profiles in Software Trust Manager?",
       options: [
-        "Define signing policies per keypair",
-        "Enforce algorithm and validity rules",
-        "Control usage by team or pipeline",
-        "Discover Keys on Build Servers",
+        "A. Define signing policies per keypair",
+        "B. Enforce algorithm and validity rules",
+        "C. Control usage by team or pipeline",
+        "D. Discover Keys on Build Servers",
         "B, C, and D",
         "A, B, and C",
       ],
