@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { Clock, CheckCircle, XCircle, Trophy } from "lucide-react";
 import { DB_URL } from "../services/firebaseConfig";
 import { getValidAuth } from "../services/firebaseAuth";
+import { sortLeaderboardEntries } from "../utils/leaderboardSort";
 
 // Simple name validation (2–30 allowed characters)
 const NAME_REGEX = /^[A-Za-z0-9 .,'_-]{2,30}$/;
@@ -195,9 +196,7 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
         const entries = data && typeof data === 'object' ? Object.values(data) : [];
         // Log count for troubleshooting
         try { console.debug('[leaderboard]', quizId, 'entries:', entries.length); } catch (_) {}
-        const leaderboardArray = entries.sort(
-          (a, b) => (b.score - a.score) || (b.timestamp - a.timestamp)
-        );
+        const leaderboardArray = sortLeaderboardEntries(entries);
         setLeaderboard(leaderboardArray);
       }
       setLoading(false);
