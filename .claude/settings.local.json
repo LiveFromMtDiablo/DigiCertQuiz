@@ -12,7 +12,13 @@
       "Bash(npx tailwindcss init:*)",
       "Bash(npm run build)",
       "Bash(/usr/bin/git status)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npx:*)",
+      "Bash(mdfind:*)",
+      "Bash(uv --version:*)",
+      "Bash(curl:*)",
+      "Bash(sh)",
+      "Bash(~/.local/bin/uvx:*)"
     ],
     "deny": [],
     "ask": []
