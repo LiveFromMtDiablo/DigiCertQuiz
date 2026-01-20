@@ -807,3 +807,26 @@ Before announcing a new quiz:
 **Last Updated:** 2025-10-29
 **Author:** Claude (AI Assistant)
 **Maintained By:** DigiCert Quiz Team
+
+---
+
+## Anti-Replay Hardening (2025-11)
+
+Overview
+- Preserve instant answer reveal and confetti; all players see the same questions.
+- Reduce repeat attempts via per-session shuffling and server rules.
+
+App Updates
+- Shuffle question order and option order per session on Start; recompute `correctAnswer` per question.
+- Save scores via multi-path PATCH to write:
+  - `leaderboard/{quizId}/{uid}`: `{ name, nameSlug, score, timestamp, fp }`
+  - `nameIndex/{quizId}/{nameSlug}`: `uid`
+  - `fingerprints/{quizId}/{fp}`: `uid`
+- `nameSlug` is a normalized, lowercased name; `fp` is a salted SHA‑256 device fingerprint (non‑PII stored).
+
+Rules Rollout
+- v1 (now): First-score-only per uid. See `docs/firebase-rules.v1.json`.
+- v2: Require `nameSlug` and `fp`, and enforce uniqueness per quiz. See `docs/firebase-rules.v2.json`.
+
+Docs
+- Full plan and admin guidance: `docs/hardening.md`.

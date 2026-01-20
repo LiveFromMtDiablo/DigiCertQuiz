@@ -1,0 +1,42 @@
+{
+  "rules": {
+    ".read": "auth != null",
+
+    "leaderboard": {
+      "$quizId": {
+        "$uid": {
+          ".write": "auth != null && auth.uid == $uid && !data.exists()",
+          ".validate": "\n            newData.hasChildren(['name','nameSlug','score','timestamp','fp']) &&\n            newData.child('name').isString() &&\n            newData.child('nameSlug').isString() &&\n            newData.child('score').isNumber() &&\n            newData.child('score').val() >= 0 &&\n            newData.child('score').val() <= 1000 &&\n            newData.child('timestamp').val() <= now &&\n            newData.child('fp').isString() &&\n\n            /* Allow if index entries are free or already map to this uid;\n               multi-path updates will create them atomically via their own rules. */\n            (\n              !root.child('nameIndex').child($quizId).child(newData.child('nameSlug').val()).exists() ||\n              root.child('nameIndex').child($quizId).child(newData.child('nameSlug').val()).val() === $uid\n            ) &&\n            (\n              !root.child('fingerprints').child($quizId).child(newData.child('fp').val()).exists() ||\n              root.child('fingerprints').child($quizId).child(newData.child('fp').val()).val() === $uid\n            )\n          "
+        }
+      }
+    },
+
+    "nameIndex": {
+      "$quizId": {
+        "$nameSlug": {
+          ".write": "auth != null && !data.exists()",
+          ".validate": "newData.isString() && newData.val() === auth.uid"
+        }
+      }
+    },
+
+    "fingerprints": {
+      "$quizId": {
+        "$fp": {
+          ".write": "auth != null && (!data.exists() || data.val() === auth.uid)",
+          ".validate": "newData.isString() && newData.val() === auth.uid"
+        }
+      }
+    }
+    ,
+    "machinePrints": {
+      "$quizId": {
+        "$fpm": {
+          ".write": "auth != null && (!data.exists() || data.val() === auth.uid)",
+          ".validate": "newData.isString() && newData.val() === auth.uid"
+        }
+      }
+    }
+  }
+}
+

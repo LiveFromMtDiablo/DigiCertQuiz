@@ -10,3 +10,9 @@
 Implementation files:
 - `src/components/FullLeaderboard.js`
 - `src/App.js`
+
+## Turnkey Handoff
+
+For a step-by-step guide to setting up a fresh copy of this quiz stack on **GitHub**, **Vercel**, and **Firebase** (and then handing it over to a non-engineering team), see:
+
+- `docs/turnkey-handoff.md`

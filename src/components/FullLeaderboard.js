@@ -4,6 +4,7 @@ import { DB_URL } from "../services/firebaseConfig";
 import { getValidAuth } from "../services/firebaseAuth";
 import { currentQuizId, getQuiz } from "../quizzes";
 import { Trophy } from "lucide-react";
+import { sortLeaderboardEntries } from "../utils/leaderboardSort";
 
 const SCREEN_BACKGROUND_STYLE = {
   backgroundImage:
@@ -34,9 +35,7 @@ export default function FullLeaderboard() {
       if (!res.ok) throw new Error(`Failed to load leaderboard: ${res.status}`);
       const data = await res.json();
       const entries = data && typeof data === "object" ? Object.values(data) : [];
-      const sorted = entries.sort(
-        (a, b) => (b.score - a.score) || (b.timestamp - a.timestamp)
-      );
+      const sorted = sortLeaderboardEntries(entries);
       setLeaderboard(sorted);
       setError("");
     } catch (e) {

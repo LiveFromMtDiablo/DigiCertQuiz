@@ -1,0 +1,14 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    "leaderboard": {
+      "$quizId": {
+        "$uid": {
+          ".write": "auth != null && auth.uid == $uid && !data.exists()",
+          ".validate": "\n            newData.hasChildren(['name','score','timestamp']) &&\n            newData.child('name').isString() &&\n            newData.child('score').isNumber() &&\n            newData.child('score').val() >= 0 &&\n            newData.child('score').val() <= 1000 &&\n            newData.child('timestamp').val() <= now\n          "
+        }
+      }
+    }
+  }
+}
+

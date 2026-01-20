@@ -36,7 +36,7 @@ const quiz = {
       options: ["Answer A", "Answer B", "Answer C", "Answer D"],
       correctAnswer: 1,                         // Index of correct option (0-based)
     },
-    // Add 4–5 total questions
+    // Add 4-5 total questions
   ],
 };
 
@@ -49,9 +49,9 @@ export default quiz;
 | --- | --- | --- |
 | `id` | string | Unique, lowercase, hyphenated slug (`week-3-pki-fundamentals`). Must stay in sync with file name and registry entry. |
 | `title` | string | Appears on the intro and leaderboard screens. |
-| `intro` | string (optional) | Short description of the week’s theme; shown on the intro screen. |
+| `intro` | string (optional) | Short description of the week's theme; shown on the intro screen. |
 | `maxTime` | number | Countdown (seconds) per question. Leave at 100 unless a different pace is desired. |
-| `questions` | array | Each entry needs `question` (string), `options` (array of 4), and `correctAnswer` (0–3). |
+| `questions` | array | Each entry needs `question` (string), `options` (array of 4–6), and `correctAnswer` (0–`options.length - 1`). |
 
 ### 3. Register the Quiz
 
@@ -94,6 +94,7 @@ This command ensures:
 1. `npm start` to launch the app.
 2. Navigate to `/quiz/{your-quiz-id}`.
 3. Confirm intro text, timer, question flow, and leaderboard submission.
+   - Note: Questions and their options are shuffled per session; the content is identical for all players.
 4. Verify that the new quiz is the default redirect if you updated `currentQuizId`.
 
 ### 6. Commit and Deploy
@@ -108,8 +109,19 @@ Leaderboard entries enforce unique display names per quiz to keep scores attribu
 
 ## Troubleshooting
 
-- **`npm run test:quizzes` fails**: read the error message—it typically reports the file or field that’s missing.
+- **`npm run test:quizzes` fails**: read the error message-it typically reports the file or field that's missing.
 - **Quiz 404s in the browser**: ensure the quiz ID matches in the file name, `id` field, and registry entry.
 - **Timer appears incorrect**: verify the `maxTime` value in your quiz file.
+
+## Option Shuffling Exceptions
+
+By default, questions and their options are shuffled per session.
+
+Option order is preserved (not shuffled) when:
+
+- An option is a grouped reference like `A, B, and C` (or `B, C, and D`), since shuffling would change the meaning.
+- You set `shuffleOptions: false` on a question.
+
+The existing `"All of the above"` behavior still applies: when shuffling is enabled, that option is kept last.
 
 For additional questions, refer to [`QUIZ_ARCHITECTURE_PLAN.md`](../../QUIZ_ARCHITECTURE_PLAN.md) or reach out to the engineering team.
