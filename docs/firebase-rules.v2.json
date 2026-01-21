@@ -1,8 +1,7 @@
 {
   "rules": {
-    ".read": "auth != null",
-
     "leaderboard": {
+      ".read": "auth != null",
       "$quizId": {
         "$uid": {
           ".write": "auth != null && auth.uid == $uid && !data.exists()",
