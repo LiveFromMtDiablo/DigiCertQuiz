@@ -1,5 +1,5 @@
 const quiz = {
-  id: "week-11-tlm-part-2",
+  id: "week-12-compliance-dates",
   title: "DigiCert Weekly Product Quiz #12",
   intro: "This week's focus: Compliance Dates",
   maxTime: 100,
