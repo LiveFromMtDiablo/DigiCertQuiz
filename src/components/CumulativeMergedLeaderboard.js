@@ -155,10 +155,10 @@ export default function CumulativeMergedLeaderboard() {
             />
             <div className="min-w-0">
               <h1 className="text-2xl font-bold truncate" style={{ color: "#0e75ba" }}>
-                Cumulative Leaderboard (Merged)
+                Cumulative Leaderboard
               </h1>
               <p className="text-gray-600 text-sm">
-                Last refreshed: {today} • Source: /cumulative-leaderboard-merged.csv
+                Last refreshed: {today}
               </p>
             </div>
           </div>
@@ -227,4 +227,3 @@ export default function CumulativeMergedLeaderboard() {
     </div>
   );
 }
-
