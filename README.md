@@ -11,6 +11,27 @@ Implementation files:
 - `src/components/FullLeaderboard.js`
 - `src/App.js`
 
+## Cumulative Leaderboard (Merged + Screenshot View)
+
+- Script: `scripts/cumulative-leaderboard.js`
+- Cumulative screenshot route: open `/leaderboard/cumulative` (Top 30 total points across quizzes, screenshot-friendly).
+- Data source for the cumulative screenshot route: `public/cumulative-leaderboard-merged.csv` (served as `/cumulative-leaderboard-merged.csv`).
+
+Typical workflow:
+
+```sh
+# 1) Generate the raw cumulative CSV + likely-duplicate pairs + fully merged CSV (written into /public)
+node scripts/cumulative-leaderboard.js \
+  --csv cumulative-leaderboard.csv \
+  --dupes-csv potential-duplicates.csv \
+  --merged-csv public/cumulative-leaderboard-merged.csv
+
+# 2) Open the screenshot page
+#    /leaderboard/cumulative
+```
+
+More details: `docs/cumulative-leaderboard.md`
+
 ## Turnkey Handoff
 
 For a step-by-step guide to setting up a fresh copy of this quiz stack on **GitHub**, **Vercel**, and **Firebase** (and then handing it over to a non-engineering team), see:
