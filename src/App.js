@@ -2,6 +2,7 @@ import React from "react";
 import { Routes, Route, Navigate, useParams, Link } from "react-router-dom";
 import QuizGame from "./components/QuizGame";
 import FullLeaderboard from "./components/FullLeaderboard";
+import CumulativeMergedLeaderboard from "./components/CumulativeMergedLeaderboard";
 import { getQuiz, currentQuizId } from "./quizzes";
 
 function QuizPage() {
@@ -59,6 +60,7 @@ export default function App() {
       <Route path="/quiz/:quizId" element={<QuizPage />} />
       <Route path="/leaderboard/full" element={<FullLeaderboard />} />
       <Route path="/leaderboard/full/:quizId" element={<FullLeaderboard />} />
+      <Route path="/leaderboard/cumulative" element={<CumulativeMergedLeaderboard />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
