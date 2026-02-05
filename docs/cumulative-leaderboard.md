@@ -23,7 +23,7 @@ What it does:
 The script uses a fixed list of quiz IDs:
 
 - Edit `QUIZ_IDS` inside `scripts/cumulative-leaderboard.js`
-- We currently include week 12, but intentionally do not include week 13 (not pushed to the audience yet)
+- We currently include week 13.
 
 ### Firebase reads (unlocking)
 
