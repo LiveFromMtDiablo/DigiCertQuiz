@@ -15,7 +15,7 @@ const quiz = {
       correctAnswer: 2,
     },
     {
-      question: "Why is the "Sensor Extensibility" architecture so critical for our Product and Engineering teams?",
+      question: "Why is the Sensor Extensibility architecture so critical for our Product and Engineering teams?",
       options: [
         "It standardizes integration testing, reducing the scope of regression cycles needed for core releases",
         "It ensures that custom customer requirements are automatically added to the core product roadmap",
@@ -36,12 +36,12 @@ const quiz = {
       correctAnswer: 1,
     },
     {
-      question: "A customer wants to automate certificate deployment to a specific firewall (e.g., Palo Alto) but doesn't see a native connector in the UI. What is the "Extensible" approach to solving this?",
+      question: "A customer wants to automate certificate deployment to a specific firewall (e.g., Palo Alto) but doesn't see a native connector in the UI. What is the extensible approach to solving this?",
       options: [
-        "Submit a "Connector Request" ticket and wait for the quarterly integration pack update",
-        "Configure the "Generic REST Connector" to map the firewall's API endpoints in the UI",
+        "Submit a Connector Request ticket and wait for the quarterly integration pack update",
+        "Configure the Generic REST Connector to map the firewall's API endpoints in the UI",
         "Use an external CI/CD tool like Jenkins to script the retrieval and push the certificate via SSH",
-        "Use the "Sensor Extensibility" framework to build or download a custom plugin and upload it directly to TLM",
+        "Use the Sensor Extensibility framework to build or download a custom plugin and upload it directly to TLM",
       ],
       correctAnswer: 3,
     },
