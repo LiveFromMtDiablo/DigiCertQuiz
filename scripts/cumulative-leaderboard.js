@@ -32,6 +32,7 @@ const QUIZ_IDS = [
   "week-10-software-trust",
   "week-11-tlm-part-2",
   "week-12-compliance-dates",
+  "week-13-root-strategy",
 ];
 
 function getArgValue(flag) {

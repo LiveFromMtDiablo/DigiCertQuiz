@@ -23,7 +23,26 @@ What it does:
 The script uses a fixed list of quiz IDs:
 
 - Edit `QUIZ_IDS` inside `scripts/cumulative-leaderboard.js`
-- We currently include week 12, but intentionally do not include week 13 (not pushed to the audience yet)
+- We currently include week 13.
+
+### Weekly update checklist (e.g., add week 14)
+
+1. Add the new quiz id (e.g. `week-14-...`) to `QUIZ_IDS` in `scripts/cumulative-leaderboard.js`
+2. Ensure Firebase reads are available (temporary public read) or set `AUTH_TOKEN`
+3. Regenerate outputs:
+
+```sh
+node scripts/cumulative-leaderboard.js \
+  --csv cumulative-leaderboard.csv \
+  --dupes-csv potential-duplicates.csv \
+  --merged-csv public/cumulative-leaderboard-merged.csv
+```
+
+4. Quick sanity check:
+   - `public/cumulative-leaderboard-merged.csv` header includes the new `W{N}-...` column
+   - Visit `/leaderboard/cumulative` and confirm the Top 30 looks right
+5. Commit + push the updated CSV(s) and script change (Vercel deploy picks up the new CSV)
+6. Re-lock Firebase reads if you temporarily opened them
 
 ### Firebase reads (unlocking)
 

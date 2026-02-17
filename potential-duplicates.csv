@@ -1,83 +1,86 @@
 Method,Score,Name1,NameSlug1,Total1,QuizzesPlayed1,Name2,NameSlug2,Total2,QuizzesPlayed2,OverlapQuizzes,MergedTotalLowestOverlap,SumTotals,SumMinusMerged,OverlapDetails
-last_initial_vs_lastname,,Ken M.,ken-m,3956,9,Ken Martin,ken-martin,438,1,0,4394,4394,0,
-last_initial_vs_lastname,,Paolo Tropea,paolo-tropea,996,3,Paolo T,paolo-t,3135,8,1,3642,4131,489,W12:383/489->383
-last_initial_vs_lastname,,Kelsey B.,kelsey-b-,480,1,Kelsey Berteaux,kelsey-berteaux,3527,11,0,4007,4007,0,
-last_initial_vs_lastname,,Shankar K,shankar-k,466,1,Shankar Kambam,shankar-kambam,3464,8,0,3930,3930,0,
-last_initial_vs_lastname,,Sam Merrill,sam-merrill,3360,9,Sam M,sam-m,183,1,0,3543,3543,0,
-last_initial_vs_lastname,,Brett Philp,brett-philp,1429,4,Brett P,brett-p,1989,5,0,3418,3418,0,
-last_initial_vs_lastname,,Darren Solomon,darren-solomon,708,3,Darren S.,darren-s,2327,7,0,3035,3035,0,
-last_initial_vs_lastname,,Riaan Pretorius,riaan-pretorius,2388,9,Riaan P,riaan-p,457,1,0,2845,2845,0,
-last_initial_vs_lastname,,Diego M,diego-m,2297,6,Diego Martinez,diego-martinez,376,1,0,2673,2673,0,
-last_initial_vs_lastname,,Riaan P.,riaan-p-,285,1,Riaan Pretorius,riaan-pretorius,2388,9,0,2673,2673,0,
-last_initial_vs_lastname,,Viraj R,viraj-r,272,1,Viraj Rathod,viraj-rathod,2287,6,1,2170,2559,389,W1:272/389->272
-last_initial_vs_lastname,,Brandon J,brandon-j,1051,3,Brandon Jemmett,brandon-jemmett,1319,3,0,2370,2370,0,
-last_initial_vs_lastname,,Tyler Fullerton,tyler-fullerton,164,1,Tyler F,tyler-f,2206,6,0,2370,2370,0,
-last_initial_vs_lastname,,Mayur Madhawani,mayur-madhawani,1630,6,Mayur M,mayur-m,699,2,0,2329,2329,0,
-last_initial_vs_lastname,,Candice S,candice-s,867,3,Candice Smith,candice-smith,1257,3,0,2124,2124,0,
-last_initial_vs_lastname,,Mohan Dattatreya,mohan-dattatreya,1142,3,Mohan D,mohan-d,842,3,0,1984,1984,0,
-last_initial_vs_lastname,,Jack P,jack-p,850,2,Jack Parrish,jack-parrish,1090,3,0,1940,1940,0,
-last_initial_vs_lastname,,Michael P,michael-p,1350,3,Michael Pryor,michael-pryor,552,2,0,1902,1902,0,
-last_initial_vs_lastname,,Fawwaz S,fawwaz-s,952,2,Fawwaz Stafford,fawwaz-stafford,725,2,0,1677,1677,0,
-last_initial_vs_lastname,,Nicole F,nicole-f,922,3,Nicole Ferretti,nicole-ferretti,745,3,0,1667,1667,0,
-last_initial_vs_lastname,,Nicole F,nicole-f,922,3,Nicole Ferr,nicole-ferr,741,2,0,1663,1663,0,
-last_initial_vs_lastname,,Emmanuel Okafor,emmanuel-okafor,1194,3,Emmanuel O,emmanuel-o,380,1,1,1194,1574,380,W2:222/380->222
-last_initial_vs_lastname,,Jamie Gonzalez,jamie-gonzalez,300,1,Jamie G,jamie-g,1258,4,0,1558,1558,0,
-last_initial_vs_lastname,,Melusi Khumalo,melusi-khumalo,983,3,Melusi K,melusi-k,461,1,0,1444,1444,0,
-last_initial_vs_lastname,,Almir G.,almir-g-,362,1,Almir Guillao,almir-guillao,1051,6,0,1413,1413,0,
-last_initial_vs_lastname,,Ivana Naumovic,ivana-naumovic,741,2,Ivana N,ivana-n,658,2,0,1399,1399,0,
-last_initial_vs_lastname,,Maurizia January,maurizia-january,639,2,Maurizia J,maurizia-j,664,2,0,1303,1303,0,
-last_initial_vs_lastname,,Ana G,ana-g,821,2,Ana Grigore,ana-grigore,474,1,0,1295,1295,0,
-last_initial_vs_lastname,,Cosi Reichhardt,cosi-reichhardt,1064,4,Cosi R,cosi-r,158,1,0,1222,1222,0,
-last_initial_vs_lastname,,Tanner Y,tanner-y,513,2,Tanner Young,tanner-young,700,2,0,1213,1213,0,
-last_initial_vs_lastname,,George Curran,george-curran,815,2,George C,george-c,358,1,0,1173,1173,0,
-last_initial_vs_lastname,,John M,john-m,719,3,John Merrill,john-merrill,385,1,0,1104,1104,0,
-last_initial_vs_lastname,,Nazek Benhamada,nazek-benhamada,352,1,Nazek B,nazek-b,752,2,1,644,1104,460,W4:352/460->352
-last_initial_vs_lastname,,Vikas Kumar,vikas-kumar,632,3,Vikas k,vikas-k,471,1,1,632,1103,471,W6:91/471->91
-last_initial_vs_lastname,,Ryan White,ryan-white,648,2,Ryan W,ryan-w,367,1,0,1015,1015,0,
-last_initial_vs_lastname,,Darren Solomon,darren-solomon,708,3,Darren S.,darren-s-,295,1,0,1003,1003,0,
-last_initial_vs_lastname,,John McArthur,john-mcarthur,271,1,John M,john-m,719,3,0,990,990,0,
-last_initial_vs_lastname,,Krishna P,krishna-p,874,4,Krishna Patel,krishna-patel,96,1,0,970,970,0,
-last_initial_vs_lastname,,Christian K.,christian-k,696,4,Christian Kachukiwa,christian-kachukiwa,255,1,0,951,951,0,
-last_initial_vs_lastname,,Matteo Peli,matteo-peli,254,1,Matteo P,matteo-p,590,2,0,844,844,0,
-last_initial_vs_lastname,,Remy Lyle,remy-lyle,458,1,Remy L,remy-l,367,1,0,825,825,0,
-last_initial_vs_lastname,,Evans Ejike,evans-ejike,438,1,Evans E,evans-e,346,1,0,784,784,0,
-last_initial_vs_lastname,,Garrett Mair,garrett-mair,559,2,Garrett m,garrett-m,213,1,0,772,772,0,
-last_initial_vs_lastname,,Ryan Charles White,ryan-charles-white,369,1,Ryan W,ryan-w,367,1,0,736,736,0,
-last_initial_vs_lastname,,Scott Mellegaard,scott-mellegaard,363,1,Scott M,scott-m,367,1,1,363,730,367,W1:363/367->363
-last_initial_vs_lastname,,Fauzan S,fauzan-s,351,1,Fauzan Slamang,fauzan-slamang,376,1,0,727,727,0,
-last_initial_vs_lastname,,David D,david-d,360,1,Davin aka David,davin-aka-david,347,1,0,707,707,0,
-last_initial_vs_lastname,,Kyle D,kyle-d,189,1,Kyle Denny,kyle-denny,463,1,0,652,652,0,
-last_initial_vs_lastname,,Cosima Reichhardt,cosima-reichhardt,276,1,Cosima R,cosima-r,376,1,0,652,652,0,
-last_initial_vs_lastname,,David D.,david-d-,271,1,Davin aka David,davin-aka-david,347,1,0,618,618,0,
-last_initial_vs_lastname,,Jacqueline S.,jacqueline-s-,236,1,Jacqueline Sherrill,jacqueline-sherrill,363,2,0,599,599,0,
-last_initial_vs_lastname,,Jon T,jon-t,249,1,Jon Taggart,jon-taggart,335,1,0,584,584,0,
-last_initial_vs_lastname,,Pavan G.,pavan-g-,318,1,Pavan Golivi,pavan-golivi,259,1,0,577,577,0,
-last_initial_vs_lastname,,Vita Balie,vita-balie,199,1,Vita B,vita-b,353,1,0,552,552,0,
-last_initial_vs_lastname,,Vrushali M,vrushali-m,359,1,Vrushali More,vrushali-more,180,1,0,539,539,0,
-last_initial_vs_lastname,,Noah Lott,noah-lott,441,1,Noah L,noah-l,97,1,0,538,538,0,
-last_initial_vs_lastname,,Noah T.,noah-t-,324,1,Noah Thomann,noah-thomann,96,1,0,420,420,0,
-last_initial_vs_lastname,,McKayla Christensen,mckayla-christensen,94,2,McKayla C,mckayla-c,188,1,0,282,282,0,
-slug_similarity,94%,Mithun Chaithanya,mithun-chaithanya,602,2,Mithun Chaithanaya,mithun-chaithanaya,281,1,0,883,883,0,
-slug_similarity,92%,Stephanie W.,stephanie-w-,420,1,Stephanie W,stephanie-w,91,1,0,511,511,0,
-slug_similarity,91%,Lee Isbell,lee-isbell,1699,4,Leee Isbell,leee-isbell,466,1,0,2165,2165,0,
-slug_similarity,91%,Prashanth A,prashanth-a,1081,3,Prashanth R,prashanth-r,427,2,1,1171,1508,337,W5:337/336->336
-slug_similarity,89%,Yogesh Chindarkar,yogesh-chindarkar,1608,5,Yogesh V Chindarkar,yogesh-v-chindarkar,379,1,1,1592,1987,395,W3:395/379->379
-slug_similarity,89%,Sivasankaranathan,sivasankaranathan,264,1,Sivasankaranathan K,sivasankaranathan-k,376,1,1,264,640,376,W7:264/376->264
-slug_similarity,89%,Darren S.,darren-s-,295,1,Darren S.,darren-s,2327,7,0,2622,2622,0,
-slug_similarity,89%,Mariano J,mariano-j,267,1,Mariano T,mariano-t,1941,5,0,2208,2208,0,
-slug_similarity,89%,Daniel S.,daniel-s-,252,1,Daniel S.,daniel-s,418,1,0,670,670,0,
-slug_similarity,89%,Tatyana G,tatyana-g,434,1,Tatjana G,tatjana-g,227,1,0,661,661,0,
-slug_similarity,88%,Cosima Reichhardt,cosima-reichhardt,276,1,Cosi Reichhardt,cosi-reichhardt,1064,4,0,1340,1340,0,
-slug_similarity,88%,Devin S.,devin-s-,230,1,Devin S.,devin-s,1396,4,0,1626,1626,0,
-slug_similarity,88%,Riaan P.,riaan-p-,285,1,Riaan P,riaan-p,457,1,0,742,742,0,
-slug_similarity,88%,David D.,david-d-,271,1,David D,david-d,360,1,0,631,631,0,
-slug_similarity,86%,Jason Z,jason-z,3255,7,Jason C,jason-c,387,1,1,3159,3642,483,W6:483/387->387
-slug_similarity,86%,Alex C.,alex-c-,259,1,Alex C,alex-c,2137,8,0,2396,2396,0,
-slug_similarity,86%,Candace,candace,177,1,Candice,candice,1575,4,0,1752,1752,0,
-slug_similarity,86%,Hari Krishna D,hari-krishna-d,879,3,hari krishna,hari-krishna,622,2,0,1501,1501,0,
-slug_similarity,86%,Chris K,chris-k,221,1,Chris L,chris-l,984,3,0,1205,1205,0,
-slug_similarity,86%,Ashwin,ashwin,422,1,Ashwini,ashwini,694,2,0,1116,1116,0,
-slug_similarity,86%,Andrew,andrew,643,2,AndrewS,andrews,369,1,0,1012,1012,0,
-slug_similarity,86%,Chris K,chris-k,221,1,ChrisK,chrisk,653,2,0,874,874,0,
-slug_similarity,86%,Scott M,scott-m,367,1,Scott S,scott-s,315,1,0,682,682,0,
-slug_similarity,86%,Jamie Gonzalez,jamie-gonzalez,300,1,James Gonzalez,james-gonzalez,364,1,0,664,664,0,
+last_initial_vs_lastname,,"Ken M.",ken-m,4325,10,"Ken Martin",ken-martin,438,1,0,4763,4763,0,""
+last_initial_vs_lastname,,"Kelsey B.",kelsey-b-,480,1,"Kelsey Berteaux",kelsey-berteaux,3894,12,0,4374,4374,0,""
+last_initial_vs_lastname,,"Shankar K",shankar-k,466,1,"Shankar Kambam",shankar-kambam,3903,9,0,4369,4369,0,""
+last_initial_vs_lastname,,"Paolo Tropea",paolo-tropea,996,3,"Paolo T",paolo-t,3135,8,1,3642,4131,489,"W12:383/489->383"
+last_initial_vs_lastname,,"Brett Philp",brett-philp,1429,4,"Brett P",brett-p,2455,6,0,3884,3884,0,""
+last_initial_vs_lastname,,"Sam Merrill",sam-merrill,3360,9,"Sam M",sam-m,183,1,0,3543,3543,0,""
+last_initial_vs_lastname,,"Riaan Pretorius",riaan-pretorius,2665,10,"Riaan P",riaan-p,457,1,0,3122,3122,0,""
+last_initial_vs_lastname,,"Darren Solomon",darren-solomon,708,3,"Darren S.",darren-s,2327,7,0,3035,3035,0,""
+last_initial_vs_lastname,,"Riaan P.",riaan-p-,285,1,"Riaan Pretorius",riaan-pretorius,2665,10,0,2950,2950,0,""
+last_initial_vs_lastname,,"Diego M",diego-m,2297,6,"Diego Martinez",diego-martinez,376,1,0,2673,2673,0,""
+last_initial_vs_lastname,,"Mayur Madhawani",mayur-madhawani,1961,7,"Mayur M",mayur-m,699,2,0,2660,2660,0,""
+last_initial_vs_lastname,,"Viraj R",viraj-r,272,1,"Viraj Rathod",viraj-rathod,2287,6,1,2170,2559,389,"W1:272/389->272"
+last_initial_vs_lastname,,"Brandon J",brandon-j,1051,3,"Brandon Jemmett",brandon-jemmett,1319,3,0,2370,2370,0,""
+last_initial_vs_lastname,,"Tyler Fullerton",tyler-fullerton,164,1,"Tyler F",tyler-f,2206,6,0,2370,2370,0,""
+last_initial_vs_lastname,,"Mohan Dattatreya",mohan-dattatreya,1142,3,"Mohan D",mohan-d,1198,4,0,2340,2340,0,""
+last_initial_vs_lastname,,"Jack P",jack-p,850,2,"Jack Parrish",jack-parrish,1359,4,0,2209,2209,0,""
+last_initial_vs_lastname,,"Candice S",candice-s,867,3,"Candice Smith",candice-smith,1257,3,0,2124,2124,0,""
+last_initial_vs_lastname,,"Michael P",michael-p,1350,3,"Michael Pryor",michael-pryor,552,2,0,1902,1902,0,""
+last_initial_vs_lastname,,"Nicole F",nicole-f,922,3,"Nicole Ferretti",nicole-ferretti,932,4,0,1854,1854,0,""
+last_initial_vs_lastname,,"Fawwaz S",fawwaz-s,952,2,"Fawwaz Stafford",fawwaz-stafford,725,2,0,1677,1677,0,""
+last_initial_vs_lastname,,"Nicole F",nicole-f,922,3,"Nicole Ferr",nicole-ferr,741,2,0,1663,1663,0,""
+last_initial_vs_lastname,,"Jamie Gonzalez",jamie-gonzalez,300,1,"Jamie G",jamie-g,1258,4,0,1558,1558,0,""
+last_initial_vs_lastname,,"George Curran",george-curran,815,2,"George C",george-c,726,2,0,1541,1541,0,""
+last_initial_vs_lastname,,"Melusi Khumalo",melusi-khumalo,983,3,"Melusi K",melusi-k,461,1,0,1444,1444,0,""
+last_initial_vs_lastname,,"Almir G.",almir-g-,362,1,"Almir Guillao",almir-guillao,1051,6,0,1413,1413,0,""
+last_initial_vs_lastname,,"Ivana Naumovic",ivana-naumovic,741,2,"Ivana N",ivana-n,658,2,0,1399,1399,0,""
+last_initial_vs_lastname,,"Vikas Kumar",vikas-kumar,906,4,"Vikas k",vikas-k,471,1,1,906,1377,471,"W6:91/471->91"
+last_initial_vs_lastname,,"Maurizia January",maurizia-january,639,2,"Maurizia J",maurizia-j,664,2,0,1303,1303,0,""
+last_initial_vs_lastname,,"Ana G",ana-g,821,2,"Ana Grigore",ana-grigore,474,1,0,1295,1295,0,""
+last_initial_vs_lastname,,"Amit Kumar",amit-kumar,851,2,"Amit K",amit-k,379,1,0,1230,1230,0,""
+last_initial_vs_lastname,,"Cosi Reichhardt",cosi-reichhardt,1064,4,"Cosi R",cosi-r,158,1,0,1222,1222,0,""
+last_initial_vs_lastname,,"Tanner Y",tanner-y,513,2,"Tanner Young",tanner-young,700,2,0,1213,1213,0,""
+last_initial_vs_lastname,,"Fauzan S",fauzan-s,351,1,"Fauzan Slamang",fauzan-slamang,777,2,0,1128,1128,0,""
+last_initial_vs_lastname,,"John M",john-m,719,3,"John Merrill",john-merrill,385,1,0,1104,1104,0,""
+last_initial_vs_lastname,,"Nazek Benhamada",nazek-benhamada,352,1,"Nazek B",nazek-b,752,2,1,644,1104,460,"W4:352/460->352"
+last_initial_vs_lastname,,"Emmanuel Okafor",emmanuel-okafor,703,2,"Emmanuel O",emmanuel-o,380,1,1,703,1083,380,"W2:222/380->222"
+last_initial_vs_lastname,,"Ryan White",ryan-white,648,2,"Ryan W",ryan-w,367,1,0,1015,1015,0,""
+last_initial_vs_lastname,,"Darren Solomon",darren-solomon,708,3,"Darren S.",darren-s-,295,1,0,1003,1003,0,""
+last_initial_vs_lastname,,"John McArthur",john-mcarthur,271,1,"John M",john-m,719,3,0,990,990,0,""
+last_initial_vs_lastname,,"Krishna P",krishna-p,874,4,"Krishna Patel",krishna-patel,96,1,0,970,970,0,""
+last_initial_vs_lastname,,"Christian K.",christian-k,696,4,"Christian Kachukiwa",christian-kachukiwa,255,1,0,951,951,0,""
+last_initial_vs_lastname,,"Matteo Peli",matteo-peli,254,1,"Matteo P",matteo-p,590,2,0,844,844,0,""
+last_initial_vs_lastname,,"Remy Lyle",remy-lyle,458,1,"Remy L",remy-l,367,1,0,825,825,0,""
+last_initial_vs_lastname,,"Evans Ejike",evans-ejike,438,1,"Evans E",evans-e,346,1,0,784,784,0,""
+last_initial_vs_lastname,,"Garrett Mair",garrett-mair,559,2,"Garrett m",garrett-m,213,1,0,772,772,0,""
+last_initial_vs_lastname,,"Ryan Charles White",ryan-charles-white,369,1,"Ryan W",ryan-w,367,1,0,736,736,0,""
+last_initial_vs_lastname,,"Scott Mellegaard",scott-mellegaard,363,1,"Scott M",scott-m,367,1,1,363,730,367,"W1:363/367->363"
+last_initial_vs_lastname,,"David D",david-d,360,1,"Davin aka David",davin-aka-david,347,1,0,707,707,0,""
+last_initial_vs_lastname,,"Nas B.",nas-b-,280,1,"Nas Burtscher",nas-burtscher,377,1,0,657,657,0,""
+last_initial_vs_lastname,,"Kyle D",kyle-d,189,1,"Kyle Denny",kyle-denny,463,1,0,652,652,0,""
+last_initial_vs_lastname,,"Cosima Reichhardt",cosima-reichhardt,276,1,"Cosima R",cosima-r,376,1,0,652,652,0,""
+last_initial_vs_lastname,,"Pierre D",pierre-d,354,1,"Pierre Davis",pierre-davis,281,1,0,635,635,0,""
+last_initial_vs_lastname,,"David D.",david-d-,271,1,"Davin aka David",davin-aka-david,347,1,0,618,618,0,""
+last_initial_vs_lastname,,"Jacqueline S.",jacqueline-s-,236,1,"Jacqueline Sherrill",jacqueline-sherrill,363,2,0,599,599,0,""
+last_initial_vs_lastname,,"Jon T",jon-t,249,1,"Jon Taggart",jon-taggart,335,1,0,584,584,0,""
+last_initial_vs_lastname,,"Pavan G.",pavan-g-,318,1,"Pavan Golivi",pavan-golivi,259,1,0,577,577,0,""
+last_initial_vs_lastname,,"Vita Balie",vita-balie,199,1,"Vita B",vita-b,353,1,0,552,552,0,""
+last_initial_vs_lastname,,"Vrushali M",vrushali-m,359,1,"Vrushali More",vrushali-more,180,1,0,539,539,0,""
+last_initial_vs_lastname,,"Noah Lott",noah-lott,441,1,"Noah L",noah-l,97,1,0,538,538,0,""
+last_initial_vs_lastname,,"Noah T.",noah-t-,324,1,"Noah Thomann",noah-thomann,96,1,0,420,420,0,""
+last_initial_vs_lastname,,"McKayla Christensen",mckayla-christensen,94,2,"McKayla C",mckayla-c,188,1,0,282,282,0,""
+slug_similarity,94%,"Mithun Chaithanya",mithun-chaithanya,777,3,"Mithun Chaithanaya",mithun-chaithanaya,281,1,0,1058,1058,0,""
+slug_similarity,92%,"Stephanie W.",stephanie-w-,420,1,"Stephanie W",stephanie-w,91,1,0,511,511,0,""
+slug_similarity,91%,"Lee Isbell",lee-isbell,1699,4,"Leee Isbell",leee-isbell,466,1,0,2165,2165,0,""
+slug_similarity,91%,"Prashanth A",prashanth-a,1540,4,"Prashanth R",prashanth-r,427,2,1,1630,1967,337,"W5:337/336->336"
+slug_similarity,89%,"Yogesh Chindarkar",yogesh-chindarkar,1924,6,"Yogesh V Chindarkar",yogesh-v-chindarkar,379,1,1,1908,2303,395,"W3:395/379->379"
+slug_similarity,89%,"Sivasankaranathan",sivasankaranathan,264,1,"Sivasankaranathan K",sivasankaranathan-k,376,1,1,264,640,376,"W7:264/376->264"
+slug_similarity,89%,"Darren S.",darren-s-,295,1,"Darren S.",darren-s,2327,7,0,2622,2622,0,""
+slug_similarity,89%,"Mariano J",mariano-j,267,1,"Mariano T",mariano-t,1941,5,0,2208,2208,0,""
+slug_similarity,89%,"Daniel S.",daniel-s-,252,1,"Daniel S.",daniel-s,418,1,0,670,670,0,""
+slug_similarity,89%,"Tatyana G",tatyana-g,434,1,"Tatjana G",tatjana-g,227,1,0,661,661,0,""
+slug_similarity,88%,"Cosima Reichhardt",cosima-reichhardt,276,1,"Cosi Reichhardt",cosi-reichhardt,1064,4,0,1340,1340,0,""
+slug_similarity,88%,"Devin S.",devin-s-,230,1,"Devin S.",devin-s,1396,4,0,1626,1626,0,""
+slug_similarity,88%,"Riaan P.",riaan-p-,285,1,"Riaan P",riaan-p,457,1,0,742,742,0,""
+slug_similarity,88%,"David D.",david-d-,271,1,"David D",david-d,360,1,0,631,631,0,""
+slug_similarity,86%,"Jason Z",jason-z,3255,7,"Jason C",jason-c,387,1,1,3159,3642,483,"W6:483/387->387"
+slug_similarity,86%,"Alex C.",alex-c-,259,1,"Alex C",alex-c,2319,9,0,2578,2578,0,""
+slug_similarity,86%,"Candace",candace,177,1,"Candice",candice,1575,4,0,1752,1752,0,""
+slug_similarity,86%,"Chris K",chris-k,584,2,"Chris L",chris-l,984,3,0,1568,1568,0,""
+slug_similarity,86%,"Hari Krishna D",hari-krishna-d,879,3,"hari krishna",hari-krishna,622,2,0,1501,1501,0,""
+slug_similarity,86%,"Chris K",chris-k,584,2,"ChrisK",chrisk,653,2,0,1237,1237,0,""
+slug_similarity,86%,"Ashwin",ashwin,422,1,"Ashwini",ashwini,694,2,0,1116,1116,0,""
+slug_similarity,86%,"Andrew",andrew,643,2,"AndrewS",andrews,369,1,0,1012,1012,0,""
+slug_similarity,86%,"Scott M",scott-m,367,1,"Scott S",scott-s,315,1,0,682,682,0,""
+slug_similarity,86%,"Jamie Gonzalez",jamie-gonzalez,300,1,"James Gonzalez",james-gonzalez,364,1,0,664,664,0,""
