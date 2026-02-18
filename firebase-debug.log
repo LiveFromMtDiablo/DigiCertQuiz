@@ -95,3 +95,219 @@
 [debug] [2026-01-21T17:17:35.186Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
 [debug] [2026-01-21T17:17:35.188Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
 [debug] [2026-01-21T17:17:35.189Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-17T07:23:32.991Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-17T07:23:32.996Z] > authorizing via signed-in user (jasonmpace@gmail.com)
+[debug] [2026-02-17T07:23:32.996Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-17T07:23:32.996Z] > authorizing via signed-in user (jasonmpace@gmail.com)
+[debug] [2026-02-17T07:23:32.997Z] Checked if tokens are valid: false, expires at: 1769020422073
+[debug] [2026-02-17T07:23:32.997Z] Checked if tokens are valid: false, expires at: 1769020422073
+[debug] [2026-02-17T07:23:32.997Z] > refreshing access token with scopes: []
+[debug] [2026-02-17T07:23:32.999Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-02-17T07:23:32.999Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-02-17T07:23:33.022Z] Checked if tokens are valid: false, expires at: 1769020422073
+[debug] [2026-02-17T07:23:33.022Z] Checked if tokens are valid: false, expires at: 1769020422073
+[debug] [2026-02-17T07:23:33.022Z] > refreshing access token with scopes: []
+[debug] [2026-02-17T07:23:33.022Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-02-17T07:23:33.022Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-02-17T07:23:33.024Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-17T07:23:33.024Z] > authorizing via signed-in user (jasonmpace@gmail.com)
+[debug] [2026-02-17T07:23:33.024Z] Checked if tokens are valid: false, expires at: 1769020422073
+[debug] [2026-02-17T07:23:33.024Z] Checked if tokens are valid: false, expires at: 1769020422073
+[debug] [2026-02-17T07:23:33.024Z] > refreshing access token with scopes: []
+[debug] [2026-02-17T07:23:33.024Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-02-17T07:23:33.024Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-02-17T07:23:33.174Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-02-17T07:23:33.174Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-02-17T07:23:33.220Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/digicert-product-quiz/billingInfo [none]
+[debug] [2026-02-17T07:23:33.222Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-02-17T07:23:33.222Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-02-17T07:23:33.264Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/digicert-product-quiz/billingInfo [none]
+[debug] [2026-02-17T07:23:33.265Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-02-17T07:23:33.265Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-02-17T07:23:33.308Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/digicert-product-quiz/billingInfo [none]
+[debug] [2026-02-17T07:23:33.652Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/digicert-product-quiz/billingInfo 200
+[debug] [2026-02-17T07:23:33.652Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/digicert-product-quiz/billingInfo {"name":"projects/digicert-product-quiz/billingInfo","projectId":"digicert-product-quiz","billingAccountName":"","billingEnabled":false}
+[debug] [2026-02-17T07:23:33.656Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.656Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.657Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.657Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.657Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.657Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.657Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.657Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.657Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.657Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.658Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.658Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.658Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.658Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.667Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.667Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.667Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.667Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.667Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firestore.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.667Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firestore.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.668Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/storage.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.668Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/storage.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.669Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.669Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebasedataconnect.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.670Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/identitytoolkit.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.670Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/identitytoolkit.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.671Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/fcm.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.671Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/fcm.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.671Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/cloudfunctions.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.671Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/cloudfunctions.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.672Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseremoteconfig.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.672Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseremoteconfig.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.673Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.673Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseapphosting.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.673Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseio.com [none]
+[debug] [2026-02-17T07:23:33.673Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseio.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.740Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/digicert-product-quiz/billingInfo 200
+[debug] [2026-02-17T07:23:33.740Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/digicert-product-quiz/billingInfo {"name":"projects/digicert-product-quiz/billingInfo","projectId":"digicert-product-quiz","billingAccountName":"","billingEnabled":false}
+[debug] [2026-02-17T07:23:33.741Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.741Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.741Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.741Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.742Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.742Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.742Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.742Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.742Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.742Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.742Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.742Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.742Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.742Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.745Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.745Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.745Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.745Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.746Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firestore.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.746Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firestore.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.746Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/storage.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.746Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/storage.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.747Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.747Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebasedataconnect.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.748Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/identitytoolkit.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.748Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/identitytoolkit.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.748Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/fcm.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.748Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/fcm.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.749Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/cloudfunctions.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.749Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/cloudfunctions.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.750Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseremoteconfig.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.750Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseremoteconfig.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.750Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.750Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseapphosting.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.751Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseio.com [none]
+[debug] [2026-02-17T07:23:33.751Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseio.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.918Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/digicert-product-quiz/billingInfo 200
+[debug] [2026-02-17T07:23:33.918Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/digicert-product-quiz/billingInfo {"name":"projects/digicert-product-quiz/billingInfo","projectId":"digicert-product-quiz","billingAccountName":"","billingEnabled":false}
+[debug] [2026-02-17T07:23:33.918Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.919Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.919Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.919Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.919Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.919Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.919Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.919Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.920Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.920Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.920Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.920Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.920Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.920Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.923Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.923Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.923Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.923Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:33.923Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firestore.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.923Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firestore.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.924Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/storage.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.924Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/storage.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.925Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebasedataconnect.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.925Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebasedataconnect.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.925Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/identitytoolkit.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.925Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/identitytoolkit.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.926Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/fcm.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.926Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/fcm.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.927Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/cloudfunctions.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.927Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/cloudfunctions.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.927Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseremoteconfig.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.927Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseremoteconfig.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.928Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseapphosting.googleapis.com [none]
+[debug] [2026-02-17T07:23:33.928Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseapphosting.googleapis.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:33.929Z] >>> [apiv2][query] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseio.com [none]
+[debug] [2026-02-17T07:23:33.929Z] >>> [apiv2][(partial)header] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseio.com  x-goog-user-project=digicert-product-quiz
+[debug] [2026-02-17T07:23:34.130Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseio.com 403
+[debug] [2026-02-17T07:23:34.130Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseio.com [omitted]
+[debug] [2026-02-17T07:23:34.169Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/fcm.googleapis.com 200
+[debug] [2026-02-17T07:23:34.169Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/fcm.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.196Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-02-17T07:23:34.196Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.196Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/cloudfunctions.googleapis.com 200
+[debug] [2026-02-17T07:23:34.196Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/cloudfunctions.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.197Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/identitytoolkit.googleapis.com 200
+[debug] [2026-02-17T07:23:34.197Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/identitytoolkit.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.217Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseremoteconfig.googleapis.com 200
+[debug] [2026-02-17T07:23:34.217Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseremoteconfig.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.239Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-02-17T07:23:34.239Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.240Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firestore.googleapis.com 200
+[debug] [2026-02-17T07:23:34.240Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firestore.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.262Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/storage.googleapis.com 200
+[debug] [2026-02-17T07:23:34.262Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/storage.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.286Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-17T07:23:34.286Z] > authorizing via signed-in user (jasonmpace@gmail.com)
+[debug] [2026-02-17T07:23:34.286Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:34.286Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:34.287Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/digicert-product-quiz/billingInfo [none]
+[debug] [2026-02-17T07:23:34.363Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-02-17T07:23:34.363Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.364Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/cloudfunctions.googleapis.com 200
+[debug] [2026-02-17T07:23:34.364Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/cloudfunctions.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.399Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/digicert-product-quiz/billingInfo 200
+[debug] [2026-02-17T07:23:34.399Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/digicert-product-quiz/billingInfo {"name":"projects/digicert-product-quiz/billingInfo","projectId":"digicert-product-quiz","billingAccountName":"","billingEnabled":false}
+[debug] [2026-02-17T07:23:34.401Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-17T07:23:34.401Z] > authorizing via signed-in user (jasonmpace@gmail.com)
+[debug] [2026-02-17T07:23:34.444Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseio.com 403
+[debug] [2026-02-17T07:23:34.444Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseio.com [omitted]
+[debug] [2026-02-17T07:23:34.445Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseio.com 403
+[debug] [2026-02-17T07:23:34.445Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseio.com [omitted]
+[debug] [2026-02-17T07:23:34.501Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseremoteconfig.googleapis.com 200
+[debug] [2026-02-17T07:23:34.501Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseremoteconfig.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.524Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/fcm.googleapis.com 200
+[debug] [2026-02-17T07:23:34.525Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/fcm.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.544Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-02-17T07:23:34.544Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.546Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseremoteconfig.googleapis.com 200
+[debug] [2026-02-17T07:23:34.546Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseremoteconfig.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.569Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/identitytoolkit.googleapis.com 200
+[debug] [2026-02-17T07:23:34.569Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/identitytoolkit.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.590Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseapphosting.googleapis.com 200
+[debug] [2026-02-17T07:23:34.590Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebaseapphosting.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.590Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/identitytoolkit.googleapis.com 200
+[debug] [2026-02-17T07:23:34.590Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/identitytoolkit.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.612Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/cloudfunctions.googleapis.com 200
+[debug] [2026-02-17T07:23:34.612Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/cloudfunctions.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.613Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/storage.googleapis.com 200
+[debug] [2026-02-17T07:23:34.613Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/storage.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.635Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firestore.googleapis.com 200
+[debug] [2026-02-17T07:23:34.635Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firestore.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.660Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-17T07:23:34.660Z] > authorizing via signed-in user (jasonmpace@gmail.com)
+[debug] [2026-02-17T07:23:34.660Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:34.660Z] Checked if tokens are valid: true, expires at: 1771316612265
+[debug] [2026-02-17T07:23:34.660Z] >>> [apiv2][query] GET https://cloudbilling.googleapis.com/v1/projects/digicert-product-quiz/billingInfo [none]
+[debug] [2026-02-17T07:23:34.661Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/fcm.googleapis.com 200
+[debug] [2026-02-17T07:23:34.661Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/fcm.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.684Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/storage.googleapis.com 200
+[debug] [2026-02-17T07:23:34.684Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/storage.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.706Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebasedataconnect.googleapis.com 200
+[debug] [2026-02-17T07:23:34.706Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firebasedataconnect.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.707Z] <<< [apiv2][status] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firestore.googleapis.com 200
+[debug] [2026-02-17T07:23:34.707Z] <<< [apiv2][body] GET https://serviceusage.googleapis.com/v1/projects/digicert-product-quiz/services/firestore.googleapis.com [omitted]
+[debug] [2026-02-17T07:23:34.745Z] <<< [apiv2][status] GET https://cloudbilling.googleapis.com/v1/projects/digicert-product-quiz/billingInfo 200
+[debug] [2026-02-17T07:23:34.745Z] <<< [apiv2][body] GET https://cloudbilling.googleapis.com/v1/projects/digicert-product-quiz/billingInfo {"name":"projects/digicert-product-quiz/billingInfo","projectId":"digicert-product-quiz","billingAccountName":"","billingEnabled":false}
+[debug] [2026-02-17T07:23:34.747Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-17T07:23:34.747Z] > authorizing via signed-in user (jasonmpace@gmail.com)
