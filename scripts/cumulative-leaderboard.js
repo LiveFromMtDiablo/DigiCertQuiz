@@ -20,19 +20,8 @@ const DB_URL = "https://digicert-product-quiz-default-rtdb.firebaseio.com";
 const POTENTIAL_DUPES_SLUG_SIM_THRESHOLD = 0.85;
 
 const QUIZ_IDS = [
-  "week-1-key-sovereignty",
-  "week-2-x9-extended-key-usage",
-  "week-3-protocols",
-  "week-4-acme",
-  "week-5-trustcore",
-  "week-6-dns",
-  "week-7-tlm-part-1",
-  "week-8-cert-central-part-1",
-  "week-9-dns-part-2",
-  "week-10-software-trust",
-  "week-11-tlm-part-2",
-  "week-12-compliance-dates",
-  "week-13-root-strategy",
+  "week-14-pam",
+  "week-15-tlm-part-3",
 ];
 
 function getArgValue(flag) {
