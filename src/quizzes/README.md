@@ -7,11 +7,17 @@ This guide walks marketing and product teams through creating, registering, and 
 ## Quick Checklist
 
 1. Copy the template file.
-2. Update quiz metadata, timer, and questions.
-3. Register the quiz in [`index.js`](./index.js).
-4. Set [`currentQuizId`](./index.js) if this is the latest quiz.
-5. Run `npm run test:quizzes` to validate structure and registration.
-6. Smoke test the quiz locally and publish.
+2. Save the new quiz file inside `src/quizzes/` (not repo root).
+3. Update quiz metadata, timer, and questions.
+4. Register the quiz in [`index.js`](./index.js).
+5. Set [`currentQuizId`](./index.js) now, or leave it on the current live quiz until launch day.
+6. Run `npm run test:quizzes` to validate structure and registration.
+7. Smoke test the quiz locally and publish.
+
+## Launch Timing Note
+
+- If next week's quiz should be staged but not live yet, keep `currentQuizId` pointing to the currently live quiz.
+- On launch day, flip `currentQuizId` to the new quiz ID and deploy.
 
 ## Step-by-Step Instructions
 
@@ -19,6 +25,7 @@ This guide walks marketing and product teams through creating, registering, and 
 
 - In VS Code or GitHub, duplicate `src/quizzes/week-1-key-sovereignty.js`.
 - Rename the new file using `week-{number}-{topic}.js` (e.g., `week-2-certificate-lifecycle.js`).
+- Keep the file in `src/quizzes/` so imports like `./week-2-certificate-lifecycle` resolve correctly.
 
 ### 2. Update Quiz Content
 
@@ -59,7 +66,7 @@ Open [`src/quizzes/index.js`](./index.js) and:
 
 - Add an import for your new module.
 - Add the quiz to the exported `quizzes` map.
-- Update `currentQuizId` if this is the newest quiz.
+- Update `currentQuizId` if this is the newest live quiz, or leave it unchanged until launch day.
 
 Example:
 
@@ -111,6 +118,8 @@ Leaderboard entries enforce unique display names per quiz to keep scores attribu
 
 - **`npm run test:quizzes` fails**: read the error message-it typically reports the file or field that's missing.
 - **Quiz 404s in the browser**: ensure the quiz ID matches in the file name, `id` field, and registry entry.
+- **Build fails with `Can't resolve './week-XX-...'`**: make sure the quiz file is under `src/quizzes/` and the import in `src/quizzes/index.js` matches the filename slug.
+- **`react-scripts: command not found`**: run `npm install` from the project root (`/Users/j.pace.admin/Documents/GitHub/DigiCertQuiz`).
 - **Timer appears incorrect**: verify the `maxTime` value in your quiz file.
 
 ## Option Shuffling Exceptions

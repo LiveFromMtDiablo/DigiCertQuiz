@@ -7,9 +7,11 @@
  *
  * Usage:
  *   node scripts/cumulative-leaderboard.js
+ *   node scripts/cumulative-leaderboard.js --from-week 14
  *   node scripts/cumulative-leaderboard.js --csv cumulative-leaderboard.csv
  *   node scripts/cumulative-leaderboard.js --dupes-csv potential-duplicates.csv
  *   node scripts/cumulative-leaderboard.js --merged-csv cumulative-leaderboard-merged.csv
+ *   node scripts/cumulative-leaderboard.js --from-week 14 --merged-csv public/cumulative-leaderboard-merged.csv
  */
 
 const fs = require("node:fs");
@@ -19,17 +21,85 @@ const DB_URL = "https://digicert-product-quiz-default-rtdb.firebaseio.com";
 // For the CSV export we want a narrower/high-confidence list than the console's 0.6.
 const POTENTIAL_DUPES_SLUG_SIM_THRESHOLD = 0.85;
 
-const QUIZ_IDS = [
+const ALL_QUIZ_IDS = [
+  "week-1-key-sovereignty",
+  "week-2-x9-extended-key-usage",
+  "week-3-protocols",
+  "week-4-acme",
+  "week-5-trustcore",
+  "week-6-dns",
+  "week-7-tlm-part-1",
+  "week-8-cert-central-part-1",
+  "week-9-dns-part-2",
+  "week-10-software-trust",
+  "week-11-tlm-part-2",
+  "week-12-compliance-dates",
+  "week-13-root-strategy",
   "week-14-pam",
   "week-15-tlm-part-3",
 ];
 
 function getArgValue(flag) {
+  const inlinePrefix = `${flag}=`;
+  const inlineArg = process.argv.find((arg) => arg.startsWith(inlinePrefix));
+  if (inlineArg) return inlineArg.slice(inlinePrefix.length);
+
   const idx = process.argv.indexOf(flag);
   if (idx === -1) return null;
   const next = process.argv[idx + 1];
   if (!next || next.startsWith("-")) return "";
   return next;
+}
+
+function parseWeekNumberFromQuizId(quizId) {
+  const m = /^week-(\d+)-/.exec(String(quizId || ""));
+  if (!m) return null;
+  const n = Number(m[1]);
+  return Number.isInteger(n) ? n : null;
+}
+
+function parseWeekArg(flag) {
+  const raw = getArgValue(flag);
+  if (raw === null) return null;
+
+  const value = String(raw).trim();
+  if (!value) {
+    console.error(`Missing value for ${flag}. Example: ${flag} 14`);
+    process.exit(1);
+  }
+  if (!/^\d+$/.test(value)) {
+    console.error(`Invalid ${flag} value "${raw}". Expected a positive integer, e.g. 14.`);
+    process.exit(1);
+  }
+
+  const week = Number(value);
+  if (week < 1) {
+    console.error(`Invalid ${flag} value "${raw}". Week must be >= 1.`);
+    process.exit(1);
+  }
+
+  return week;
+}
+
+function resolveQuizIds() {
+  const fromWeek = parseWeekArg("--from-week");
+  const quizIds = fromWeek == null
+    ? ALL_QUIZ_IDS.slice()
+    : ALL_QUIZ_IDS.filter((qid) => {
+        const n = parseWeekNumberFromQuizId(qid);
+        return n != null && n >= fromWeek;
+      });
+
+  if (quizIds.length === 0) {
+    if (fromWeek == null) {
+      console.error("No quiz IDs configured. Update ALL_QUIZ_IDS in this script.");
+    } else {
+      console.error(`No quiz IDs matched --from-week ${fromWeek}.`);
+    }
+    process.exit(1);
+  }
+
+  return quizIds;
 }
 
 function slugify(value) {
@@ -114,11 +184,11 @@ function isLikelyLastInitialVsLastName(nameA, nameB) {
   return fullLast[0] === initial;
 }
 
-function mergedTotalLowestOverlap(p1, p2) {
+function mergedTotalLowestOverlap(p1, p2, quizIds) {
   const overlap = [];
   let mergedTotal = 0;
 
-  for (const qid of QUIZ_IDS) {
+  for (const qid of quizIds) {
     const s1 = p1?.quizzes?.[qid];
     const s2 = p2?.quizzes?.[qid];
     const has1 = typeof s1 === "number";
@@ -295,13 +365,16 @@ async function fetchLeaderboard(quizId) {
 }
 
 async function main() {
+  const quizIds = resolveQuizIds();
+
   console.log("Fetching leaderboard data from all quizzes...\n");
+  console.log(`Quiz scope (${quizIds.length}): ${quizIds.join(", ")}\n`);
 
   // Fetch all quiz data
   const allData = {};
   let authRequired = false;
 
-  for (const quizId of QUIZ_IDS) {
+  for (const quizId of quizIds) {
     process.stdout.write(`  ${quizId}... `);
     const data = await fetchLeaderboard(quizId);
     if (data === null) {
@@ -335,7 +408,7 @@ To add auth, get a token from browser DevTools while on the quiz:
   // Aggregate by nameSlug
   const players = {}; // nameSlug -> { displayName, quizzes: { quizId: score }, total }
 
-  for (const quizId of QUIZ_IDS) {
+  for (const quizId of quizIds) {
     const entries = allData[quizId];
     if (!entries) continue;
 
@@ -393,7 +466,7 @@ To add auth, get a token from browser DevTools while on the quiz:
   console.log("═".repeat(80) + "\n");
 
   console.log(`Total unique players (by nameSlug): ${leaderboard.length}`);
-  console.log(`Total quizzes: ${QUIZ_IDS.length}\n`);
+  console.log(`Total quizzes: ${quizIds.length}\n`);
 
   // Top scores table
   console.log("┌─────┬────────────────────────────┬─────────┬────────────────────────────────┐");
@@ -404,7 +477,7 @@ To add auth, get a token from browser DevTools while on the quiz:
     const rank = String(idx + 1).padStart(3);
     const name = (player.displayName || player.nameSlug).slice(0, 26).padEnd(26);
     const total = String(player.total).padStart(7);
-    const quizCount = `${Object.keys(player.quizzes).length}/${QUIZ_IDS.length} quizzes`.padEnd(30);
+    const quizCount = `${Object.keys(player.quizzes).length}/${quizIds.length} quizzes`.padEnd(30);
     console.log(`│ ${rank} │ ${name} │ ${total} │ ${quizCount} │`);
   });
 
@@ -417,7 +490,7 @@ To add auth, get a token from browser DevTools while on the quiz:
     console.log(`${idx + 1}. ${player.displayName} (${player.nameSlug})`);
     console.log(`   Total: ${player.total} points across ${Object.keys(player.quizzes).length} quizzes`);
 
-    const quizScores = QUIZ_IDS.map((qid) => {
+    const quizScores = quizIds.map((qid) => {
       const score = player.quizzes[qid];
       const weekNum = qid.match(/week-(\d+)/)?.[1] || "?";
       return score !== undefined ? `W${weekNum}:${score}` : `W${weekNum}:-`;
@@ -447,7 +520,7 @@ To add auth, get a token from browser DevTools while on the quiz:
   console.log("CSV FORMAT (copy below for spreadsheet import):");
   console.log("═".repeat(80) + "\n");
 
-  const csvHeader = ["Rank", "Name", "NameSlug", "Total", ...QUIZ_IDS.map((q) => q.replace("week-", "W"))].join(",");
+  const csvHeader = ["Rank", "Name", "NameSlug", "Total", ...quizIds.map((q) => q.replace("week-", "W"))].join(",");
   console.log(csvHeader);
 
   const csvLines = [csvHeader];
@@ -458,7 +531,7 @@ To add auth, get a token from browser DevTools while on the quiz:
       `"${(player.displayName || "").replace(/"/g, '""')}"`,
       player.nameSlug,
       player.total,
-      ...QUIZ_IDS.map((qid) => player.quizzes[qid] ?? ""),
+      ...quizIds.map((qid) => player.quizzes[qid] ?? ""),
     ].join(",");
     console.log(row);
     csvLines.push(row);
@@ -482,7 +555,7 @@ To add auth, get a token from browser DevTools while on the quiz:
     const dupesList = dupesEdges.map((d) => {
       const p1 = players[d.slug1];
       const p2 = players[d.slug2];
-      const merged = mergedTotalLowestOverlap(p1, p2);
+      const merged = mergedTotalLowestOverlap(p1, p2, quizIds);
       return {
         method: d.method,
         score: d.score,
@@ -590,7 +663,7 @@ To add auth, get a token from browser DevTools while on the quiz:
       if (members.length === 0) continue;
 
       const mergedQuizzes = {};
-      for (const qid of QUIZ_IDS) {
+      for (const qid of quizIds) {
         const scores = [];
         for (const m of members) {
           const s = m?.quizzes?.[qid];
@@ -622,7 +695,7 @@ To add auth, get a token from browser DevTools while on the quiz:
 
     mergedEntries.sort((a, b) => b.total - a.total);
 
-    const header = ["Rank", "Name", "NameSlug", "Total", ...QUIZ_IDS.map((q) => q.replace("week-", "W"))].join(",");
+    const header = ["Rank", "Name", "NameSlug", "Total", ...quizIds.map((q) => q.replace("week-", "W"))].join(",");
     const lines = [header];
 
     mergedEntries.forEach((p, idx) => {
@@ -631,7 +704,7 @@ To add auth, get a token from browser DevTools while on the quiz:
         `"${String(p.displayName || "").replace(/"/g, '""')}"`,
         p.nameSlug,
         p.total,
-        ...QUIZ_IDS.map((qid) => (p.quizzes[qid] ?? "")),
+        ...quizIds.map((qid) => (p.quizzes[qid] ?? "")),
       ].join(",");
       lines.push(row);
     });

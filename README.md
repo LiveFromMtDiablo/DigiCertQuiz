@@ -1,5 +1,15 @@
 # DigiCertQuiz
 
+## Local Setup
+
+Run commands from the repo root (`/Users/j.pace.admin/Documents/GitHub/DigiCertQuiz`):
+
+```sh
+npm install
+```
+
+If you see `ENOENT ... /Users/<you>/package.json`, you're in the wrong directory. `cd` into this repo and rerun.
+
 ## Full Leaderboard (Screenshot View)
 
 - Route: open `/leaderboard/full` to show the current quiz’s full leaderboard (top 30) formatted for a 1920×1080 desktop screenshot.
@@ -21,7 +31,9 @@ Typical workflow:
 
 ```sh
 # 1) Generate the raw cumulative CSV + likely-duplicate pairs + fully merged CSV (written into /public)
+#    Example below scopes the report to week 14 and newer.
 node scripts/cumulative-leaderboard.js \
+  --from-week 14 \
   --csv cumulative-leaderboard.csv \
   --dupes-csv potential-duplicates.csv \
   --merged-csv public/cumulative-leaderboard-merged.csv

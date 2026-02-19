@@ -20,19 +20,22 @@ What it does:
 
 ### Quiz coverage
 
-The script uses a fixed list of quiz IDs:
+The script uses a configured list of quiz IDs plus an optional range flag:
 
-- Edit `QUIZ_IDS` inside `scripts/cumulative-leaderboard.js`
-- We currently include week 13.
+- Edit `ALL_QUIZ_IDS` inside `scripts/cumulative-leaderboard.js`
+- By default, the script includes all IDs in that list
+- Use `--from-week N` to include only week `N` and newer (for example, `--from-week 14`)
+- `--from-week` also supports inline form: `--from-week=14`
 
 ### Weekly update checklist (e.g., add week 14)
 
-1. Add the new quiz id (e.g. `week-14-...`) to `QUIZ_IDS` in `scripts/cumulative-leaderboard.js`
+1. Add the new quiz id (e.g. `week-16-...`) to `ALL_QUIZ_IDS` in `scripts/cumulative-leaderboard.js` when that week should be part of cumulative reporting.
 2. Ensure Firebase reads are available (temporary public read) or set `AUTH_TOKEN`
-3. Regenerate outputs:
+3. Regenerate outputs with the desired range:
 
 ```sh
 node scripts/cumulative-leaderboard.js \
+  --from-week 14 \
   --csv cumulative-leaderboard.csv \
   --dupes-csv potential-duplicates.csv \
   --merged-csv public/cumulative-leaderboard-merged.csv
@@ -69,6 +72,12 @@ Generate a cumulative CSV (also prints CSV to stdout):
 node scripts/cumulative-leaderboard.js --csv cumulative-leaderboard.csv
 ```
 
+Generate only from a given week onward:
+
+```sh
+node scripts/cumulative-leaderboard.js --from-week 14 --csv cumulative-leaderboard.csv
+```
+
 Generate the likely-duplicate pairs list:
 
 ```sh
@@ -85,6 +94,7 @@ All in one run:
 
 ```sh
 node scripts/cumulative-leaderboard.js \
+  --from-week 14 \
   --csv cumulative-leaderboard.csv \
   --dupes-csv potential-duplicates.csv \
   --merged-csv public/cumulative-leaderboard-merged.csv
@@ -144,4 +154,3 @@ Implementation files:
 - Weekly screenshot page: `src/components/FullLeaderboard.js`
 - Cumulative screenshot page: `src/components/CumulativeMergedLeaderboard.js`
 - Routes: `src/App.js`
-
