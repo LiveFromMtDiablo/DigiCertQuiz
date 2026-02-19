@@ -34,7 +34,7 @@ export const quizzes = {
   [week16.id]: week16,
 };
 
-export const currentQuizId = week15.id;
+export const currentQuizId = week16.id;
 
 export function getQuiz(id) {
   return quizzes[id];
