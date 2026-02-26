@@ -1,4 +1,5 @@
 Method,Score,Name1,NameSlug1,Total1,QuizzesPlayed1,Name2,NameSlug2,Total2,QuizzesPlayed2,OverlapQuizzes,MergedTotalLowestOverlap,SumTotals,SumMinusMerged,OverlapDetails
-last_initial_vs_lastname,,"Brett Philp",brett-philp,619,2,"Brett P",brett-p,266,1,1,424,885,461,"W14:461/266->266"
+last_initial_vs_lastname,,"Brett Philp",brett-philp,979,3,"Brett P",brett-p,266,1,1,784,1245,461,"W14:461/266->266"
 last_initial_vs_lastname,,"Paolo T",paolo-t,366,1,"Paolo Tropea",paolo-tropea,403,1,0,769,769,0,""
-last_initial_vs_lastname,,"Mithun C",mithun-c,348,1,"Mithun Chaithanya",mithun-chaithanya,93,1,0,441,441,0,""
+last_initial_vs_lastname,,"Mithun C",mithun-c,348,1,"Mithun Chaithanya",mithun-chaithanya,421,2,0,769,769,0,""
+last_initial_vs_lastname,,"Daymon Pillay",daymon-pillay,0,1,"Daymon P",daymon-p,256,1,0,256,256,0,""

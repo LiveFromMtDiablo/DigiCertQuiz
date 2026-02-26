@@ -37,6 +37,7 @@ const ALL_QUIZ_IDS = [
   "week-13-root-strategy",
   "week-14-pam",
   "week-15-tlm-part-3",
+  "week-16-cert-central-part-2",
 ];
 
 function getArgValue(flag) {
