@@ -14,6 +14,7 @@ import week13 from "./week-13-root-strategy";
 import week14 from "./week-14-pam";
 import week15 from "./week-15-tlm-part-3";
 import week16 from "./week-16-cert-central-part-2";
+import week17 from "./week-17-document-trust";
 
 export const quizzes = {
   [week1.id]: week1,
@@ -32,6 +33,7 @@ export const quizzes = {
   [week14.id]: week14,
   [week15.id]: week15,
   [week16.id]: week16,
+  [week17.id]: week17,
 };
 
 export const currentQuizId = week16.id;
