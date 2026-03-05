@@ -27,9 +27,9 @@ The script uses a configured list of quiz IDs plus an optional range flag:
 - Use `--from-week N` to include only week `N` and newer (for example, `--from-week 14`)
 - `--from-week` also supports inline form: `--from-week=14`
 
-### Weekly update checklist (e.g., add week 14)
+### Weekly update checklist (e.g., add week 17)
 
-1. Add the new quiz id (e.g. `week-16-...`) to `ALL_QUIZ_IDS` in `scripts/cumulative-leaderboard.js` when that week should be part of cumulative reporting.
+1. Add the new quiz id (e.g. `week-17-...`) to `ALL_QUIZ_IDS` in `scripts/cumulative-leaderboard.js` when that week should be part of cumulative reporting.
 2. Ensure Firebase reads are available (temporary public read) or set `AUTH_TOKEN`
 3. Regenerate outputs with the desired range:
 
