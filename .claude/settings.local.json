@@ -41,7 +41,12 @@
       "mcp__plugin_firebase_firebase__firebase_login",
       "mcp__plugin_firebase_firebase__firebase_get_project",
       "mcp__plugin_firebase_firebase__firebase_read_resources",
-      "Bash(firebase database:rules:get:*)"
+      "Bash(firebase database:rules:get:*)",
+      "WebSearch",
+      "WebFetch(domain:www.digicert.com)",
+      "WebFetch(domain:vercara.digicert.com)",
+      "WebFetch(domain:docs.digicert.com)",
+      "Bash(pip3 install:*)"
     ],
     "deny": [],
     "ask": []
