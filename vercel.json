@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/quiz/:path*",
+      "destination": "/"
+    },
+    {
+      "source": "/leaderboard/:path*",
+      "destination": "/"
+    }
+  ]
+}

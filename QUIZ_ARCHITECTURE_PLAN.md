@@ -551,11 +551,18 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100 }) {
 
 ### Vercel Configuration
 
-No special configuration needed! React Router works automatically with Vercel because:
-- Vercel detects Create React App
-- Automatically configures SPA routing
-- All routes serve `index.html`
-- React Router handles client-side routing
+Use [`vercel.json`](vercel.json) to rewrite client-side routes back to `/` so `BrowserRouter` can resolve them in the browser:
+
+```json
+{
+  "rewrites": [
+    { "source": "/quiz/:path*", "destination": "/" },
+    { "source": "/leaderboard/:path*", "destination": "/" }
+  ]
+}
+```
+
+Without these rewrites, direct requests or refreshes on paths like `/quiz/week-19-dns-part-3` can return a platform 404 before React loads.
 
 ---
 

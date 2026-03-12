@@ -10,7 +10,7 @@ const quiz = {
       options: [
         "Secure recursive DNS filtering for end-user protection",
         "High-volume, mission-critical DNS workloads",
-        "Automated domain registration and renewal management",
+        "Automated domain registration and renewal management for enterprise customers",
         "Internal name resolution for private networks and endpoints",
       ],
       correctAnswer: 1,
@@ -52,8 +52,8 @@ const quiz = {
       question:
         "Approximately how many DNS transactions does UltraDNS process per day?",
       options: [
-        "10 billion",
         "50 billion",
+        "100 billion",
         "200 billion",
         "500 billion",
       ],

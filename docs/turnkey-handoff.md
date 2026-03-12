@@ -151,6 +151,8 @@ Vercel builds and hosts the React app directly from your GitHub repo.
    - **Output directory**: `build`
 4. Click **Deploy**.
 
+This repo includes [`vercel.json`](../vercel.json) so direct visits to client-side routes like `/quiz/week-19-dns-part-3` and `/leaderboard/full` rewrite to the React app entrypoint. Keep that file in place if you continue using `BrowserRouter`.
+
 Once the first deployment finishes, Vercel will provide a preview URL and a production URL (typically on the `main` branch).
 
 ### 6.2 Ongoing deployments
@@ -213,4 +215,3 @@ After the above, the marketing team:
 - Owns the full stack (code, hosting, and data).
 - Can add new quizzes and change rules without needing the original engineer.
 - Can replicate the quiz stack for another team/brand by repeating this document with a new GitHub repo, Vercel project, and Firebase project.
-
