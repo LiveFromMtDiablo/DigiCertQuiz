@@ -47,7 +47,9 @@
       "WebFetch(domain:vercara.digicert.com)",
       "WebFetch(domain:docs.digicert.com)",
       "Bash(pip3 install:*)",
-      "Bash(python3 -c \":*)"
+      "Bash(python3 -c \":*)",
+      "Bash(python3:*)",
+      "WebFetch(domain:knowledge.digicert.com)"
     ],
     "deny": [],
     "ask": []
