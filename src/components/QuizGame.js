@@ -13,6 +13,12 @@ import {
   ELIGIBILITY_CHECKING_MESSAGE,
   ELIGIBILITY_ERROR_MESSAGE,
 } from "../utils/quizEligibility";
+import {
+  clampQuizScore,
+  buildIndexedScorePayload,
+  writeIndexedScoreSubmission,
+  writeMachinePrintObservation,
+} from "../utils/quizSubmission";
 
 const TROPHY_COLORS = ["text-yellow-500", "text-gray-400", "text-orange-500"];
 
@@ -304,7 +310,7 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
       // Clamp score to a safe maximum (respect shuffled set length)
       const activeQuestions = gameQuestions || questions;
       const maxPossible = maxTime * activeQuestions.length;
-      const safeScore = Math.max(0, Math.min(score, maxPossible));
+      const safeScore = clampQuizScore(score, maxPossible);
 
       // Ensure authenticated uid and token for protected write
       auth = await getValidAuth();
@@ -312,42 +318,18 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
       fp = await getDeviceFingerprint(quizId);
       const fpMachine = await getMachineFingerprint(quizId);
 
-      const updates = {};
-      updates[`leaderboard/${quizId}/${uid}`] = {
-        name: name,
-        nameSlug,
-        score: safeScore,
-        // Use server timestamp to avoid client clock skew
-        timestamp: { ".sv": "timestamp" },
-        fp,
-      };
-      updates[`nameIndex/${quizId}/${nameSlug}`] = uid;
-      updates[`fingerprints/${quizId}/${fp}`] = uid;
-      // Observe-only machine-level print (no enforcement in rules yet)
-      updates[`machinePrints/${quizId}/${fpMachine}`] = uid;
-
-      let response = await fetch(
-        `${DB_URL}/.json?auth=${encodeURIComponent(idToken)}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updates),
-        }
-      );
-
-      if (!response.ok && (response.status === 401 || response.status === 403)) {
-        // Likely rules v1 without permissions for nameIndex/fingerprints.
-        // Fallback to single write to leaderboard path only.
-        const newEntry = updates[`leaderboard/${quizId}/${uid}`];
-        response = await fetch(
-          `${DB_URL}/leaderboard/${quizId}/${uid}.json?auth=${encodeURIComponent(idToken)}`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(newEntry),
-          }
-        );
-      }
+      const response = await writeIndexedScoreSubmission({
+        dbUrl: DB_URL,
+        idToken,
+        payload: buildIndexedScorePayload({
+          quizId,
+          uid,
+          name,
+          nameSlug,
+          score: safeScore,
+          fp,
+        }),
+      });
 
       if (response.ok) {
         await loadLeaderboard();
@@ -357,6 +339,30 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
             setAlreadySubmitted(true);
           }
         } catch (_) {}
+
+        // Machine prints are observe-only today, so they must not break score saves.
+        try {
+          const machinePrintResponse = await writeMachinePrintObservation({
+            dbUrl: DB_URL,
+            idToken,
+            quizId,
+            uid,
+            fpMachine,
+          });
+          if (!machinePrintResponse.ok) {
+            console.warn("Machine print observation failed:", {
+              quizId,
+              uid,
+              status: machinePrintResponse.status,
+            });
+          }
+        } catch (machinePrintError) {
+          console.warn("Machine print observation failed:", {
+            quizId,
+            uid,
+            error: machinePrintError?.message || String(machinePrintError),
+          });
+        }
       } else {
         let errText = "";
         try {

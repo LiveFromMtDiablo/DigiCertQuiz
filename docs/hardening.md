@@ -12,13 +12,15 @@ What Changed (App v1)
   - Implementation: src/components/QuizGame.js (secure RNG + Fisher–Yates).
 - Multi‑path save with indexes
   - Save score via a single PATCH at DB root with keys:
-    - leaderboard/{quizId}/{uid}: { name, nameSlug, score, timestamp, fp, fpMachine }
+    - leaderboard/{quizId}/{uid}: { name, nameSlug, score, timestamp, fp }
     - nameIndex/{quizId}/{nameSlug}: uid
     - fingerprints/{quizId}/{fp}: uid
+  - Observe-only machine prints are written separately on a best-effort basis after a successful indexed score save:
     - machinePrints/{quizId}/{fpMachine}: uid (observe‑only in v2; enforced in v2.1)
   - nameSlug: sanitized, lowercased, punctuation‑stripped name (non‑PII).
   - fp: SHA‑256 hash of a small, non‑PII device fingerprint salted with quizId.
 - Existing client guards remain (localStorage flag + existing server record check).
+- The app no longer falls back to a leaderboard-only write when the indexed PATCH fails; this avoids creating unlocked leaderboard rows that bypass name/fingerprint enforcement.
 
 Rules Rollout
 - v1 (now): first‑score‑only per uid
@@ -61,4 +63,3 @@ Testing Checklist
 - Second attempt from the same uid is blocked (v1+).
 - Incognito/new uid on same device is blocked after v2 (fp mapping).
 - Duplicate display names (after normalization) are blocked after v2 (nameIndex mapping).
-
