@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Clock, CheckCircle, XCircle, Trophy } from "lucide-react";
 import { DB_URL } from "../services/firebaseConfig";
-import { getValidAuth } from "../services/firebaseAuth";
+import { AUTH_STORAGE_KEY, getValidAuth } from "../services/firebaseAuth";
 import { sortLeaderboardEntries } from "../utils/leaderboardSort";
 import {
   NAME_REGEX,
@@ -23,6 +23,7 @@ const TROPHY_COLORS = ["text-yellow-500", "text-gray-400", "text-orange-500"];
 const QUIZ_ATTEMPT_STORAGE_VERSION = 1;
 const ATTEMPT_STATUS_IN_PROGRESS = "in_progress";
 const ATTEMPT_STATUS_COMPLETED = "completed";
+const DEV_FINGERPRINT_SEED_KEY = "devFingerprintSeed";
 const STALE_ATTEMPT_LOCK_MESSAGE =
   "This browser has a stale saved-attempt lock for this quiz. Please contact the quiz organizer to clear it.";
 
@@ -62,6 +63,62 @@ function clearStoredAttempt(quizId) {
   } catch (_) {}
 }
 
+function isDevFingerprintResetEnabled() {
+  if (process.env.NODE_ENV === "production" || typeof window === "undefined") {
+    return false;
+  }
+
+  const hostname = window.location?.hostname || "";
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "::1" ||
+    hostname === "[::1]"
+  );
+}
+
+function getDevFingerprintSeed() {
+  if (!isDevFingerprintResetEnabled()) return "";
+
+  try {
+    return localStorage.getItem(DEV_FINGERPRINT_SEED_KEY) || "";
+  } catch (_) {
+    return "";
+  }
+}
+
+function createDevFingerprintSeed() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return `dev-${Date.now().toString(36)}-${Math.random().toString(16).slice(2)}`;
+}
+
+function rotateDevFingerprintSeed() {
+  const nextSeed = createDevFingerprintSeed();
+
+  try {
+    const keysToRemove = [];
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (!key) continue;
+      if (
+        key === AUTH_STORAGE_KEY ||
+        key.startsWith("submitted:") ||
+        key.startsWith("quizAttempt:")
+      ) {
+        keysToRemove.push(key);
+      }
+    }
+
+    keysToRemove.forEach((key) => localStorage.removeItem(key));
+    localStorage.setItem(DEV_FINGERPRINT_SEED_KEY, nextSeed);
+  } catch (_) {}
+
+  return nextSeed;
+}
+
 async function sha256Hex(input) {
   const enc = new TextEncoder();
   const data = enc.encode(input);
@@ -80,6 +137,7 @@ async function getDeviceFingerprint(salt) {
   try {
     const nav = typeof navigator !== "undefined" ? navigator : {};
     const scr = typeof screen !== "undefined" ? screen : {};
+    const devSeed = getDevFingerprintSeed();
     const tz =
       (Intl &&
         Intl.DateTimeFormat &&
@@ -98,6 +156,7 @@ async function getDeviceFingerprint(salt) {
       String(nav.hardwareConcurrency || 0),
       String(nav.deviceMemory || 0),
       String("ontouchstart" in (typeof window !== "undefined" ? window : {})),
+      String(devSeed || ""),
     ];
     return sha256Hex(parts.join("|"));
   } catch (_) {
@@ -110,6 +169,7 @@ async function getMachineFingerprint(salt) {
   try {
     const nav = typeof navigator !== "undefined" ? navigator : {};
     const scr = typeof screen !== "undefined" ? screen : {};
+    const devSeed = getDevFingerprintSeed();
     const tz =
       (Intl &&
         Intl.DateTimeFormat &&
@@ -127,6 +187,7 @@ async function getMachineFingerprint(salt) {
       String(nav.hardwareConcurrency || 0),
       String(nav.deviceMemory || 0),
       String("ontouchstart" in (typeof window !== "undefined" ? window : {})),
+      String(devSeed || ""),
     ];
     return sha256Hex(parts.join("|"));
   } catch (_) {
@@ -156,6 +217,7 @@ function isRestorableServerAttempt(attempt) {
 }
 
 export default function QuizGame({ quizId, title, questions, maxTime = 100, intro }) {
+  const devFingerprintResetEnabled = isDevFingerprintResetEnabled();
   const [screen, setScreen] = useState("intro");
   const [playerName, setPlayerName] = useState("");
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -175,6 +237,8 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
   const [attemptCreatedAt, setAttemptCreatedAt] = useState(null);
   const [eligibilityStatus, setEligibilityStatus] = useState("checking");
   const [isStartingAttempt, setIsStartingAttempt] = useState(false);
+  const [devResetNotice, setDevResetNotice] = useState("");
+  const [identityRefreshNonce, setIdentityRefreshNonce] = useState(0);
 
   // Secure RNG and shuffle helpers (per-session order randomization)
   function secureRandomInt(maxExclusive) {
@@ -764,7 +828,7 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
     setEligibilityStatus("checking");
     resetGameState("intro");
     restoreStoredAttempt(loadStoredAttempt(quizId));
-  }, [quizId]);
+  }, [identityRefreshNonce, quizId]);
 
   // Detect if the user has already submitted a score for this quiz
   useEffect(() => {
@@ -774,7 +838,7 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
     } catch (_) {
       setAlreadySubmitted(false);
     }
-  }, [quizId]);
+  }, [identityRefreshNonce, quizId]);
 
   // Also check the server for an existing score or resumable attempt for this uid
   useEffect(() => {
@@ -850,7 +914,7 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
     return () => {
       cancelled = true;
     };
-  }, [quizId]);
+  }, [identityRefreshNonce, quizId]);
 
   // Note: name uniqueness validation is performed on Start to avoid blocking typing
 
@@ -1176,6 +1240,20 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
     resetGameState("intro");
   };
 
+  const handleResetDevFingerprint = () => {
+    rotateDevFingerprintSeed();
+    clearStoredAttempt(quizId);
+    resetGameState("intro");
+    setAlreadySubmitted(false);
+    setError("");
+    setResumeNotice("");
+    setEligibilityStatus("checking");
+    setDevResetNotice(
+      "Dev fingerprint reset. Cached auth and saved-attempt locks were cleared for this browser."
+    );
+    setIdentityRefreshNonce((value) => value + 1);
+  };
+
   if (screen === "intro") {
     return (
       <div
@@ -1215,6 +1293,12 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
           {eligibilityStatus === "checking" && (
             <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded mb-4">
               {ELIGIBILITY_CHECKING_MESSAGE}
+            </div>
+          )}
+
+          {devResetNotice && devFingerprintResetEnabled && (
+            <div className="bg-slate-50 border border-slate-300 text-slate-700 px-4 py-3 rounded mb-4">
+              {devResetNotice}
             </div>
           )}
 
@@ -1303,6 +1387,19 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
             >
               View the leaderboard top 25
             </button>
+            {devFingerprintResetEnabled && (
+              <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                <p className="mb-3">
+                  Local dev helper: rotate the browser fingerprint seed and clear cached anonymous auth plus saved attempt locks.
+                </p>
+                <button
+                  onClick={handleResetDevFingerprint}
+                  className="w-full rounded-lg border border-slate-400 bg-white px-4 py-3 font-semibold text-slate-800 transition-all hover:bg-slate-100"
+                >
+                  Reset Dev Fingerprint
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -1502,6 +1599,14 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
           >
             Return to Start
           </button>
+          {devFingerprintResetEnabled && (
+            <button
+              onClick={handleResetDevFingerprint}
+              className="mt-3 w-full rounded-lg border border-slate-400 bg-slate-50 py-3 font-semibold text-slate-800 transition-all hover:bg-slate-100"
+            >
+              Reset Dev Fingerprint
+            </button>
+          )}
         </div>
       </div>
     );

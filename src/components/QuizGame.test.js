@@ -3,10 +3,11 @@ import { createRoot } from "react-dom/client";
 import { webcrypto } from "crypto";
 import { TextDecoder, TextEncoder } from "util";
 import QuizGame from "./QuizGame";
-import { getValidAuth } from "../services/firebaseAuth";
+import { AUTH_STORAGE_KEY, getValidAuth } from "../services/firebaseAuth";
 import { DB_URL } from "../services/firebaseConfig";
 
 jest.mock("../services/firebaseAuth", () => ({
+  AUTH_STORAGE_KEY: "firebaseAuth",
   getValidAuth: jest.fn(),
 }));
 
@@ -16,6 +17,7 @@ const AUTH = {
 };
 
 const QUIZ_ID = "week-99-hardening-test";
+const DEV_FINGERPRINT_SEED_KEY = "devFingerprintSeed";
 const NOW = 1_710_000_000_000;
 const QUESTIONS = [
   {
@@ -377,6 +379,80 @@ describe("QuizGame", () => {
     });
     expect(fingerprintKey).toBeDefined();
     expect(payload[fingerprintKey]).toBe(AUTH.uid);
+  });
+
+  it("shows a localhost-only reset control that clears cached auth and quiz locks", async () => {
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(AUTH));
+    localStorage.setItem(`submitted:${QUIZ_ID}`, "1");
+    localStorage.setItem(
+      `quizAttempt:${QUIZ_ID}`,
+      JSON.stringify({ version: 999, stale: true })
+    );
+    localStorage.setItem(DEV_FINGERPRINT_SEED_KEY, "seed-before");
+    installFetchMock();
+
+    await renderQuizGame();
+    await waitFor(() => Boolean(getButton("Reset Dev Fingerprint")));
+
+    await clickButton("Reset Dev Fingerprint");
+
+    await waitFor(() =>
+      container.textContent.includes("Dev fingerprint reset.")
+    );
+
+    expect(localStorage.getItem(AUTH_STORAGE_KEY)).toBeNull();
+    expect(localStorage.getItem(`submitted:${QUIZ_ID}`)).toBeNull();
+    expect(localStorage.getItem(`quizAttempt:${QUIZ_ID}`)).toBeNull();
+    expect(localStorage.getItem(DEV_FINGERPRINT_SEED_KEY)).toBeTruthy();
+    expect(localStorage.getItem(DEV_FINGERPRINT_SEED_KEY)).not.toBe("seed-before");
+  });
+
+  it("changes the derived fingerprint when the dev seed changes", async () => {
+    localStorage.setItem(DEV_FINGERPRINT_SEED_KEY, "seed-a");
+    installFetchMock();
+
+    await startQuiz("Taylor");
+    await waitFor(() => container.textContent.includes("Question 1 of 2"));
+
+    const firstReservationCall = global.fetch.mock.calls.find(
+      ([url, options]) =>
+        url === `${DB_URL}/.json?auth=${AUTH.idToken}` &&
+        options?.method === "PATCH"
+    );
+    const firstPayload = JSON.parse(firstReservationCall[1].body);
+    const firstFingerprintKey = Object.keys(firstPayload).find((key) =>
+      key.startsWith(`attemptFingerprints/${QUIZ_ID}/`)
+    );
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+
+    localStorage.clear();
+    localStorage.setItem(DEV_FINGERPRINT_SEED_KEY, "seed-b");
+
+    container = document.createElement("div");
+    document.body.appendChild(container);
+    root = createRoot(container);
+
+    installFetchMock();
+    await startQuiz("Taylor");
+    await waitFor(() => container.textContent.includes("Question 1 of 2"));
+
+    const reservationCalls = global.fetch.mock.calls.filter(
+      ([url, options]) =>
+        url === `${DB_URL}/.json?auth=${AUTH.idToken}` &&
+        options?.method === "PATCH"
+    );
+    const secondPayload = JSON.parse(reservationCalls[0][1].body);
+    const secondFingerprintKey = Object.keys(secondPayload).find((key) =>
+      key.startsWith(`attemptFingerprints/${QUIZ_ID}/`)
+    );
+
+    expect(firstFingerprintKey).toBeTruthy();
+    expect(secondFingerprintKey).toBeTruthy();
+    expect(secondFingerprintKey).not.toBe(firstFingerprintKey);
   });
 
   it("restores an in-progress local attempt after a refresh with time already deducted", async () => {

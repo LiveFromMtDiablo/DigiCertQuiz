@@ -1,7 +1,7 @@
 import { firebaseConfig } from "./firebaseConfig";
 
 const API_KEY = firebaseConfig.apiKey;
-const AUTH_STORAGE_KEY = "firebaseAuth";
+export const AUTH_STORAGE_KEY = "firebaseAuth";
 
 function loadAuth() {
   try {
@@ -80,4 +80,3 @@ export async function getValidAuth() {
   // Fresh anonymous sign-in
   return await signInAnonymously();
 }
-
