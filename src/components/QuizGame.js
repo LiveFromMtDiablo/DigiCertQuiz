@@ -23,6 +23,8 @@ const TROPHY_COLORS = ["text-yellow-500", "text-gray-400", "text-orange-500"];
 const QUIZ_ATTEMPT_STORAGE_VERSION = 1;
 const ATTEMPT_STATUS_IN_PROGRESS = "in_progress";
 const ATTEMPT_STATUS_COMPLETED = "completed";
+const STALE_ATTEMPT_LOCK_MESSAGE =
+  "This browser has a stale saved-attempt lock for this quiz. Please contact the quiz organizer to clear it.";
 
 const SCREEN_BACKGROUND_STYLE = {
   backgroundImage:
@@ -441,19 +443,33 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
 
   async function fetchFingerprintLockedAttempt(idToken, fp) {
     if (!fp) {
-      return { ownerUid: null, attemptResult: null };
+      return { ownerUid: null, attemptResult: null, lookupStatus: "skipped" };
     }
 
-    const ownerUid = await readProtectedData(
-      `attemptFingerprints/${quizId}/${fp}`,
-      idToken
-    );
-    if (!ownerUid) {
-      return { ownerUid: null, attemptResult: null };
-    }
+    try {
+      const ownerUid = await readProtectedData(
+        `attemptFingerprints/${quizId}/${fp}`,
+        idToken
+      );
+      if (!ownerUid) {
+        return { ownerUid: null, attemptResult: null, lookupStatus: "ok" };
+      }
 
-    const attemptResult = await fetchAttemptByUid(ownerUid, idToken);
-    return { ownerUid, attemptResult };
+      const attemptResult = await fetchAttemptByUid(ownerUid, idToken);
+      return { ownerUid, attemptResult, lookupStatus: "ok" };
+    } catch (err) {
+      console.warn("Fingerprint-locked attempt lookup failed; continuing without it.", {
+        quizId,
+        status: err?.status || null,
+        message: err?.message || String(err),
+      });
+      return {
+        ownerUid: null,
+        attemptResult: null,
+        lookupStatus: "unavailable",
+        error: err,
+      };
+    }
   }
 
   function chooseCanonicalAttempt(candidates) {
@@ -812,13 +828,12 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
           restoreServerAttempt(canonicalAttempt.attempt);
         } else if (
           !localAttempt &&
+          fingerprintLocked?.lookupStatus === "ok" &&
           fingerprintLocked?.ownerUid &&
           !fingerprintLocked?.attemptResult?.data
         ) {
           setEligibilityStatus("error");
-          setError(
-            "This browser has a stale saved-attempt lock for this quiz. Please contact the quiz organizer to clear it."
-          );
+          setError(STALE_ATTEMPT_LOCK_MESSAGE);
           return;
         }
 
@@ -1051,14 +1066,18 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
         return;
       }
 
-      if (fingerprintLocked?.ownerUid && !fingerprintLocked?.attemptResult?.data) {
-        setError(
-          "This browser has a stale saved-attempt lock for this quiz. Please contact the quiz organizer to clear it."
-        );
-      } else {
+      if (
+        fingerprintLocked?.lookupStatus === "ok" &&
+        fingerprintLocked?.ownerUid &&
+        !fingerprintLocked?.attemptResult?.data
+      ) {
+        setError(STALE_ATTEMPT_LOCK_MESSAGE);
+      } else if (fingerprintLocked?.lookupStatus === "ok" && fingerprintLocked?.ownerUid) {
         setError(
           "This browser already has an in-progress attempt for this quiz, but we couldn't restore it automatically. Please refresh once and try again."
         );
+      } else {
+        setError("Could not start the quiz right now. Please try again.");
       }
     } catch (err) {
       console.error("Error creating attempt:", err);
