@@ -119,6 +119,10 @@ function rotateDevFingerprintSeed() {
   return nextSeed;
 }
 
+function formatDevFingerprintSeed(seed) {
+  return seed || "default (no override)";
+}
+
 async function sha256Hex(input) {
   const enc = new TextEncoder();
   const data = enc.encode(input);
@@ -218,6 +222,8 @@ function isRestorableServerAttempt(attempt) {
 
 export default function QuizGame({ quizId, title, questions, maxTime = 100, intro }) {
   const devFingerprintResetEnabled = isDevFingerprintResetEnabled();
+  const devFingerprintSeed = getDevFingerprintSeed();
+  const devFingerprintSeedLabel = formatDevFingerprintSeed(devFingerprintSeed);
   const [screen, setScreen] = useState("intro");
   const [playerName, setPlayerName] = useState("");
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -1392,6 +1398,12 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
                 <p className="mb-3">
                   Local dev helper: rotate the browser fingerprint seed and clear cached anonymous auth plus saved attempt locks.
                 </p>
+                <p className="mb-3 text-xs text-slate-600">
+                  Current dev seed:{" "}
+                  <span className="rounded bg-white px-1.5 py-0.5 font-mono text-[11px] text-slate-800">
+                    {devFingerprintSeedLabel}
+                  </span>
+                </p>
                 <button
                   onClick={handleResetDevFingerprint}
                   className="w-full rounded-lg border border-slate-400 bg-white px-4 py-3 font-semibold text-slate-800 transition-all hover:bg-slate-100"
@@ -1600,12 +1612,20 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
             Return to Start
           </button>
           {devFingerprintResetEnabled && (
-            <button
-              onClick={handleResetDevFingerprint}
-              className="mt-3 w-full rounded-lg border border-slate-400 bg-slate-50 py-3 font-semibold text-slate-800 transition-all hover:bg-slate-100"
-            >
-              Reset Dev Fingerprint
-            </button>
+            <div className="mt-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+              <p className="mb-3 text-xs text-slate-600">
+                Current dev seed:{" "}
+                <span className="rounded bg-white px-1.5 py-0.5 font-mono text-[11px] text-slate-800">
+                  {devFingerprintSeedLabel}
+                </span>
+              </p>
+              <button
+                onClick={handleResetDevFingerprint}
+                className="w-full rounded-lg border border-slate-400 bg-white py-3 font-semibold text-slate-800 transition-all hover:bg-slate-100"
+              >
+                Reset Dev Fingerprint
+              </button>
+            </div>
           )}
         </div>
       </div>

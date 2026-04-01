@@ -14,6 +14,11 @@ What Changed (App v3)
   - On successful score save, the attempt record is marked `completed` and remains immutable for audit/debugging.
   - Local resume still exists, but the server is now the authoritative “this run already started” gate.
 
+Local Development Helper (not production behavior)
+- On localhost only, the app exposes a `Reset Dev Fingerprint` helper for developer testing.
+- The helper rotates a local seed that is mixed into `fp` and `fpMachine`, then clears cached anonymous auth plus local attempt/submitted flags.
+- This exists only to make dev-machine replay testing easier. It does not weaken or bypass production enforcement because it is disabled in production builds and non-localhost environments.
+
 What Changed (App v1)
 - Per‑session shuffling
   - Shuffle question order and each question’s option order on Start.
@@ -88,3 +93,12 @@ Testing Checklist for v3
 - Confirm a completed player cannot start a second run on the same uid.
 - If intro eligibility fails everywhere after publishing rules, verify that `attemptFingerprints` has authenticated read access.
 - If Start fails everywhere after publishing rules, verify that the `attempts` validator still allows nullable/omitted fields like `selectedAnswer`, `questionDeadlineAt`, and `completedAt`.
+
+Automated Coverage Notes
+- `src/components/QuizGame.test.js` covers the localhost-only dev fingerprint reset flow.
+- The test verifies:
+  - the reset helper is shown on localhost
+  - cached auth and local quiz locks are cleared
+  - the dev seed rotates
+  - a new seed produces a different reserved fingerprint
+- Additional E2E coverage is optional, not required, because this behavior is UI-local and already exercised at the component level.

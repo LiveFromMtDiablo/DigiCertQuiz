@@ -127,6 +127,7 @@ From the project root:
    - Navigate to `/quiz/<quiz-id>` (e.g., `/quiz/week-1-key-sovereignty`).
    - Submit a test score; confirm it appears in the Firebase Realtime Database under:
      - `leaderboard/{quizId}/{uid}`
+   - If you need to repeat local anti-replay testing on the same machine, use the localhost-only `Reset Dev Fingerprint` helper on the intro or leaderboard screen.
 4. Optionally run schema checks for quizzes:
    - `npm run test:quizzes`
 

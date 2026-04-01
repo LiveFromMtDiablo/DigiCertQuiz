@@ -393,6 +393,8 @@ describe("QuizGame", () => {
 
     await renderQuizGame();
     await waitFor(() => Boolean(getButton("Reset Dev Fingerprint")));
+    expect(container.textContent).toContain("Current dev seed:");
+    expect(container.textContent).toContain("seed-before");
 
     await clickButton("Reset Dev Fingerprint");
 
@@ -405,6 +407,7 @@ describe("QuizGame", () => {
     expect(localStorage.getItem(`quizAttempt:${QUIZ_ID}`)).toBeNull();
     expect(localStorage.getItem(DEV_FINGERPRINT_SEED_KEY)).toBeTruthy();
     expect(localStorage.getItem(DEV_FINGERPRINT_SEED_KEY)).not.toBe("seed-before");
+    expect(container.textContent).toContain(localStorage.getItem(DEV_FINGERPRINT_SEED_KEY));
   });
 
   it("changes the derived fingerprint when the dev seed changes", async () => {
