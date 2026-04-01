@@ -1021,6 +1021,16 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
         return;
       }
 
+      let attemptReservationErrorBody = "";
+      try {
+        attemptReservationErrorBody = await response.text();
+      } catch (_) {}
+      console.error("Attempt reservation failed:", {
+        quizId,
+        status: response.status,
+        body: attemptReservationErrorBody,
+      });
+
       const auth = await getValidAuth();
       const fp = await getDeviceFingerprint(quizId);
       const [ownAttempt, fingerprintLocked] = await Promise.all([
