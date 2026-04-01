@@ -10,6 +10,46 @@ npm install
 
 If you see `ENOENT ... /Users/<you>/package.json`, you're in the wrong directory. `cd` into this repo and rerun.
 
+## Testing
+
+Useful test commands:
+
+```sh
+# Run the full Jest suite once
+npm test -- --watchAll=false
+
+# Run the full suite with coverage output
+npm run test:coverage
+
+# Run only quiz-registry validation
+npm run test:quizzes
+```
+
+Coverage output is written to `/coverage`. Open `coverage/lcov-report/index.html` for the HTML report after running `npm run test:coverage`.
+
+Current automated-test snapshot as of April 1, 2026:
+
+- 8 passing Jest suites
+- 41 passing tests
+- Coverage:
+  - 68.49% statements
+  - 58.65% branches
+  - 72.79% functions
+  - 69.84% lines
+
+Areas with strong coverage:
+
+- `src/components/QuizGame.js`
+- `src/services/firebaseAuth.js`
+- `src/App.js`
+- `src/utils/*`
+- `src/quizzes/*`
+
+Next obvious coverage targets are the standalone leaderboard screens:
+
+- `src/components/FullLeaderboard.js`
+- `src/components/CumulativeMergedLeaderboard.js`
+
 ## Full Leaderboard (Screenshot View)
 
 - Route: open `/leaderboard/full` to show the current quiz’s full leaderboard (top 30) formatted for a 1920×1080 desktop screenshot.

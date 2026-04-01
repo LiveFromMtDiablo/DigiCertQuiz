@@ -198,3 +198,47 @@ Expected Deliverables
 - Updated `QuizGame.js` error handling and start gating
 - Updated admin/support documentation
 - Short findings note from real production conflict review
+
+Testing Snapshot (April 1, 2026)
+- Automated regression coverage has been expanded beyond utilities into the main quiz flow.
+- Current status:
+  - 8 passing Jest suites
+  - 41 passing tests
+  - Coverage:
+    - 68.49% statements
+    - 58.65% branches
+    - 72.79% functions
+    - 69.84% lines
+- High-value covered areas now include:
+  - `src/components/QuizGame.js`
+  - `src/services/firebaseAuth.js`
+  - `src/App.js`
+  - `src/utils/quizEligibility.js`
+  - `src/utils/quizSubmission.js`
+
+Follow-On Backlog
+
+P1: Add component tests for the leaderboard views
+- Target `src/components/FullLeaderboard.js`
+- Target `src/components/CumulativeMergedLeaderboard.js`
+- Cover:
+  - route parameter handling
+  - loading and empty states
+  - successful data rendering
+  - error states
+
+P1: Add a true browser-level refresh/resume test
+- Exercise the highest-value real flow end to end:
+  - start quiz
+  - refresh tab
+  - resume same run
+  - finish and save
+- This remains the most realistic anti-cheat regression test not yet automated.
+
+P2: Close the remaining `QuizGame.js` branch gaps
+- Focus on lower-frequency save-failure and fallback branches that are still uncovered in the coverage report.
+- Especially useful if rules or save semantics change again.
+
+P2: Raise service and utility branch coverage from “good” to “nearly complete”
+- `firebaseAuth.js` is already at full statement coverage, but still has a couple of unhit branch edges.
+- `quizAudit.js` and `leaderboardSort.js` still have some uncovered branch paths that could be closed with small targeted tests.

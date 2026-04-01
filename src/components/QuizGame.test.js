@@ -203,6 +203,26 @@ async function clickOption(label) {
   });
 }
 
+function getCurrentQuestionText() {
+  const title = container.querySelector("h2.text-2xl");
+  return title ? title.textContent : "";
+}
+
+async function answerCurrentQuestionCorrectly() {
+  const currentQuestionText = getCurrentQuestionText();
+  const currentQuestion = QUESTIONS.find(
+    (question) => question.question === currentQuestionText
+  );
+
+  if (!currentQuestion) {
+    throw new Error(`Unknown question on screen: ${currentQuestionText}`);
+  }
+
+  const correctOption = currentQuestion.options[currentQuestion.correctAnswer];
+  await waitFor(() => container.textContent.includes(correctOption));
+  await clickOption(correctOption);
+}
+
 async function renderQuizGame() {
   await act(async () => {
     root.render(
@@ -500,7 +520,7 @@ describe("QuizGame", () => {
     await clickButton("Start Quiz");
     await waitFor(() => container.textContent.includes("Question 1 of 2"));
 
-    await clickOption("Bravo");
+    await answerCurrentQuestionCorrectly();
     await clickButton("Submit Answer");
     await waitFor(() => container.textContent.includes("Correct!"));
     expect(container.textContent).toContain("You earned 100 points!");
@@ -509,7 +529,7 @@ describe("QuizGame", () => {
     await waitFor(() => container.textContent.includes("Question 2 of 2"));
     expect(container.textContent).toContain("Score: 100");
 
-    await clickOption("Three");
+    await answerCurrentQuestionCorrectly();
     await clickButton("Submit Answer");
     await waitFor(() => container.textContent.includes("Correct!"));
 
