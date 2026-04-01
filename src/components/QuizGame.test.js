@@ -237,6 +237,37 @@ async function renderQuizGame() {
   });
 }
 
+async function waitForStartButtonEnabled() {
+  await waitFor(() => {
+    const button = getButton("Start Quiz");
+    return Boolean(button && !button.disabled);
+  });
+}
+
+async function startQuiz(name = "Taylor") {
+  await renderQuizGame();
+  await waitFor(() => Boolean(getButton("Start Quiz")));
+  await changeName(name);
+  await waitForStartButtonEnabled();
+  await clickButton("Start Quiz");
+}
+
+async function completeQuizPerfectly(name = "Taylor") {
+  await startQuiz(name);
+  await waitFor(() => container.textContent.includes("Question 1 of 2"));
+
+  await answerCurrentQuestionCorrectly();
+  await clickButton("Submit Answer");
+  await waitFor(() => container.textContent.includes("Correct!"));
+
+  await clickButton("Next Question");
+  await waitFor(() => container.textContent.includes("Question 2 of 2"));
+
+  await answerCurrentQuestionCorrectly();
+  await clickButton("Submit Answer");
+  await waitFor(() => container.textContent.includes("Correct!"));
+}
+
 async function remountQuizGame() {
   await act(async () => {
     root.unmount();
@@ -317,16 +348,7 @@ describe("QuizGame", () => {
   it("starts a fresh quiz and reserves the attempt on the server", async () => {
     installFetchMock();
 
-    await renderQuizGame();
-    await waitFor(() => Boolean(getButton("Start Quiz")));
-
-    await changeName("Taylor");
-    await waitFor(() => {
-      const button = getButton("Start Quiz");
-      return Boolean(button && !button.disabled);
-    });
-
-    await clickButton("Start Quiz");
+    await startQuiz("Taylor");
 
     await waitFor(() =>
       container.textContent.includes("Question 1 of 2")
@@ -360,16 +382,7 @@ describe("QuizGame", () => {
   it("restores an in-progress local attempt after a refresh with time already deducted", async () => {
     installFetchMock();
 
-    await renderQuizGame();
-    await waitFor(() => Boolean(getButton("Start Quiz")));
-
-    await changeName("Taylor");
-    await waitFor(() => {
-      const button = getButton("Start Quiz");
-      return Boolean(button && !button.disabled);
-    });
-
-    await clickButton("Start Quiz");
+    await startQuiz("Taylor");
     await waitFor(() => container.textContent.includes("Question 1 of 2"));
     await waitFor(() =>
       Boolean(localStorage.getItem(`quizAttempt:${QUIZ_ID}`))
@@ -508,16 +521,7 @@ describe("QuizGame", () => {
       return undefined;
     });
 
-    await renderQuizGame();
-    await waitFor(() => Boolean(getButton("Start Quiz")));
-
-    await changeName("Taylor");
-    await waitFor(() => {
-      const button = getButton("Start Quiz");
-      return Boolean(button && !button.disabled);
-    });
-
-    await clickButton("Start Quiz");
+    await startQuiz("Taylor");
     await waitFor(() => container.textContent.includes("Question 1 of 2"));
 
     await answerCurrentQuestionCorrectly();
@@ -628,5 +632,347 @@ describe("QuizGame", () => {
         status: 403,
       })
     );
+  });
+
+  it("rejects invalid player names before starting", async () => {
+    installFetchMock();
+
+    await renderQuizGame();
+    await waitFor(() => Boolean(getButton("Start Quiz")));
+
+    await changeName("x");
+    await waitForStartButtonEnabled();
+    await clickButton("Start Quiz");
+
+    expect(container.textContent).toContain(
+      "Please enter a valid name (2–30 characters)."
+    );
+    expect(container.textContent).not.toContain("Question 1 of 2");
+
+    const reservationCall = global.fetch.mock.calls.find(
+      ([url, options]) =>
+        url === `${DB_URL}/.json?auth=${AUTH.idToken}` &&
+        options?.method === "PATCH"
+    );
+    expect(reservationCall).toBeUndefined();
+  });
+
+  it("blocks names that already exist on the leaderboard after normalization", async () => {
+    installFetchMock(({ url, method }) => {
+      if (method === "GET" && url.includes(`/leaderboard/${QUIZ_ID}.json?`)) {
+        return jsonResponse({
+          existing: {
+            name: "Taylor",
+            score: 320,
+            timestamp: NOW,
+          },
+        });
+      }
+      return undefined;
+    });
+
+    await renderQuizGame();
+    await waitFor(() => Boolean(getButton("Start Quiz")));
+
+    await changeName("  Taylor  ");
+    await waitForStartButtonEnabled();
+    await clickButton("Start Quiz");
+
+    expect(container.textContent).toContain(
+      "That display name is already on the leaderboard. Please make it unique"
+    );
+    expect(container.textContent).not.toContain("Question 1 of 2");
+  });
+
+  it("blocks names that conflict with the server-side normalized name index", async () => {
+    installFetchMock(({ url, method }) => {
+      if (method === "GET" && url.includes(`/nameIndex/${QUIZ_ID}/taylor.json?`)) {
+        return jsonResponse("another-uid");
+      }
+      return undefined;
+    });
+
+    await startQuiz("Taylor");
+
+    expect(container.textContent).toContain(
+      "That display name conflicts with an existing leaderboard entry after name normalization."
+    );
+    expect(container.textContent).not.toContain("Question 1 of 2");
+
+    const reservationCall = global.fetch.mock.calls.find(
+      ([url, options]) =>
+        url === `${DB_URL}/.json?auth=${AUTH.idToken}` &&
+        options?.method === "PATCH"
+    );
+    expect(reservationCall).toBeUndefined();
+  });
+
+  it("prefers the most recent server snapshot over a stale local attempt and clears the local copy", async () => {
+    localStorage.setItem(
+      `quizAttempt:${QUIZ_ID}`,
+      JSON.stringify(
+        buildLocalAttempt({
+          totalScore: 10,
+          currentQuestion: 0,
+          updatedAt: NOW - 10_000,
+        })
+      )
+    );
+
+    installFetchMock(({ url, method }) => {
+      if (
+        method === "GET" &&
+        url.includes(`/attempts/${QUIZ_ID}/${AUTH.uid}.json?`)
+      ) {
+        return jsonResponse(
+          buildServerAttempt({
+            totalScore: 77,
+            currentQuestion: 1,
+            updatedAt: NOW - 1_000,
+          })
+        );
+      }
+      return undefined;
+    });
+
+    await renderQuizGame();
+
+    await waitFor(() =>
+      container.textContent.includes("Your in-progress quiz was restored from the server.")
+    );
+
+    const storedAttempt = JSON.parse(
+      localStorage.getItem(`quizAttempt:${QUIZ_ID}`)
+    );
+
+    expect(container.textContent).toContain("Question 2 of 2");
+    expect(container.textContent).toContain("Score: 77");
+    expect(storedAttempt).toMatchObject({
+      currentQuestion: 1,
+      totalScore: 77,
+    });
+    expect(console.warn).toHaveBeenCalledWith(
+      "Multiple attempt snapshots found; restoring the most recent one.",
+      expect.objectContaining({
+        quizId: QUIZ_ID,
+        sources: expect.arrayContaining(["local", "server-own"]),
+      })
+    );
+  });
+
+  it("restores an existing server attempt when secure attempt reservation fails", async () => {
+    const restoredAttempt = buildServerAttempt({
+      totalScore: 58,
+      currentQuestion: 1,
+      updatedAt: NOW - 500,
+    });
+
+    installFetchMock(({ url, method, options }) => {
+      if (
+        method === "PATCH" &&
+        url === `${DB_URL}/.json?auth=${AUTH.idToken}` &&
+        JSON.parse(options.body || "{}")[`attempts/${QUIZ_ID}/${AUTH.uid}`]
+      ) {
+        return jsonResponse("write failed", { ok: false, status: 409 });
+      }
+
+      if (
+        method === "GET" &&
+        url.includes(`/attempts/${QUIZ_ID}/${AUTH.uid}.json?`)
+      ) {
+        const reservationFailed = global.fetch.mock.calls.some(
+          ([calledUrl, calledOptions]) =>
+            calledUrl === `${DB_URL}/.json?auth=${AUTH.idToken}` &&
+            calledOptions?.method === "PATCH" &&
+            JSON.parse(calledOptions.body || "{}")[`attempts/${QUIZ_ID}/${AUTH.uid}`]
+        );
+        return jsonResponse(reservationFailed ? restoredAttempt : null);
+      }
+
+      return undefined;
+    });
+
+    await startQuiz("Taylor");
+
+    await waitFor(() =>
+      container.textContent.includes("Your in-progress quiz was restored from the server.")
+    );
+
+    expect(container.textContent).toContain("Question 2 of 2");
+    expect(container.textContent).toContain("Score: 58");
+  });
+
+  it("falls back to a local-only start when server-side attempt rules are unavailable", async () => {
+    installFetchMock(({ url, method, options }) => {
+      if (
+        method === "PATCH" &&
+        url === `${DB_URL}/.json?auth=${AUTH.idToken}` &&
+        JSON.parse(options.body || "{}")[`attempts/${QUIZ_ID}/${AUTH.uid}`]
+      ) {
+        return jsonResponse("permission denied", { ok: false, status: 403 });
+      }
+
+      if (
+        method === "GET" &&
+        url.includes(`/attempts/${QUIZ_ID}/${AUTH.uid}.json?`)
+      ) {
+        const reservationFailed = global.fetch.mock.calls.some(
+          ([calledUrl, calledOptions]) =>
+            calledUrl === `${DB_URL}/.json?auth=${AUTH.idToken}` &&
+            calledOptions?.method === "PATCH" &&
+            JSON.parse(calledOptions.body || "{}")[`attempts/${QUIZ_ID}/${AUTH.uid}`]
+        );
+        return reservationFailed
+          ? jsonResponse("forbidden", { ok: false, status: 403 })
+          : jsonResponse(null);
+      }
+
+      return undefined;
+    });
+
+    await startQuiz("Taylor");
+
+    await waitFor(() => container.textContent.includes("Question 1 of 2"));
+
+    expect(container.textContent).not.toContain(
+      "Your in-progress quiz was restored from the server."
+    );
+    expect(console.warn).toHaveBeenCalledWith(
+      "Server-side attempt rules are not available yet; falling back to local resume only."
+    );
+    expect(localStorage.getItem(`quizAttempt:${QUIZ_ID}`)).toBeTruthy();
+  });
+
+  it("falls back to a direct leaderboard write when indexed score submission is forbidden", async () => {
+    const leaderboardAfterSave = {
+      [AUTH.uid]: {
+        name: "Taylor",
+        score: 200,
+        timestamp: NOW,
+        fp: "fp-1",
+      },
+    };
+
+    installFetchMock(({ url, method, options }) => {
+      if (
+        method === "PATCH" &&
+        url === `${DB_URL}/.json?auth=${AUTH.idToken}` &&
+        JSON.parse(options.body || "{}")[`leaderboard/${QUIZ_ID}/${AUTH.uid}`]
+      ) {
+        return jsonResponse("forbidden", { ok: false, status: 403 });
+      }
+
+      if (
+        method === "PUT" &&
+        url === `${DB_URL}/leaderboard/${QUIZ_ID}/${AUTH.uid}.json?auth=${AUTH.idToken}`
+      ) {
+        return jsonResponse({});
+      }
+
+      if (
+        method === "GET" &&
+        url.includes(`/leaderboard/${QUIZ_ID}.json?`)
+      ) {
+        const usedFallbackPut = global.fetch.mock.calls.some(
+          ([calledUrl, calledOptions]) =>
+            calledUrl ===
+              `${DB_URL}/leaderboard/${QUIZ_ID}/${AUTH.uid}.json?auth=${AUTH.idToken}` &&
+            calledOptions?.method === "PUT"
+        );
+        return jsonResponse(usedFallbackPut ? leaderboardAfterSave : {});
+      }
+
+      if (
+        method === "PATCH" &&
+        url.includes(`/attempts/${QUIZ_ID}/${AUTH.uid}.json?auth=${AUTH.idToken}`)
+      ) {
+        return jsonResponse({});
+      }
+
+      if (
+        method === "PUT" &&
+        url === `${DB_URL}/machinePrints/${QUIZ_ID}/machine-1.json?auth=${AUTH.idToken}`
+      ) {
+        return jsonResponse("uid-1");
+      }
+
+      return undefined;
+    });
+
+    await completeQuizPerfectly("Taylor");
+    await clickButton("View Results");
+
+    await waitFor(() => container.textContent.includes("Quiz Complete!"));
+
+    const fallbackWrite = global.fetch.mock.calls.find(
+      ([url, options]) =>
+        url === `${DB_URL}/leaderboard/${QUIZ_ID}/${AUTH.uid}.json?auth=${AUTH.idToken}` &&
+        options?.method === "PUT"
+    );
+
+    expect(fallbackWrite).toBeDefined();
+    expect(JSON.parse(fallbackWrite[1].body)).toMatchObject({
+      name: "Taylor",
+      score: 200,
+    });
+    expect(container.textContent).toContain("Taylor, your final score:");
+    expect(container.textContent).toContain("200");
+  });
+
+  it("surfaces already-submitted save failures and stores the submitted flag", async () => {
+    installFetchMock(({ url, method, options }) => {
+      if (
+        method === "PATCH" &&
+        url === `${DB_URL}/.json?auth=${AUTH.idToken}` &&
+        JSON.parse(options.body || "{}")[`leaderboard/${QUIZ_ID}/${AUTH.uid}`]
+      ) {
+        return jsonResponse("server exploded", { ok: false, status: 500 });
+      }
+
+      if (
+        method === "GET" &&
+        url.includes(`/leaderboard/${QUIZ_ID}/${AUTH.uid}.json?`)
+      ) {
+        const attemptedSave = global.fetch.mock.calls.some(
+          ([calledUrl, calledOptions]) =>
+            calledUrl === `${DB_URL}/.json?auth=${AUTH.idToken}` &&
+            calledOptions?.method === "PATCH" &&
+            JSON.parse(calledOptions.body || "{}")[`leaderboard/${QUIZ_ID}/${AUTH.uid}`]
+        );
+
+        return jsonResponse(
+          attemptedSave
+            ? {
+                name: "Taylor",
+                score: 200,
+                timestamp: NOW,
+              }
+            : null
+        );
+      }
+
+      if (method === "GET" && url.includes(`/fingerprints/${QUIZ_ID}/`)) {
+        return jsonResponse(null);
+      }
+
+      if (
+        method === "PATCH" &&
+        url.includes(`/attempts/${QUIZ_ID}/${AUTH.uid}.json?auth=${AUTH.idToken}`)
+      ) {
+        return jsonResponse({});
+      }
+
+      return undefined;
+    });
+
+    await completeQuizPerfectly("Taylor");
+    await clickButton("View Results");
+
+    await waitFor(() =>
+      container.textContent.includes("You've already played this quiz")
+    );
+
+    expect(localStorage.getItem(`submitted:${QUIZ_ID}`)).toBe("1");
+    expect(container.textContent).toContain("Global Leaderboard");
   });
 });
