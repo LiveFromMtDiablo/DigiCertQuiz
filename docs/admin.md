@@ -3,6 +3,7 @@ Admin FAQ – DigiCert Quiz Hardening
 Quick Links
 - Rules v1 (first‑score‑only): docs/firebase-rules.v1.json
 - Rules v2 (name/fingerprint enforcement): docs/firebase-rules.v2.json
+- Rules v3 (attempt reservation at quiz start): docs/firebase-rules.v3.json
 - Rules v2.1 (machine prints enforcement): docs/firebase-rules.v2.1.json
 - Plan and guidance: docs/hardening.md
 - Observe‑only machine prints: written under `machinePrints/{quizId}/{fpMachine}` (no enforcement in v2)
@@ -14,10 +15,13 @@ Quiz IDs
 Data Model (writes)
 - Leaderboard record (per user): `leaderboard/{quizId}/{uid}`
   - Fields: `name`, `nameSlug`, `score`, `timestamp` (server set), `fp`, `fpMachine`
+- Server-side attempt record (per started run): `attempts/{quizId}/{uid}`
+  - Fields include: `name`, `nameSlug`, `fp`, `fpMachine`, `questionSet`, `currentQuestion`, `totalScore`, `timeLeft`, `questionDeadlineAt`, `showFeedback`, `isCorrect`, `status`, `createdAt`, `updatedAt`, `completedAt`
 - Indexes (enforced in rules):
   - `nameIndex/{quizId}/{nameSlug}` → `uid`
   - `fingerprints/{quizId}/{fp}` → `uid`
   - `machinePrints/{quizId}/{fpMachine}` → `uid` (enforced only in v2.1)
+  - `attemptFingerprints/{quizId}/{fp}` → `uid` (v3)
 
 How to Apply Rules v1 (first‑score‑only)
 1) Open Firebase Console → your project `digicert-product-quiz`.
@@ -29,6 +33,14 @@ How to Upgrade to Rules v2 (enforce name + fingerprint)
 1) Confirm most clients have shipped (app writes `nameSlug` + `fp`).
 2) In Firebase Console → Realtime Database → Rules, paste docs/firebase-rules.v2.json and Publish.
 3) Monitor write errors; if elevated, revert to v1 and investigate.
+
+How to Upgrade to Rules v3 (reserve attempts at quiz start)
+1) Deploy the app version that writes `attempts/{quizId}/{uid}` and `attemptFingerprints/{quizId}/{fp}`.
+2) In Firebase Console → Realtime Database → Rules, paste docs/firebase-rules.v3.json and Publish.
+3) Verify:
+   - starting a quiz immediately creates an `attempts/{quizId}/{uid}` record
+   - refreshing resumes the same run
+   - clearing local storage in the same browser no longer allows a fresh start
 
 Optional: Observe‑Only Machine Prints
 - The app writes `machinePrints/{quizId}/{fpMachine}` alongside `fingerprints`. Rules v2 allow these writes but do not enforce them on leaderboard validation.
@@ -58,9 +70,18 @@ Allow a Player a Fresh Attempt (v1 or v2)
   - `nameIndex/{quizId}/{nameSlug}` (if you need to free the name)
   - If you later enforce machine prints, also delete `machinePrints/{quizId}/{fpMachine}`
 
+Allow a Player a Fresh Attempt (v3)
+- Delete all of the player’s reservation and score records for that quiz:
+  - `attempts/{quizId}/{uid}`
+  - `attemptFingerprints/{quizId}/{fp}`
+  - `leaderboard/{quizId}/{uid}` if they already submitted
+  - `fingerprints/{quizId}/{fp}` if they already submitted
+  - `nameIndex/{quizId}/{nameSlug}` if you need to free the display name too
+
 Investigate “Permission denied” Errors
 - Second attempt from same browser: blocked by v1 (`!data.exists()`).
 - Incognito/same device after v2: blocked by `fingerprints` mapping.
+- Restart attempt after clearing storage in the same browser after v3: blocked by `attemptFingerprints` mapping.
 - Duplicate display name after v2: blocked by `nameIndex` mapping.
  - Different browser on same machine after v2.1: blocked by `machinePrints` mapping.
 

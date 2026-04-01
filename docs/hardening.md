@@ -1,9 +1,18 @@
-Anti‑Replay Hardening Plan (v1/v2)
+Anti‑Replay Hardening Plan (v1/v2/v3)
 
 Objectives
 - Keep instant correct‑answer reveal and confetti.
 - Keep the same questions for all players.
 - Reduce repeat attempts from same device/incognito/new browser with minimal friction.
+
+What Changed (App v3)
+- Server-side attempt reservation
+  - On Start, the app now creates `attempts/{quizId}/{uid}` immediately and locks `attemptFingerprints/{quizId}/{fp}` before question 1 is shown.
+  - If the same uid comes back without local state, the app restores the server snapshot.
+  - If a different uid on the same browser/device tries to start after clearing storage, the fingerprint lock prevents a fresh run from starting.
+- Attempt completion tracking
+  - On successful score save, the attempt record is marked `completed` and remains immutable for audit/debugging.
+  - Local resume still exists, but the server is now the authoritative “this run already started” gate.
 
 What Changed (App v1)
 - Per‑session shuffling
@@ -35,6 +44,12 @@ Staged Tightening (v2.1): enforce machine‑level prints
 - Adds a browser‑agnostic machine print gate (`fpMachine`), blocking cross‑browser replays on the same machine.
 - Requires `fpMachine` in the leaderboard entry and validates that `machinePrints/{quizId}/{fpMachine}` is free or mapped to the same uid.
 
+- v3 (recommended): reserve attempts at quiz start
+  - File: docs/firebase-rules.v3.json
+  - Adds `attempts/{quizId}/{uid}` and `attemptFingerprints/{quizId}/{fp}`.
+  - Prevents the “refresh/close before the last question, then restart with answer knowledge” exploit from becoming a new run.
+  - Allows same-uid restore while blocking new starts from the same browser/device fingerprint.
+
 Checklist before enabling v2.1
 - Adoption ≥ 95%: New leaderboard entries include `fpMachine` and matching `machinePrints` mapping.
 - Low collision risk: Minimal `machinePrints/{quizId}` collisions across different uids (spot‑check).
@@ -61,4 +76,3 @@ Testing Checklist
 - Second attempt from the same uid is blocked (v1+).
 - Incognito/new uid on same device is blocked after v2 (fp mapping).
 - Duplicate display names (after normalization) are blocked after v2 (nameIndex mapping).
-

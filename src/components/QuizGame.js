@@ -7,6 +7,9 @@ import { sortLeaderboardEntries } from "../utils/leaderboardSort";
 // Simple name validation (2–30 allowed characters)
 const NAME_REGEX = /^[A-Za-z0-9 .,'_-]{2,30}$/;
 const TROPHY_COLORS = ["text-yellow-500", "text-gray-400", "text-orange-500"];
+const QUIZ_ATTEMPT_STORAGE_VERSION = 1;
+const ATTEMPT_STATUS_IN_PROGRESS = "in_progress";
+const ATTEMPT_STATUS_COMPLETED = "completed";
 const sanitizeName = (s) => s.trim().replace(/\s+/g, " ");
 
 const SCREEN_BACKGROUND_STYLE = {
@@ -18,11 +21,39 @@ const SCREEN_BACKGROUND_STYLE = {
   backgroundSize: "auto, cover",
 };
 
+function getAttemptStorageKey(quizId) {
+  return `quizAttempt:${quizId}`;
+}
+
+function loadStoredAttempt(quizId) {
+  try {
+    const raw = localStorage.getItem(getAttemptStorageKey(quizId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.version === QUIZ_ATTEMPT_STORAGE_VERSION ? parsed : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function saveStoredAttempt(quizId, attempt) {
+  try {
+    localStorage.setItem(getAttemptStorageKey(quizId), JSON.stringify(attempt));
+  } catch (_) {}
+}
+
+function clearStoredAttempt(quizId) {
+  try {
+    localStorage.removeItem(getAttemptStorageKey(quizId));
+  } catch (_) {}
+}
+
 export default function QuizGame({ quizId, title, questions, maxTime = 100, intro }) {
   const [screen, setScreen] = useState("intro");
   const [playerName, setPlayerName] = useState("");
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [timeLeft, setTimeLeft] = useState(maxTime);
+  const [questionDeadlineAt, setQuestionDeadlineAt] = useState(null);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -33,6 +64,10 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
   const [finalScoreValue, setFinalScoreValue] = useState(null);
   const [gameQuestions, setGameQuestions] = useState(null);
+  const [resumeNotice, setResumeNotice] = useState("");
+  const [attemptCreatedAt, setAttemptCreatedAt] = useState(null);
+  const [isCheckingEligibility, setIsCheckingEligibility] = useState(true);
+  const [isStartingAttempt, setIsStartingAttempt] = useState(false);
 
   // Secure RNG and shuffle helpers (per-session order randomization)
   function secureRandomInt(maxExclusive) {
@@ -182,6 +217,240 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
     }
   }
 
+  function restoreStoredAttempt(attempt) {
+    const activeQuestions = Array.isArray(attempt?.gameQuestions)
+      ? attempt.gameQuestions
+      : null;
+    if (!isValidQuestionSet(activeQuestions)) {
+      clearStoredAttempt(quizId);
+      return false;
+    }
+
+    const safeQuestionIndex = Math.min(
+      Math.max(0, Number(attempt.currentQuestion) || 0),
+      activeQuestions.length - 1
+    );
+    const storedDeadlineAt =
+      typeof attempt.questionDeadlineAt === "number" ? attempt.questionDeadlineAt : null;
+    const restoredTimeLeft = attempt.showFeedback
+      ? Math.max(0, Number(attempt.timeLeft) || 0)
+      : storedDeadlineAt
+        ? Math.max(0, Math.ceil((storedDeadlineAt - Date.now()) / 1000))
+        : maxTime;
+
+    setPlayerName(typeof attempt.playerName === "string" ? attempt.playerName : "");
+    setGameQuestions(activeQuestions);
+    setCurrentQuestion(safeQuestionIndex);
+    setSelectedAnswer(
+      typeof attempt.selectedAnswer === "number" ? attempt.selectedAnswer : null
+    );
+    setShowFeedback(Boolean(attempt.showFeedback));
+    setIsCorrect(Boolean(attempt.isCorrect));
+    setTotalScore(Math.max(0, Number(attempt.totalScore) || 0));
+    setFinalScoreValue(null);
+    setAttemptCreatedAt(
+      typeof attempt.createdAt === "number" ? attempt.createdAt : Date.now()
+    );
+    setQuestionDeadlineAt(attempt.showFeedback ? null : storedDeadlineAt);
+    setTimeLeft(restoredTimeLeft);
+    setScreen("question");
+    setError("");
+    setResumeNotice("Your in-progress quiz was restored. Refreshing will not restart it.");
+    return true;
+  }
+
+  function resetGameState(nextScreen = "intro") {
+    setScreen(nextScreen);
+    setPlayerName("");
+    setCurrentQuestion(0);
+    setTimeLeft(maxTime);
+    setQuestionDeadlineAt(null);
+    setSelectedAnswer(null);
+    setShowFeedback(false);
+    setIsCorrect(false);
+    setTotalScore(0);
+    setError("");
+    setFinalScoreValue(null);
+    setAttemptCreatedAt(null);
+    setGameQuestions(null);
+    setResumeNotice("");
+  }
+
+  function isValidQuestionSet(activeQuestions) {
+    return (
+      Array.isArray(activeQuestions) &&
+      activeQuestions.length === questions.length &&
+      activeQuestions.every(
+        (question) =>
+          question &&
+          typeof question.question === "string" &&
+          Array.isArray(question.options) &&
+          typeof question.correctAnswer === "number"
+      )
+    );
+  }
+
+  function serializeQuestionSet(activeQuestions) {
+    return JSON.stringify(activeQuestions);
+  }
+
+  function parseQuestionSet(serialized) {
+    try {
+      const parsed = JSON.parse(serialized);
+      return isValidQuestionSet(parsed) ? parsed : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function buildAttemptRecord({
+    name,
+    nameSlug,
+    fp,
+    fpMachine,
+    currentQuestion: questionIndex,
+    totalScore: score,
+    timeLeft: secondsLeft,
+    questionDeadlineAt: deadlineAt,
+    selectedAnswer: answerIndex,
+    showFeedback: showingFeedback,
+    isCorrect: answeredCorrectly,
+    gameQuestions: activeQuestions,
+    createdAt = Date.now(),
+    status = ATTEMPT_STATUS_IN_PROGRESS,
+    completedAt = null,
+  }) {
+    return {
+      name,
+      nameSlug,
+      fp,
+      fpMachine,
+      questionSet: serializeQuestionSet(activeQuestions),
+      currentQuestion: questionIndex,
+      totalScore: score,
+      timeLeft: secondsLeft,
+      questionDeadlineAt: deadlineAt,
+      selectedAnswer: answerIndex,
+      showFeedback: showingFeedback,
+      isCorrect: answeredCorrectly,
+      status,
+      createdAt,
+      updatedAt: Date.now(),
+      completedAt,
+    };
+  }
+
+  function restoreServerAttempt(attempt) {
+    const activeQuestions = parseQuestionSet(attempt?.questionSet);
+    if (!activeQuestions) return false;
+
+    const safeQuestionIndex = Math.min(
+      Math.max(0, Number(attempt.currentQuestion) || 0),
+      activeQuestions.length - 1
+    );
+    const storedDeadlineAt =
+      typeof attempt.questionDeadlineAt === "number" ? attempt.questionDeadlineAt : null;
+    const restoredTimeLeft = Boolean(attempt.showFeedback)
+      ? Math.max(0, Number(attempt.timeLeft) || 0)
+      : storedDeadlineAt
+        ? Math.max(0, Math.ceil((storedDeadlineAt - Date.now()) / 1000))
+        : maxTime;
+
+    setPlayerName(typeof attempt.name === "string" ? attempt.name : "");
+    setGameQuestions(activeQuestions);
+    setCurrentQuestion(safeQuestionIndex);
+    setSelectedAnswer(
+      typeof attempt.selectedAnswer === "number" ? attempt.selectedAnswer : null
+    );
+    setShowFeedback(Boolean(attempt.showFeedback));
+    setIsCorrect(Boolean(attempt.isCorrect));
+    setTotalScore(Math.max(0, Number(attempt.totalScore) || 0));
+    setFinalScoreValue(null);
+    setAttemptCreatedAt(
+      typeof attempt.createdAt === "number" ? attempt.createdAt : Date.now()
+    );
+    setQuestionDeadlineAt(Boolean(attempt.showFeedback) ? null : storedDeadlineAt);
+    setTimeLeft(restoredTimeLeft);
+    setScreen("question");
+    setError("");
+    setResumeNotice("Your in-progress quiz was restored from the server.");
+    return true;
+  }
+
+  async function getAttemptIdentity() {
+    const { uid, idToken } = await getValidAuth();
+    const [fp, fpMachine] = await Promise.all([
+      getDeviceFingerprint(quizId),
+      getMachineFingerprint(quizId),
+    ]);
+    return { uid, idToken, fp, fpMachine };
+  }
+
+  async function fetchOwnAttempt() {
+    const { uid, idToken } = await getValidAuth();
+    const res = await fetch(
+      `${DB_URL}/attempts/${quizId}/${uid}.json?auth=${encodeURIComponent(idToken)}&t=${Date.now()}`,
+      { cache: "no-store" }
+    );
+    if (!res.ok) return { res, data: null };
+    const data = await res.json();
+    return { res, data };
+  }
+
+  async function createServerAttempt({
+    name,
+    nameSlug,
+    gameQuestions: activeQuestions,
+    questionDeadlineAt: deadlineAt,
+  }) {
+    const { uid, idToken, fp, fpMachine } = await getAttemptIdentity();
+    const attemptRecord = buildAttemptRecord({
+      name,
+      nameSlug,
+      fp,
+      fpMachine,
+      currentQuestion: 0,
+      totalScore: 0,
+      timeLeft: maxTime,
+      questionDeadlineAt: deadlineAt,
+      selectedAnswer: null,
+      showFeedback: false,
+      isCorrect: false,
+      gameQuestions: activeQuestions,
+    });
+
+    const updates = {};
+    updates[`attempts/${quizId}/${uid}`] = attemptRecord;
+    updates[`attemptFingerprints/${quizId}/${fp}`] = uid;
+
+    const response = await fetch(`${DB_URL}/.json?auth=${encodeURIComponent(idToken)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
+    });
+
+    return { response, attemptRecord };
+  }
+
+  async function syncServerAttempt(snapshot) {
+    try {
+      const { uid, idToken } = await getValidAuth();
+      const res = await fetch(
+        `${DB_URL}/attempts/${quizId}/${uid}.json?auth=${encodeURIComponent(idToken)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(snapshot),
+        }
+      );
+      if (!res.ok) {
+        console.warn("Attempt sync failed:", res.status);
+      }
+    } catch (err) {
+      console.warn("Attempt sync failed:", err);
+    }
+  }
+
   // Load leaderboard for this quiz
   const loadLeaderboard = useCallback(async () => {
     try {
@@ -246,6 +515,26 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
       updates[`fingerprints/${quizId}/${fp}`] = uid;
       // Observe-only machine-level print (no enforcement in rules yet)
       updates[`machinePrints/${quizId}/${fpMachine}`] = uid;
+      if (gameQuestions) {
+        updates[`attempts/${quizId}/${uid}`] = buildAttemptRecord({
+          name,
+          nameSlug,
+          fp,
+          fpMachine,
+          currentQuestion: activeQuestions.length - 1,
+          totalScore: safeScore,
+          timeLeft,
+          questionDeadlineAt: null,
+          selectedAnswer,
+          showFeedback: true,
+          isCorrect,
+          gameQuestions,
+          createdAt: attemptCreatedAt || Date.now(),
+          status: ATTEMPT_STATUS_COMPLETED,
+          completedAt: Date.now(),
+        });
+        updates[`attemptFingerprints/${quizId}/${fp}`] = uid;
+      }
 
       let response = await fetch(
         `${DB_URL}/.json?auth=${encodeURIComponent(idToken)}`,
@@ -301,6 +590,12 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
     }
   }, [screen, loadLeaderboard]);
 
+  useEffect(() => {
+    setIsCheckingEligibility(true);
+    resetGameState("intro");
+    restoreStoredAttempt(loadStoredAttempt(quizId));
+  }, [quizId]);
+
   // Detect if the user has already submitted a score for this quiz
   useEffect(() => {
     try {
@@ -311,40 +606,144 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
     }
   }, [quizId]);
 
-  // Also check server for an existing record for this device's anonymous UID
+  // Also check the server for an existing score or resumable attempt for this uid
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
+        const localAttempt = loadStoredAttempt(quizId);
         const { uid, idToken } = await getValidAuth();
         if (cancelled) return;
-        const res = await fetch(`${DB_URL}/leaderboard/${quizId}/${uid}.json?auth=${encodeURIComponent(idToken)}`, {
-          cache: "no-store",
-        });
-        if (!cancelled && res.ok) {
-          const data = await res.json();
+
+        const [leaderboardRes, attemptResult] = await Promise.all([
+          fetch(`${DB_URL}/leaderboard/${quizId}/${uid}.json?auth=${encodeURIComponent(idToken)}`, {
+            cache: "no-store",
+          }),
+          localAttempt ? Promise.resolve(null) : fetchOwnAttempt(),
+        ]);
+
+        if (cancelled) return;
+
+        if (leaderboardRes.ok) {
+          const data = await leaderboardRes.json();
           if (data) setAlreadySubmitted(true);
         }
+
+        if (!localAttempt && attemptResult?.res?.ok && attemptResult.data) {
+          const status = attemptResult.data.status;
+          if (status !== ATTEMPT_STATUS_COMPLETED) {
+            restoreServerAttempt(attemptResult.data);
+          }
+        }
       } catch (_) {}
+      if (!cancelled) {
+        setIsCheckingEligibility(false);
+      }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [quizId]);
 
   // Note: name uniqueness validation is performed on Start to avoid blocking typing
 
   useEffect(() => {
-    if (screen === "question" && !showFeedback && timeLeft > 0) {
-      const timer = setInterval(() => {
-        setTimeLeft((prev) => Math.max(0, prev - 1));
-      }, 1000);
-      return () => clearInterval(timer);
-    }
-  }, [screen, showFeedback, timeLeft]);
+    if (screen !== "question" || showFeedback || !questionDeadlineAt) return undefined;
 
-  const handleStart = () => {
+    const syncTimeLeft = () => {
+      setTimeLeft(Math.max(0, Math.ceil((questionDeadlineAt - Date.now()) / 1000)));
+    };
+
+    syncTimeLeft();
+    const timer = setInterval(syncTimeLeft, 250);
+    return () => clearInterval(timer);
+  }, [screen, showFeedback, questionDeadlineAt]);
+
+  useEffect(() => {
+    if (screen !== "question" || showFeedback || timeLeft !== 0) return undefined;
+
+    setQuestionDeadlineAt(null);
+    setIsCorrect(false);
+    setShowFeedback(true);
+    void syncServerAttempt({
+      currentQuestion,
+      totalScore,
+      timeLeft: 0,
+      questionDeadlineAt: null,
+      showFeedback: true,
+      isCorrect: false,
+      updatedAt: Date.now(),
+    });
+    return undefined;
+  }, [currentQuestion, screen, showFeedback, timeLeft, totalScore]);
+
+  useEffect(() => {
+    if (screen !== "question" || !gameQuestions || alreadySubmitted) return undefined;
+
+    saveStoredAttempt(quizId, {
+      version: QUIZ_ATTEMPT_STORAGE_VERSION,
+      playerName,
+      currentQuestion,
+      timeLeft,
+      questionDeadlineAt: showFeedback ? null : questionDeadlineAt,
+      selectedAnswer,
+      showFeedback,
+      isCorrect,
+      totalScore,
+      createdAt: attemptCreatedAt,
+      gameQuestions,
+      updatedAt: Date.now(),
+    });
+
+    return undefined;
+  }, [
+    alreadySubmitted,
+    attemptCreatedAt,
+    currentQuestion,
+    gameQuestions,
+    isCorrect,
+    playerName,
+    questionDeadlineAt,
+    quizId,
+    screen,
+    selectedAnswer,
+    showFeedback,
+    timeLeft,
+    totalScore,
+  ]);
+
+  useEffect(() => {
+    if (screen !== "question") return undefined;
+
+    const handleBeforeUnload = (event) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [screen]);
+
+  useEffect(() => {
+    if (screen === "leaderboard" || alreadySubmitted) {
+      clearStoredAttempt(quizId);
+    }
+  }, [alreadySubmitted, quizId, screen]);
+
+  useEffect(() => {
+    if (!resumeNotice || screen !== "question") return undefined;
+
+    const timer = setTimeout(() => setResumeNotice(""), 5000);
+    return () => clearTimeout(timer);
+  }, [resumeNotice, screen]);
+
+  const handleStart = async () => {
     const clean = sanitizeName(playerName);
     if (!NAME_REGEX.test(clean)) {
       setError("Please enter a valid name (2–30 characters).");
+      return;
+    }
+    if (isCheckingEligibility || isStartingAttempt) {
       return;
     }
     // Prevent using an existing leaderboard name (case-insensitive exact match)
@@ -358,26 +757,90 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
       return;
     }
     // Initialize per-session shuffled questions/options
+    let shuffledQuestions;
     try {
-      const shuffled = shuffleQuestionsAndOptions(questions);
-      setGameQuestions(shuffled);
+      shuffledQuestions = shuffleQuestionsAndOptions(questions);
     } catch (_) {
-      setGameQuestions(questions.slice());
+      shuffledQuestions = questions.slice();
     }
-    setPlayerName(clean);
-    setScreen("question");
-    setTimeLeft(maxTime);
-    setError("");
+
+    const firstQuestionDeadlineAt = Date.now() + maxTime * 1000;
+    setIsStartingAttempt(true);
+
+    try {
+      const nameSlug = toNameSlug(clean);
+      const { response, attemptRecord } = await createServerAttempt({
+        name: clean,
+        nameSlug,
+        gameQuestions: shuffledQuestions,
+        questionDeadlineAt: firstQuestionDeadlineAt,
+      });
+
+      if (response.ok) {
+        setGameQuestions(shuffledQuestions);
+        setPlayerName(clean);
+        setAttemptCreatedAt(attemptRecord.createdAt);
+        setCurrentQuestion(0);
+        setScreen("question");
+        setSelectedAnswer(null);
+        setShowFeedback(false);
+        setIsCorrect(false);
+        setTotalScore(0);
+        setFinalScoreValue(null);
+        setQuestionDeadlineAt(firstQuestionDeadlineAt);
+        setTimeLeft(maxTime);
+        setError("");
+        setResumeNotice("");
+        return;
+      }
+
+      const ownAttempt = await fetchOwnAttempt();
+      if (ownAttempt.res?.ok && ownAttempt.data && ownAttempt.data.status !== ATTEMPT_STATUS_COMPLETED) {
+        restoreServerAttempt(ownAttempt.data);
+        return;
+      }
+
+      // If the new rules have not been published yet, keep the local-only protection in place.
+      if (ownAttempt.res && (ownAttempt.res.status === 401 || ownAttempt.res.status === 403)) {
+        console.warn("Server-side attempt rules are not available yet; falling back to local resume only.");
+        setGameQuestions(shuffledQuestions);
+        setPlayerName(clean);
+        setAttemptCreatedAt(Date.now());
+        setCurrentQuestion(0);
+        setScreen("question");
+        setSelectedAnswer(null);
+        setShowFeedback(false);
+        setIsCorrect(false);
+        setTotalScore(0);
+        setFinalScoreValue(null);
+        setQuestionDeadlineAt(firstQuestionDeadlineAt);
+        setTimeLeft(maxTime);
+        setError("");
+        setResumeNotice("");
+        return;
+      }
+
+      setError(
+        "This browser already has an in-progress attempt for this quiz. Resume the original session to continue."
+      );
+    } catch (err) {
+      console.error("Error creating attempt:", err);
+      setError("Could not start the quiz right now. Please try again.");
+    } finally {
+      setIsStartingAttempt(false);
+    }
   };
 
   const handleSubmitAnswer = () => {
     if (selectedAnswer === null) return;
     const activeQuestions = gameQuestions || questions;
     const correct = selectedAnswer === activeQuestions[currentQuestion].correctAnswer;
+    const nextTotalScore = correct ? totalScore + timeLeft : totalScore;
+    setQuestionDeadlineAt(null);
     setIsCorrect(correct);
     setShowFeedback(true);
     if (correct) {
-      setTotalScore((prev) => prev + timeLeft);
+      setTotalScore(nextTotalScore);
       // Fire a celebratory confetti burst when the user is correct
       try {
         if (typeof window !== "undefined" && window.confetti) {
@@ -396,16 +859,43 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
         }
       } catch (_) {}
     }
+
+    if (gameQuestions) {
+      void syncServerAttempt({
+        currentQuestion,
+        totalScore: nextTotalScore,
+        timeLeft,
+        questionDeadlineAt: null,
+        selectedAnswer,
+        showFeedback: true,
+        isCorrect: correct,
+        updatedAt: Date.now(),
+      });
+    }
   };
 
   const handleNextQuestion = async () => {
     const activeQuestions = gameQuestions || questions;
     if (currentQuestion < activeQuestions.length - 1) {
-      setCurrentQuestion((prev) => prev + 1);
-      setTimeLeft(maxTime);
+      const nextQuestionIndex = currentQuestion + 1;
+      const nextDeadlineAt = Date.now() + maxTime * 1000;
+      setCurrentQuestion(nextQuestionIndex);
       setSelectedAnswer(null);
       setShowFeedback(false);
       setIsCorrect(false);
+      setQuestionDeadlineAt(nextDeadlineAt);
+      setTimeLeft(maxTime);
+      if (gameQuestions) {
+        void syncServerAttempt({
+          currentQuestion: nextQuestionIndex,
+          timeLeft: maxTime,
+          questionDeadlineAt: nextDeadlineAt,
+          selectedAnswer: null,
+          showFeedback: false,
+          isCorrect: false,
+          updatedAt: Date.now(),
+        });
+      }
     } else {
       // Final score already includes the last question if correct
       const finalScore = totalScore;
@@ -416,17 +906,8 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
   };
 
   const handleRestart = () => {
-    setScreen("intro");
-    setPlayerName("");
-    setCurrentQuestion(0);
-    setTimeLeft(maxTime);
-    setSelectedAnswer(null);
-    setShowFeedback(false);
-    setIsCorrect(false);
-    setTotalScore(0);
-    setError("");
-    setFinalScoreValue(null);
-    setGameQuestions(null);
+    clearStoredAttempt(quizId);
+    resetGameState("intro");
   };
 
   if (screen === "intro") {
@@ -462,6 +943,12 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
           {alreadySubmitted && (
             <div className="bg-yellow-50 border-2 border-yellow-200 text-yellow-800 px-4 py-3 rounded mb-4">
               You’ve already played this quiz. Thanks for participating! You can view the leaderboard below.
+            </div>
+          )}
+
+          {isCheckingEligibility && (
+            <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded mb-4">
+              Checking whether this browser already has a saved quiz attempt...
             </div>
           )}
 
@@ -530,10 +1017,14 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
             />
             <button
               onClick={handleStart}
-              disabled={!playerName.trim() || alreadySubmitted}
+              disabled={!playerName.trim() || alreadySubmitted || isCheckingEligibility || isStartingAttempt}
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-lg font-semibold text-lg hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Start Quiz
+              {isCheckingEligibility
+                ? "Checking eligibility..."
+                : isStartingAttempt
+                  ? "Starting securely..."
+                  : "Start Quiz"}
             </button>
             <button
               onClick={() => { setFinalScoreValue(null); setScreen("leaderboard"); }}
@@ -563,6 +1054,12 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
             </div>
             <span className="text-xl font-semibold text-gray-800">Score: {totalScore}</span>
           </div>
+
+          {resumeNotice && (
+            <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+              {resumeNotice}
+            </div>
+          )}
 
           <div className="mb-6">
             <div className="text-sm text-gray-600 mb-2">
