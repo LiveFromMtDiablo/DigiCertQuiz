@@ -29,6 +29,7 @@ const QUESTIONS = [
     correctAnswer: 2,
   },
 ];
+let currentNow = NOW;
 
 function jsonResponse(data, { ok = true, status = 200 } = {}) {
   return {
@@ -58,6 +59,24 @@ function buildServerAttempt(overrides = {}) {
     createdAt: NOW - 5_000,
     updatedAt: NOW - 2_000,
     completedAt: null,
+    ...overrides,
+  };
+}
+
+function buildLocalAttempt(overrides = {}) {
+  return {
+    version: 1,
+    playerName: "Taylor",
+    currentQuestion: 0,
+    timeLeft: 55,
+    questionDeadlineAt: NOW + 55_000,
+    selectedAnswer: null,
+    showFeedback: false,
+    isCorrect: false,
+    totalScore: 42,
+    createdAt: NOW - 5_000,
+    gameQuestions: QUESTIONS,
+    updatedAt: NOW - 2_000,
     ...overrides,
   };
 }
@@ -168,6 +187,22 @@ async function clickButton(label) {
   });
 }
 
+async function clickOption(label) {
+  const optionButton = Array.from(container.querySelectorAll("button")).find(
+    (button) =>
+      button.textContent.trim() === label ||
+      button.textContent.includes(label)
+  );
+
+  if (!optionButton) {
+    throw new Error(`Option "${label}" not found`);
+  }
+
+  await act(async () => {
+    optionButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  });
+}
+
 async function renderQuizGame() {
   await act(async () => {
     root.render(
@@ -180,6 +215,19 @@ async function renderQuizGame() {
       />
     );
   });
+}
+
+async function remountQuizGame() {
+  await act(async () => {
+    root.unmount();
+  });
+  container.remove();
+
+  container = document.createElement("div");
+  document.body.appendChild(container);
+  root = createRoot(container);
+
+  await renderQuizGame();
 }
 
 describe("QuizGame", () => {
@@ -207,7 +255,8 @@ describe("QuizGame", () => {
     document.body.appendChild(container);
     root = createRoot(container);
 
-    jest.spyOn(Date, "now").mockReturnValue(NOW);
+    currentNow = NOW;
+    jest.spyOn(Date, "now").mockImplementation(() => currentNow);
     jest.spyOn(console, "error").mockImplementation(() => {});
     jest.spyOn(console, "warn").mockImplementation(() => {});
     jest.spyOn(console, "debug").mockImplementation(() => {});
@@ -288,6 +337,57 @@ describe("QuizGame", () => {
     expect(payload[fingerprintKey]).toBe(AUTH.uid);
   });
 
+  it("restores an in-progress local attempt after a refresh with time already deducted", async () => {
+    installFetchMock();
+
+    await renderQuizGame();
+    await waitFor(() => Boolean(getButton("Start Quiz")));
+
+    await changeName("Taylor");
+    await waitFor(() => {
+      const button = getButton("Start Quiz");
+      return Boolean(button && !button.disabled);
+    });
+
+    await clickButton("Start Quiz");
+    await waitFor(() => container.textContent.includes("Question 1 of 2"));
+    await waitFor(() =>
+      Boolean(localStorage.getItem(`quizAttempt:${QUIZ_ID}`))
+    );
+
+    currentNow = NOW + 15_000;
+    await remountQuizGame();
+
+    await waitFor(() =>
+      container.textContent.includes("Your in-progress quiz was restored. Refreshing will not restart it.")
+    );
+
+    expect(container.textContent).toContain("Question 1 of 2");
+    expect(container.textContent).toContain("Time Left: 85s");
+  });
+
+  it("auto-shows incorrect feedback when a restored question has already timed out", async () => {
+    localStorage.setItem(
+      `quizAttempt:${QUIZ_ID}`,
+      JSON.stringify(
+        buildLocalAttempt({
+          timeLeft: 12,
+          questionDeadlineAt: NOW - 1_000,
+          totalScore: 0,
+        })
+      )
+    );
+    installFetchMock();
+
+    await renderQuizGame();
+
+    await waitFor(() => container.textContent.includes("Incorrect"));
+
+    expect(container.textContent).toContain("The correct answer was:");
+    expect(container.textContent).toContain("Bravo");
+    expect(getButton("Next Question")).toBeDefined();
+  });
+
   it("restores an in-progress server attempt during eligibility check", async () => {
     const attempt = buildServerAttempt();
     installFetchMock(({ url, method }) => {
@@ -309,6 +409,136 @@ describe("QuizGame", () => {
     expect(container.textContent).toContain("Question 1 of 2");
     expect(container.textContent).toContain(QUESTIONS[0].question);
     expect(container.textContent).toContain("Score: 42");
+  });
+
+  it("blocks quiz start when the current uid already has a saved leaderboard score", async () => {
+    installFetchMock(({ url, method }) => {
+      if (
+        method === "GET" &&
+        url.includes(`/leaderboard/${QUIZ_ID}/${AUTH.uid}.json?`)
+      ) {
+        return jsonResponse({
+          name: "Taylor",
+          score: 375,
+        });
+      }
+      return undefined;
+    });
+
+    await renderQuizGame();
+
+    await waitFor(() =>
+      container.textContent.includes("already played this quiz")
+    );
+
+    const input = container.querySelector('input[placeholder="Enter your name to start"]');
+    const button = getButton("Start Quiz");
+
+    expect(input.disabled).toBe(true);
+    expect(button.disabled).toBe(true);
+  });
+
+  it("completes the quiz, saves the final score, and returns to the leaderboard", async () => {
+    const leaderboardAfterSave = {
+      [AUTH.uid]: {
+        name: "Taylor",
+        score: 200,
+        timestamp: NOW,
+        fp: "fp-1",
+      },
+    };
+
+    installFetchMock(({ url, method, options }) => {
+      if (
+        method === "GET" &&
+        url.includes(`/leaderboard/${QUIZ_ID}.json?`)
+      ) {
+        const hasSavedScore = global.fetch.mock.calls.some(
+          ([calledUrl, calledOptions]) =>
+            calledUrl === `${DB_URL}/.json?auth=${AUTH.idToken}` &&
+            calledOptions?.method === "PATCH" &&
+            JSON.parse(calledOptions.body || "{}")[
+              `leaderboard/${QUIZ_ID}/${AUTH.uid}`
+            ]
+        );
+        return jsonResponse(hasSavedScore ? leaderboardAfterSave : {});
+      }
+
+      if (
+        method === "PATCH" &&
+        url === `${DB_URL}/machinePrints/${QUIZ_ID}/machine-1.json?auth=${AUTH.idToken}`
+      ) {
+        return jsonResponse("uid-1");
+      }
+
+      if (
+        method === "PUT" &&
+        url === `${DB_URL}/machinePrints/${QUIZ_ID}/machine-1.json?auth=${AUTH.idToken}`
+      ) {
+        return jsonResponse("uid-1");
+      }
+
+      if (
+        method === "PATCH" &&
+        url.includes(`/attempts/${QUIZ_ID}/${AUTH.uid}.json?auth=${AUTH.idToken}`)
+      ) {
+        return jsonResponse({});
+      }
+
+      return undefined;
+    });
+
+    await renderQuizGame();
+    await waitFor(() => Boolean(getButton("Start Quiz")));
+
+    await changeName("Taylor");
+    await waitFor(() => {
+      const button = getButton("Start Quiz");
+      return Boolean(button && !button.disabled);
+    });
+
+    await clickButton("Start Quiz");
+    await waitFor(() => container.textContent.includes("Question 1 of 2"));
+
+    await clickOption("Bravo");
+    await clickButton("Submit Answer");
+    await waitFor(() => container.textContent.includes("Correct!"));
+    expect(container.textContent).toContain("You earned 100 points!");
+
+    await clickButton("Next Question");
+    await waitFor(() => container.textContent.includes("Question 2 of 2"));
+    expect(container.textContent).toContain("Score: 100");
+
+    await clickOption("Three");
+    await clickButton("Submit Answer");
+    await waitFor(() => container.textContent.includes("Correct!"));
+
+    await clickButton("View Results");
+    await waitFor(() => container.textContent.includes("Quiz Complete!"));
+
+    expect(container.textContent).toContain("Taylor, your final score:");
+    expect(container.textContent).toContain("200");
+    expect(localStorage.getItem(`submitted:${QUIZ_ID}`)).toBe("1");
+
+    const rootPatchCalls = global.fetch.mock.calls.filter(
+      ([url, options]) =>
+        url === `${DB_URL}/.json?auth=${AUTH.idToken}` &&
+        options?.method === "PATCH"
+    );
+
+    expect(rootPatchCalls).toHaveLength(2);
+
+    const savePayload = JSON.parse(rootPatchCalls[1][1].body);
+    expect(savePayload[`leaderboard/${QUIZ_ID}/${AUTH.uid}`]).toMatchObject({
+      name: "Taylor",
+      score: 200,
+    });
+    expect(savePayload[`attempts/${QUIZ_ID}/${AUTH.uid}`]).toMatchObject({
+      status: "completed",
+      totalScore: 200,
+      currentQuestion: 1,
+    });
+    expect(container.textContent).toContain("Global Leaderboard");
   });
 
   it("shows the stale-lock message when the browser fingerprint lock points to a missing attempt", async () => {
