@@ -78,3 +78,13 @@ Testing Checklist
 - Second attempt from the same uid is blocked (v1+).
 - Incognito/new uid on same device is blocked after v2 (fp mapping).
 - Duplicate display names (after normalization) are blocked after v2 (nameIndex mapping).
+
+Testing Checklist for v3
+- Start a fresh run and confirm `attempts/{quizId}/{uid}` is created immediately.
+- Confirm `attemptFingerprints/{quizId}/{fp}` is written at the same time as the attempt reservation.
+- Refresh during question 1 and confirm the same run resumes with the timer still progressing.
+- Clear local storage in the same browser and confirm the quiz does not create a fresh run.
+- Finish the quiz and confirm the attempt is marked `completed`.
+- Confirm a completed player cannot start a second run on the same uid.
+- If intro eligibility fails everywhere after publishing rules, verify that `attemptFingerprints` has authenticated read access.
+- If Start fails everywhere after publishing rules, verify that the `attempts` validator still allows nullable/omitted fields like `selectedAnswer`, `questionDeadlineAt`, and `completedAt`.

@@ -42,6 +42,30 @@ How to Upgrade to Rules v3 (reserve attempts at quiz start)
    - refreshing resumes the same run
    - clearing local storage in the same browser no longer allows a fresh start
 
+Post-Deploy Smoke Test for v3
+1) Fresh start
+   - Open a quiz in a clean browser session and click Start.
+   - Confirm the app moves to question 1 without an error.
+   - Confirm Realtime Database now contains both:
+     - `attempts/{quizId}/{uid}`
+     - `attemptFingerprints/{quizId}/{fp}`
+2) Refresh resume
+   - Refresh mid-question.
+   - Confirm the same run resumes on the same question and the timer has continued counting down.
+3) Same-browser replay block
+   - Clear local storage or open a fresh session in the same browser profile.
+   - Confirm the quiz does not start a new run and instead restores or blocks based on the existing reservation.
+4) Save path
+   - Finish the quiz.
+   - Confirm the score is saved, the attempt becomes `completed`, and the player cannot start a second run.
+
+Known v3 Failure Modes
+- `We couldn't verify quiz eligibility right now. Please refresh and try again.`
+  - Likely cause: `attemptFingerprints/{quizId}/{fp}` is missing read access in the published rules.
+- `Could not start the quiz right now. Please try again.`
+  - Likely cause: the published `attempts` validation is out of date and is rejecting nullable fields such as `selectedAnswer`, `questionDeadlineAt`, or `completedAt`.
+- If either message appears after a rules update, republish the full current `docs/firebase-rules.v3.json` rather than merging fragments into the console editor.
+
 Optional: Observe‑Only Machine Prints
 - The app writes `machinePrints/{quizId}/{fpMachine}` separately on a best-effort basis after a successful indexed score save. Rules v2 allow these writes but do not enforce them on leaderboard validation.
 - Use this to measure how many distinct uids share the same machine print before deciding to tighten further.
