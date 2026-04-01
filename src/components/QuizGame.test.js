@@ -998,6 +998,77 @@ describe("QuizGame", () => {
     expect(container.textContent).toContain("200");
   });
 
+  it("keeps the final question recoverable when the first save attempt fails generically", async () => {
+    const leaderboardAfterSave = {
+      [AUTH.uid]: {
+        name: "Taylor",
+        score: 200,
+        timestamp: NOW,
+        fp: "fp-1",
+      },
+    };
+    let saveAttempts = 0;
+
+    installFetchMock(({ url, method, options }) => {
+      if (
+        method === "PATCH" &&
+        url === `${DB_URL}/.json?auth=${AUTH.idToken}` &&
+        JSON.parse(options.body || "{}")[`leaderboard/${QUIZ_ID}/${AUTH.uid}`]
+      ) {
+        saveAttempts += 1;
+        return saveAttempts === 1
+          ? jsonResponse("server exploded", { ok: false, status: 500 })
+          : jsonResponse({});
+      }
+
+      if (method === "GET" && url.includes(`/fingerprints/${QUIZ_ID}/`)) {
+        return jsonResponse(null);
+      }
+
+      if (
+        method === "GET" &&
+        url.includes(`/leaderboard/${QUIZ_ID}.json?`)
+      ) {
+        return jsonResponse(saveAttempts >= 2 ? leaderboardAfterSave : {});
+      }
+
+      if (
+        method === "PATCH" &&
+        url.includes(`/attempts/${QUIZ_ID}/${AUTH.uid}.json?auth=${AUTH.idToken}`)
+      ) {
+        return jsonResponse({});
+      }
+
+      if (
+        method === "PUT" &&
+        url === `${DB_URL}/machinePrints/${QUIZ_ID}/machine-1.json?auth=${AUTH.idToken}`
+      ) {
+        return jsonResponse("uid-1");
+      }
+
+      return undefined;
+    });
+
+    await completeQuizPerfectly("Taylor");
+    await clickButton("View Results");
+
+    await waitFor(() =>
+      container.textContent.includes("Could not save score. Please try again.")
+    );
+
+    expect(container.textContent).toContain("Question 2 of 2");
+    expect(container.textContent).toContain("Try Saving Again");
+    expect(container.textContent).not.toContain("Quiz Complete!");
+    expect(localStorage.getItem(`quizAttempt:${QUIZ_ID}`)).toBeTruthy();
+
+    await clickButton("Try Saving Again");
+    await waitFor(() => container.textContent.includes("Quiz Complete!"));
+
+    expect(container.textContent).toContain("Taylor, your final score:");
+    expect(container.textContent).toContain("200");
+    expect(saveAttempts).toBe(2);
+  });
+
   it("surfaces already-submitted save failures and stores the submitted flag", async () => {
     installFetchMock(({ url, method, options }) => {
       if (

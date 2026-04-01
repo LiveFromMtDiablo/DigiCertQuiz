@@ -167,4 +167,39 @@ describe("firebaseAuth", () => {
 
     await expect(getValidAuth()).rejects.toThrow("Anonymous sign-in failed");
   });
+
+  it("deduplicates concurrent anonymous sign-in requests", async () => {
+    let resolveFetch;
+    global.fetch.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        })
+    );
+
+    const firstAuthPromise = getValidAuth();
+    const secondAuthPromise = getValidAuth();
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+
+    resolveFetch(
+      jsonResponse({
+        localId: "uid-shared",
+        idToken: "token-shared",
+        refreshToken: "refresh-shared",
+        expiresIn: "3600",
+      })
+    );
+
+    const [firstAuth, secondAuth] = await Promise.all([firstAuthPromise, secondAuthPromise]);
+
+    expect(firstAuth).toEqual({
+      uid: "uid-shared",
+      idToken: "token-shared",
+      refreshToken: "refresh-shared",
+      expiresAt: NOW + 3_600_000 - 30_000,
+    });
+    expect(secondAuth).toEqual(firstAuth);
+    expect(JSON.parse(localStorage.getItem(AUTH_STORAGE_KEY))).toEqual(firstAuth);
+  });
 });

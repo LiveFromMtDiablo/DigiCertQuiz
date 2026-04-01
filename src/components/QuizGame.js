@@ -709,6 +709,7 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
       }
 
       setError(failure.message);
+      return failure;
     };
 
     try {
@@ -783,6 +784,8 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
           }
         } catch (_) {}
 
+        setError("");
+
         // Machine prints are observe-only today, so they must not break score saves.
         try {
           const machinePrintResponse = await writeMachinePrintObservation({
@@ -806,21 +809,31 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
             error: machinePrintError?.message || String(machinePrintError),
           });
         }
+
+        return { ok: true, failure: null };
       } else {
         let errText = "";
         try {
           errText = await response.text();
         } catch (_) {}
-        await applySaveFailure({
+        const failure = await applySaveFailure({
           responseStatus: response.status,
           responseBody: errText,
         });
+        return {
+          ok: failure.reason === "already_submitted",
+          failure,
+        };
       }
     } catch (err) {
-      await applySaveFailure({
+      const failure = await applySaveFailure({
         responseStatus: err?.status || 0,
         sourceError: err,
       });
+      return {
+        ok: failure.reason === "already_submitted",
+        failure,
+      };
     }
   };
 
@@ -1236,8 +1249,10 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
       // Final score already includes the last question if correct
       const finalScore = totalScore;
       setFinalScoreValue(finalScore);
-      await saveScore(playerName, finalScore);
-      setScreen("leaderboard");
+      const saveResult = await saveScore(playerName, finalScore);
+      if (saveResult?.ok) {
+        setScreen("leaderboard");
+      }
     }
   };
 
@@ -1442,6 +1457,11 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
           )}
 
           <div className="mb-6">
+            {error && (
+              <div className="mb-4 rounded-lg border border-red-300 bg-red-100 px-4 py-3 text-red-800">
+                {error}
+              </div>
+            )}
             <div className="text-sm text-gray-600 mb-2">
               Question {currentQuestion + 1} of {activeQuestions.length}
             </div>
@@ -1516,7 +1536,11 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
               onClick={handleNextQuestion}
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-lg font-semibold text-lg hover:from-blue-700 hover:to-purple-700 transition-all"
             >
-              {currentQuestion < (gameQuestions ? gameQuestions.length : questions.length) - 1 ? "Next Question" : "View Results"}
+              {currentQuestion < (gameQuestions ? gameQuestions.length : questions.length) - 1
+                ? "Next Question"
+                : error
+                  ? "Try Saving Again"
+                  : "View Results"}
             </button>
           )}
         </div>

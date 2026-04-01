@@ -2,6 +2,7 @@ import { firebaseConfig } from "./firebaseConfig";
 
 const API_KEY = firebaseConfig.apiKey;
 export const AUTH_STORAGE_KEY = "firebaseAuth";
+let inFlightAuthPromise = null;
 
 function loadAuth() {
   try {
@@ -68,15 +69,44 @@ export async function getValidAuth() {
   if (auth && auth.idToken && auth.expiresAt && auth.expiresAt > Date.now() + 5_000) {
     return auth;
   }
-  // Try refresh
-  if (auth && auth.refreshToken) {
-    try {
-      auth = await refreshIdToken(auth.refreshToken);
-      return auth;
-    } catch (_) {
-      // fall through to sign-in
+
+  if (inFlightAuthPromise) {
+    return await inFlightAuthPromise;
+  }
+
+  const authRequestPromise = (async () => {
+    // Re-read after taking the lock in case another caller finished first.
+    let currentAuth = loadAuth();
+    if (
+      currentAuth &&
+      currentAuth.idToken &&
+      currentAuth.expiresAt &&
+      currentAuth.expiresAt > Date.now() + 5_000
+    ) {
+      return currentAuth;
+    }
+
+    // Try refresh
+    if (currentAuth && currentAuth.refreshToken) {
+      try {
+        currentAuth = await refreshIdToken(currentAuth.refreshToken);
+        return currentAuth;
+      } catch (_) {
+        // fall through to sign-in
+      }
+    }
+
+    // Fresh anonymous sign-in
+    return await signInAnonymously();
+  })();
+
+  inFlightAuthPromise = authRequestPromise;
+
+  try {
+    return await authRequestPromise;
+  } finally {
+    if (inFlightAuthPromise === authRequestPromise) {
+      inFlightAuthPromise = null;
     }
   }
-  // Fresh anonymous sign-in
-  return await signInAnonymously();
 }
