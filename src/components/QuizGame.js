@@ -149,6 +149,10 @@ async function readProtectedData(path, idToken) {
   return response.json();
 }
 
+function isRestorableServerAttempt(attempt) {
+  return Boolean(attempt && attempt.status !== ATTEMPT_STATUS_COMPLETED);
+}
+
 export default function QuizGame({ quizId, title, questions, maxTime = 100, intro }) {
   const [screen, setScreen] = useState("intro");
   const [playerName, setPlayerName] = useState("");
@@ -418,13 +422,67 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
 
   async function fetchOwnAttempt() {
     const { uid, idToken } = await getValidAuth();
+    return fetchAttemptByUid(uid, idToken);
+  }
+
+  async function fetchAttemptByUid(uid, idToken) {
+    if (!uid) {
+      return { res: null, data: null, uid: null };
+    }
+
     const res = await fetch(
       `${DB_URL}/attempts/${quizId}/${uid}.json?auth=${encodeURIComponent(idToken)}&t=${Date.now()}`,
       { cache: "no-store" }
     );
-    if (!res.ok) return { res, data: null };
+    if (!res.ok) return { res, data: null, uid };
     const data = await res.json();
-    return { res, data };
+    return { res, data, uid };
+  }
+
+  async function fetchFingerprintLockedAttempt(idToken, fp) {
+    if (!fp) {
+      return { ownerUid: null, attemptResult: null };
+    }
+
+    const ownerUid = await readProtectedData(
+      `attemptFingerprints/${quizId}/${fp}`,
+      idToken
+    );
+    if (!ownerUid) {
+      return { ownerUid: null, attemptResult: null };
+    }
+
+    const attemptResult = await fetchAttemptByUid(ownerUid, idToken);
+    return { ownerUid, attemptResult };
+  }
+
+  function chooseCanonicalAttempt(candidates) {
+    const validCandidates = (candidates || []).filter((candidate) => {
+      if (!candidate?.attempt) return false;
+      if (candidate.source === "local") {
+        return isValidQuestionSet(candidate.attempt.gameQuestions);
+      }
+      return isRestorableServerAttempt(candidate.attempt) && parseQuestionSet(candidate.attempt.questionSet);
+    });
+
+    if (validCandidates.length === 0) return null;
+
+    if (validCandidates.length > 1) {
+      console.warn("Multiple attempt snapshots found; restoring the most recent one.", {
+        quizId,
+        sources: validCandidates.map((candidate) => candidate.source),
+      });
+    }
+
+    validCandidates.sort((left, right) => {
+      const leftUpdatedAt =
+        Number(left.attempt.updatedAt) || Number(left.attempt.createdAt) || 0;
+      const rightUpdatedAt =
+        Number(right.attempt.updatedAt) || Number(right.attempt.createdAt) || 0;
+      return rightUpdatedAt - leftUpdatedAt;
+    });
+
+    return validCandidates[0];
   }
 
   async function createServerAttempt({
@@ -713,12 +771,15 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
         const localAttempt = loadStoredAttempt(quizId);
         const { uid, idToken } = await getValidAuth();
         if (cancelled) return;
+        const fp = await getDeviceFingerprint(quizId);
+        if (cancelled) return;
 
-        const [leaderboardRes, attemptResult] = await Promise.all([
+        const [leaderboardRes, ownAttemptResult, fingerprintLocked] = await Promise.all([
           fetch(`${DB_URL}/leaderboard/${quizId}/${uid}.json?auth=${encodeURIComponent(idToken)}`, {
             cache: "no-store",
           }),
-          localAttempt ? Promise.resolve(null) : fetchOwnAttempt(),
+          fetchAttemptByUid(uid, idToken),
+          fetchFingerprintLockedAttempt(idToken, fp),
         ]);
 
         if (cancelled) return;
@@ -728,12 +789,39 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
           if (data) setAlreadySubmitted(true);
         }
 
-        if (!localAttempt && attemptResult?.res?.ok && attemptResult.data) {
-          const status = attemptResult.data.status;
-          if (status !== ATTEMPT_STATUS_COMPLETED) {
-            restoreServerAttempt(attemptResult.data);
+        const canonicalAttempt = chooseCanonicalAttempt([
+          localAttempt ? { source: "local", attempt: localAttempt } : null,
+          ownAttemptResult?.data
+            ? { source: "server-own", attempt: ownAttemptResult.data, uid: ownAttemptResult.uid }
+            : null,
+          fingerprintLocked?.attemptResult?.data
+            ? {
+                source: "server-fingerprint",
+                attempt: fingerprintLocked.attemptResult.data,
+                uid: fingerprintLocked.ownerUid,
+              }
+            : null,
+        ]);
+
+        if (canonicalAttempt?.source === "local") {
+          restoreStoredAttempt(canonicalAttempt.attempt);
+        } else if (canonicalAttempt?.attempt) {
+          if (localAttempt && canonicalAttempt.source !== "local") {
+            clearStoredAttempt(quizId);
           }
+          restoreServerAttempt(canonicalAttempt.attempt);
+        } else if (
+          !localAttempt &&
+          fingerprintLocked?.ownerUid &&
+          !fingerprintLocked?.attemptResult?.data
+        ) {
+          setEligibilityStatus("error");
+          setError(
+            "This browser has a stale saved-attempt lock for this quiz. Please contact the quiz organizer to clear it."
+          );
+          return;
         }
+
         if (!cancelled) {
           setEligibilityStatus("ready");
         }
@@ -918,9 +1006,28 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
         return;
       }
 
-      const ownAttempt = await fetchOwnAttempt();
-      if (ownAttempt.res?.ok && ownAttempt.data && ownAttempt.data.status !== ATTEMPT_STATUS_COMPLETED) {
-        restoreServerAttempt(ownAttempt.data);
+      const auth = await getValidAuth();
+      const fp = await getDeviceFingerprint(quizId);
+      const [ownAttempt, fingerprintLocked] = await Promise.all([
+        fetchAttemptByUid(auth.uid, auth.idToken),
+        fetchFingerprintLockedAttempt(auth.idToken, fp),
+      ]);
+
+      const canonicalAttempt = chooseCanonicalAttempt([
+        ownAttempt?.data
+          ? { source: "server-own", attempt: ownAttempt.data, uid: ownAttempt.uid }
+          : null,
+        fingerprintLocked?.attemptResult?.data
+          ? {
+              source: "server-fingerprint",
+              attempt: fingerprintLocked.attemptResult.data,
+              uid: fingerprintLocked.ownerUid,
+            }
+          : null,
+      ]);
+
+      if (canonicalAttempt?.attempt) {
+        restoreServerAttempt(canonicalAttempt.attempt);
         return;
       }
 
@@ -944,9 +1051,15 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
         return;
       }
 
-      setError(
-        "This browser already has an in-progress attempt for this quiz. Resume the original session to continue."
-      );
+      if (fingerprintLocked?.ownerUid && !fingerprintLocked?.attemptResult?.data) {
+        setError(
+          "This browser has a stale saved-attempt lock for this quiz. Please contact the quiz organizer to clear it."
+        );
+      } else {
+        setError(
+          "This browser already has an in-progress attempt for this quiz, but we couldn't restore it automatically. Please refresh once and try again."
+        );
+      }
     } catch (err) {
       console.error("Error creating attempt:", err);
       setError("Could not start the quiz right now. Please try again.");
