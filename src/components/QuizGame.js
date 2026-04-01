@@ -3,14 +3,26 @@ import { Clock, CheckCircle, XCircle, Trophy } from "lucide-react";
 import { DB_URL } from "../services/firebaseConfig";
 import { getValidAuth } from "../services/firebaseAuth";
 import { sortLeaderboardEntries } from "../utils/leaderboardSort";
+import {
+  NAME_REGEX,
+  sanitizeName,
+  toNameSlug,
+  classifyNameConflict,
+  classifySaveFailure,
+  ELIGIBILITY_CHECKING_MESSAGE,
+  ELIGIBILITY_ERROR_MESSAGE,
+} from "../utils/quizEligibility";
+import {
+  clampQuizScore,
+  buildIndexedScorePayload,
+  writeIndexedScoreSubmission,
+  writeMachinePrintObservation,
+} from "../utils/quizSubmission";
 
-// Simple name validation (2–30 allowed characters)
-const NAME_REGEX = /^[A-Za-z0-9 .,'_-]{2,30}$/;
 const TROPHY_COLORS = ["text-yellow-500", "text-gray-400", "text-orange-500"];
 const QUIZ_ATTEMPT_STORAGE_VERSION = 1;
 const ATTEMPT_STATUS_IN_PROGRESS = "in_progress";
 const ATTEMPT_STATUS_COMPLETED = "completed";
-const sanitizeName = (s) => s.trim().replace(/\s+/g, " ");
 
 const SCREEN_BACKGROUND_STYLE = {
   backgroundImage:
@@ -48,6 +60,95 @@ function clearStoredAttempt(quizId) {
   } catch (_) {}
 }
 
+async function sha256Hex(input) {
+  const enc = new TextEncoder();
+  const data = enc.encode(input);
+  if (typeof crypto === "undefined" || !crypto.subtle) {
+    // Fallback non-crypto hash (should rarely run)
+    let h = 5381;
+    for (let i = 0; i < data.length; i++) h = ((h << 5) + h) + data[i];
+    return (h >>> 0).toString(16).padStart(8, "0");
+  }
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  const bytes = new Uint8Array(digest);
+  return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function getDeviceFingerprint(salt) {
+  try {
+    const nav = typeof navigator !== "undefined" ? navigator : {};
+    const scr = typeof screen !== "undefined" ? screen : {};
+    const tz =
+      (Intl &&
+        Intl.DateTimeFormat &&
+        Intl.DateTimeFormat().resolvedOptions().timeZone) ||
+      "";
+    const parts = [
+      String(salt || ""),
+      String(nav.userAgent || ""),
+      String(nav.platform || ""),
+      String(nav.language || ""),
+      String(tz || ""),
+      String(scr.width || 0),
+      String(scr.height || 0),
+      String(scr.colorDepth || 0),
+      String(typeof devicePixelRatio !== "undefined" ? devicePixelRatio : 1),
+      String(nav.hardwareConcurrency || 0),
+      String(nav.deviceMemory || 0),
+      String("ontouchstart" in (typeof window !== "undefined" ? window : {})),
+    ];
+    return sha256Hex(parts.join("|"));
+  } catch (_) {
+    return sha256Hex(`fallback|${salt}|${Date.now()}`);
+  }
+}
+
+async function getMachineFingerprint(salt) {
+  // Browser-agnostic: exclude userAgent to approximate machine identity across browsers
+  try {
+    const nav = typeof navigator !== "undefined" ? navigator : {};
+    const scr = typeof screen !== "undefined" ? screen : {};
+    const tz =
+      (Intl &&
+        Intl.DateTimeFormat &&
+        Intl.DateTimeFormat().resolvedOptions().timeZone) ||
+      "";
+    const parts = [
+      String(salt || ""),
+      String(nav.platform || ""),
+      String(nav.language || ""),
+      String(tz || ""),
+      String(scr.width || 0),
+      String(scr.height || 0),
+      String(scr.colorDepth || 0),
+      String(typeof devicePixelRatio !== "undefined" ? devicePixelRatio : 1),
+      String(nav.hardwareConcurrency || 0),
+      String(nav.deviceMemory || 0),
+      String("ontouchstart" in (typeof window !== "undefined" ? window : {})),
+    ];
+    return sha256Hex(parts.join("|"));
+  } catch (_) {
+    return sha256Hex(`fallbackMachine|${salt}|${Date.now()}`);
+  }
+}
+
+async function readProtectedData(path, idToken) {
+  const response = await fetch(
+    `${DB_URL}/${path}.json?auth=${encodeURIComponent(idToken)}&t=${Date.now()}`,
+    {
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    const error = new Error(`Failed to read ${path}`);
+    error.status = response.status;
+    throw error;
+  }
+
+  return response.json();
+}
+
 export default function QuizGame({ quizId, title, questions, maxTime = 100, intro }) {
   const [screen, setScreen] = useState("intro");
   const [playerName, setPlayerName] = useState("");
@@ -66,7 +167,7 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
   const [gameQuestions, setGameQuestions] = useState(null);
   const [resumeNotice, setResumeNotice] = useState("");
   const [attemptCreatedAt, setAttemptCreatedAt] = useState(null);
-  const [isCheckingEligibility, setIsCheckingEligibility] = useState(true);
+  const [eligibilityStatus, setEligibilityStatus] = useState("checking");
   const [isStartingAttempt, setIsStartingAttempt] = useState(false);
 
   // Secure RNG and shuffle helpers (per-session order randomization)
@@ -144,77 +245,6 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
       return { ...q, options: newOptions, correctAnswer: newCorrect };
     });
     return shuffleArray(remapped);
-  }
-
-  function toNameSlug(s) {
-    const clean = sanitizeName(s).toLowerCase();
-    const collapsed = clean.replace(/\s+/g, " ");
-    const stripped = collapsed.replace(/[^a-z0-9 ]+/g, "");
-    return stripped.replace(/\s+/g, "-");
-  }
-
-  async function sha256Hex(input) {
-    const enc = new TextEncoder();
-    const data = enc.encode(input);
-    if (typeof crypto === "undefined" || !crypto.subtle) {
-      // Fallback non-crypto hash (should rarely run)
-      let h = 5381;
-      for (let i = 0; i < data.length; i++) h = ((h << 5) + h) + data[i];
-      return (h >>> 0).toString(16).padStart(8, "0");
-    }
-    const digest = await crypto.subtle.digest("SHA-256", data);
-    const bytes = new Uint8Array(digest);
-    return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
-  }
-
-  async function getDeviceFingerprint(salt) {
-    try {
-      const nav = typeof navigator !== "undefined" ? navigator : {};
-      const scr = typeof screen !== "undefined" ? screen : {};
-      const tz = (Intl && Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions().timeZone) || "";
-      const parts = [
-        String(salt || ""),
-        String(nav.userAgent || ""),
-        String(nav.platform || ""),
-        String(nav.language || ""),
-        String(tz || ""),
-        String(scr.width || 0),
-        String(scr.height || 0),
-        String(scr.colorDepth || 0),
-        String(typeof devicePixelRatio !== "undefined" ? devicePixelRatio : 1),
-        String(nav.hardwareConcurrency || 0),
-        String(nav.deviceMemory || 0),
-        String("ontouchstart" in (typeof window !== "undefined" ? window : {})),
-      ];
-      return await sha256Hex(parts.join("|"));
-    } catch (_) {
-      return await sha256Hex(`fallback|${salt}|${Date.now()}`);
-    }
-  }
-
-  async function getMachineFingerprint(salt) {
-    // Browser-agnostic: exclude userAgent to approximate machine identity across browsers
-    try {
-      const nav = typeof navigator !== "undefined" ? navigator : {};
-      const scr = typeof screen !== "undefined" ? screen : {};
-      const tz = (Intl && Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions().timeZone) || "";
-      const parts = [
-        String(salt || ""),
-        String(nav.platform || ""),
-        String(nav.language || ""),
-        String(tz || ""),
-        String(scr.width || 0),
-        String(scr.height || 0),
-        String(scr.colorDepth || 0),
-        String(typeof devicePixelRatio !== "undefined" ? devicePixelRatio : 1),
-        String(nav.hardwareConcurrency || 0),
-        String(nav.deviceMemory || 0),
-        String("ontouchstart" in (typeof window !== "undefined" ? window : {})),
-      ];
-      return await sha256Hex(parts.join("|"));
-    } catch (_) {
-      return await sha256Hex(`fallbackMachine|${salt}|${Date.now()}`);
-    }
   }
 
   function restoreStoredAttempt(attempt) {
@@ -450,7 +480,6 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
       console.warn("Attempt sync failed:", err);
     }
   }
-
   // Load leaderboard for this quiz
   const loadLeaderboard = useCallback(async () => {
     try {
@@ -480,39 +509,84 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
 
   // Save score for this quiz
   const saveScore = async (name, score) => {
-    try {
-      // Prevent obvious repeat submissions per quiz (client-side guard)
-      try {
-        if (
-          typeof localStorage !== "undefined" &&
-          localStorage.getItem(`submitted:${quizId}`)
-        ) {
-          return;
-        }
-      } catch (_) {}
+    let auth = null;
+    let fp = null;
+    const nameSlug = toNameSlug(name);
 
+    const applySaveFailure = async ({
+      responseStatus,
+      responseBody = "",
+      sourceError = null,
+    }) => {
+      let existingSubmission = null;
+      let nameIndexOwner = null;
+      let fingerprintOwner = null;
+
+      try {
+        auth = auth || (await getValidAuth());
+        fp = fp || (await getDeviceFingerprint(quizId));
+        [existingSubmission, nameIndexOwner, fingerprintOwner] = await Promise.all([
+          readProtectedData(`leaderboard/${quizId}/${auth.uid}`, auth.idToken),
+          readProtectedData(`nameIndex/${quizId}/${nameSlug}`, auth.idToken),
+          readProtectedData(`fingerprints/${quizId}/${fp}`, auth.idToken),
+        ]);
+      } catch (classificationError) {
+        console.error("Error classifying save failure:", classificationError);
+      }
+
+      const failure = classifySaveFailure({
+        uid: auth?.uid,
+        existingSubmission,
+        nameIndexOwner,
+        fingerprintOwner,
+        responseStatus,
+      });
+
+      console.error("Save failed:", {
+        quizId,
+        responseStatus,
+        responseBody,
+        failure,
+        existingSubmission: Boolean(existingSubmission),
+        nameIndexOwner,
+        fingerprintOwner,
+        uid: auth?.uid,
+        nameSlug,
+        sourceError: sourceError?.message || null,
+      });
+
+      if (failure.reason === "already_submitted") {
+        setAlreadySubmitted(true);
+        try {
+          if (typeof localStorage !== "undefined") {
+            localStorage.setItem(`submitted:${quizId}`, "1");
+          }
+        } catch (_) {}
+      }
+
+      setError(failure.message);
+    };
+
+    try {
       // Clamp score to a safe maximum (respect shuffled set length)
       const activeQuestions = gameQuestions || questions;
       const maxPossible = maxTime * activeQuestions.length;
-      const safeScore = Math.max(0, Math.min(score, maxPossible));
+      const safeScore = clampQuizScore(score, maxPossible);
 
       // Ensure authenticated uid and token for protected write
-      const { idToken, uid } = await getValidAuth();
-      const fp = await getDeviceFingerprint(quizId);
+      auth = await getValidAuth();
+      const { idToken, uid } = auth;
+      fp = await getDeviceFingerprint(quizId);
       const fpMachine = await getMachineFingerprint(quizId);
-      const nameSlug = toNameSlug(name);
 
-      const updates = {};
-      updates[`leaderboard/${quizId}/${uid}`] = {
-        name: name,
+      const updates = buildIndexedScorePayload({
+        quizId,
+        uid,
+        name,
         nameSlug,
         score: safeScore,
-        // Use server timestamp to avoid client clock skew
-        timestamp: { ".sv": "timestamp" },
         fp,
-      };
-      updates[`nameIndex/${quizId}/${nameSlug}`] = uid;
-      updates[`fingerprints/${quizId}/${fp}`] = uid;
+      });
       // Observe-only machine-level print (no enforcement in rules yet)
       updates[`machinePrints/${quizId}/${fpMachine}`] = uid;
       if (gameQuestions) {
@@ -536,14 +610,11 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
         updates[`attemptFingerprints/${quizId}/${fp}`] = uid;
       }
 
-      let response = await fetch(
-        `${DB_URL}/.json?auth=${encodeURIComponent(idToken)}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(updates),
-        }
-      );
+      let response = await writeIndexedScoreSubmission({
+        dbUrl: DB_URL,
+        idToken,
+        payload: updates,
+      });
 
       if (!response.ok && (response.status === 401 || response.status === 403)) {
         // Likely rules v1 without permissions for nameIndex/fingerprints.
@@ -567,20 +638,45 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
             setAlreadySubmitted(true);
           }
         } catch (_) {}
-      } else {
+
+        // Machine prints are observe-only today, so they must not break score saves.
         try {
-          const errText = await response.text();
-          console.error("Save failed:", response.status, errText);
-        } catch (_) {}
-        if (response.status === 401 || response.status === 403) {
-          setError("Could not save score. Please only play each quiz once to keep scoring fair!");
-        } else {
-          setError("Could not save score. Please try again.");
+          const machinePrintResponse = await writeMachinePrintObservation({
+            dbUrl: DB_URL,
+            idToken,
+            quizId,
+            uid,
+            fpMachine,
+          });
+          if (!machinePrintResponse.ok) {
+            console.warn("Machine print observation failed:", {
+              quizId,
+              uid,
+              status: machinePrintResponse.status,
+            });
+          }
+        } catch (machinePrintError) {
+          console.warn("Machine print observation failed:", {
+            quizId,
+            uid,
+            error: machinePrintError?.message || String(machinePrintError),
+          });
         }
+      } else {
+        let errText = "";
+        try {
+          errText = await response.text();
+        } catch (_) {}
+        await applySaveFailure({
+          responseStatus: response.status,
+          responseBody: errText,
+        });
       }
     } catch (err) {
-      console.error("Error saving score:", err);
-      setError("Could not save score. Please only play each quiz once to keep scoring fair!");
+      await applySaveFailure({
+        responseStatus: err?.status || 0,
+        sourceError: err,
+      });
     }
   };
 
@@ -591,7 +687,7 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
   }, [screen, loadLeaderboard]);
 
   useEffect(() => {
-    setIsCheckingEligibility(true);
+    setEligibilityStatus("checking");
     resetGameState("intro");
     restoreStoredAttempt(loadStoredAttempt(quizId));
   }, [quizId]);
@@ -609,6 +705,9 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
   // Also check the server for an existing score or resumable attempt for this uid
   useEffect(() => {
     let cancelled = false;
+    setAlreadySubmitted(false);
+    setError("");
+
     (async () => {
       try {
         const localAttempt = loadStoredAttempt(quizId);
@@ -635,9 +734,14 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
             restoreServerAttempt(attemptResult.data);
           }
         }
-      } catch (_) {}
-      if (!cancelled) {
-        setIsCheckingEligibility(false);
+        if (!cancelled) {
+          setEligibilityStatus("ready");
+        }
+      } catch (err) {
+        if (cancelled) return;
+        console.error("Error checking eligibility:", err);
+        setEligibilityStatus("error");
+        setError(ELIGIBILITY_ERROR_MESSAGE);
       }
     })();
     return () => {
@@ -736,14 +840,18 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
     const timer = setTimeout(() => setResumeNotice(""), 5000);
     return () => clearTimeout(timer);
   }, [resumeNotice, screen]);
-
   const handleStart = async () => {
     const clean = sanitizeName(playerName);
     if (!NAME_REGEX.test(clean)) {
       setError("Please enter a valid name (2–30 characters).");
       return;
     }
-    if (isCheckingEligibility || isStartingAttempt) {
+    if (eligibilityStatus === "checking") {
+      setError(ELIGIBILITY_CHECKING_MESSAGE);
+      return;
+    }
+    if (eligibilityStatus === "error" || isStartingAttempt) {
+      setError(ELIGIBILITY_ERROR_MESSAGE);
       return;
     }
     // Prevent using an existing leaderboard name (case-insensitive exact match)
@@ -769,6 +877,22 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
 
     try {
       const nameSlug = toNameSlug(clean);
+      try {
+        const auth = await getValidAuth();
+        const nameIndexOwner = await readProtectedData(
+          `nameIndex/${quizId}/${nameSlug}`,
+          auth.idToken
+        );
+        const nameConflict = classifyNameConflict({
+          uid: auth.uid,
+          nameIndexOwner,
+        });
+        if (nameConflict.reason) {
+          setError(nameConflict.message);
+          return;
+        }
+      } catch (_) {}
+
       const { response, attemptRecord } = await createServerAttempt({
         name: clean,
         nameSlug,
@@ -946,9 +1070,9 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
             </div>
           )}
 
-          {isCheckingEligibility && (
+          {eligibilityStatus === "checking" && (
             <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded mb-4">
-              Checking whether this browser already has a saved quiz attempt...
+              {ELIGIBILITY_CHECKING_MESSAGE}
             </div>
           )}
 
@@ -1017,10 +1141,15 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
             />
             <button
               onClick={handleStart}
-              disabled={!playerName.trim() || alreadySubmitted || isCheckingEligibility || isStartingAttempt}
+              disabled={
+                !playerName.trim() ||
+                alreadySubmitted ||
+                eligibilityStatus !== "ready" ||
+                isStartingAttempt
+              }
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-lg font-semibold text-lg hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isCheckingEligibility
+              {eligibilityStatus === "checking"
                 ? "Checking eligibility..."
                 : isStartingAttempt
                   ? "Starting securely..."

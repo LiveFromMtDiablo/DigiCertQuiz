@@ -27,6 +27,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "test:quizzes": "react-scripts test --env=jsdom --runTestsByPath src/quizzes/registry.test.js --watchAll=false",
+    "audit:quiz": "node scripts/quiz-integrity-audit.js",
     "eject": "react-scripts eject"
   },
   "browserslist": [

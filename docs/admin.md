@@ -43,7 +43,7 @@ How to Upgrade to Rules v3 (reserve attempts at quiz start)
    - clearing local storage in the same browser no longer allows a fresh start
 
 Optional: Observe‑Only Machine Prints
-- The app writes `machinePrints/{quizId}/{fpMachine}` alongside `fingerprints`. Rules v2 allow these writes but do not enforce them on leaderboard validation.
+- The app writes `machinePrints/{quizId}/{fpMachine}` separately on a best-effort basis after a successful indexed score save. Rules v2 allow these writes but do not enforce them on leaderboard validation.
 - Use this to measure how many distinct uids share the same machine print before deciding to tighten further.
 
 Free a Device (fingerprint) to Allow a Replay (v2)
@@ -115,4 +115,4 @@ Restore / Manually Add a Leaderboard Entry
 4) If you’re on v2, also restore the indexes so uniqueness/anti-replay behavior matches the app:
    - `nameIndex/{quizId}/{nameSlug}` = `uid`
    - `fingerprints/{quizId}/{fp}` = `uid`
-   - `machinePrints/{quizId}/{fpMachine}` = `uid` (optional/observe-only unless you enforce it)
+   - `machinePrints/{quizId}/{fpMachine}` = `uid` (optional/observe-only unless you enforce it and only if you know the machine print)
