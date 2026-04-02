@@ -44,30 +44,7 @@ npm test -- --runTestsByPath src/components/QuizGame.test.js --watchAll=false
 
 Coverage output is written to `/coverage`. Open `coverage/lcov-report/index.html` for the HTML report after running `npm run test:coverage`.
 
-Current automated-test snapshot as of April 1, 2026:
-
-- 8 passing Jest suites
-- 41 passing tests
-- Coverage:
-  - 68.49% statements
-  - 58.65% branches
-  - 72.79% functions
-  - 69.84% lines
-
-Areas with strong coverage:
-
-- `src/components/QuizGame.js`
-- `src/services/firebaseAuth.js`
-- `src/App.js`
-- `src/utils/*`
-- `src/quizzes/*`
-
-Next obvious coverage targets are the standalone leaderboard screens:
-
-- `src/components/FullLeaderboard.js`
-- `src/components/CumulativeMergedLeaderboard.js`
-
-Current coverage specifically includes the localhost-only dev fingerprint reset flow:
+Coverage currently includes the localhost-only dev fingerprint reset flow:
 
 - reset helper visibility on localhost
 - clearing cached auth and quiz locks
@@ -108,8 +85,11 @@ node scripts/cumulative-leaderboard.js \
 
 More details: `docs/cumulative-leaderboard.md`
 
-## Turnkey Handoff
+## Operations Docs
 
-For a step-by-step guide to setting up a fresh copy of this quiz stack on **GitHub**, **Vercel**, and **Firebase** (and then handing it over to a non-engineering team), see:
+The main runbooks live here:
 
-- `docs/turnkey-handoff.md`
+- `docs/turnkey-handoff.md` for full-stack setup and owner handoff
+- `docs/admin.md` for Firebase admin tasks and support fixes
+- `docs/hardening.md` for anti-replay and rules rollout context
+- `docs/cumulative-leaderboard.md` for cumulative leaderboard generation

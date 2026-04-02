@@ -10,14 +10,17 @@ This guide walks marketing and product teams through creating, registering, and 
 2. Save the new quiz file inside `src/quizzes/` (not repo root).
 3. Update quiz metadata, timer, and questions.
 4. Register the quiz in [`index.js`](./index.js).
-5. Set [`currentQuizId`](./index.js) now, or leave it on the current live quiz until launch day.
-6. Run `npm run test:quizzes` to validate structure and registration.
-7. Smoke test the quiz locally and publish.
+5. Decide whether the quiz is only staged or should go live immediately.
+6. Update [`currentQuizId`](./index.js) only when the new quiz should become the default live route.
+7. Run `npm run test:quizzes` to validate structure and registration.
+8. Smoke test the quiz locally and publish.
 
 ## Launch Timing Note
 
 - If next week's quiz should be staged but not live yet, keep `currentQuizId` pointing to the currently live quiz.
 - On launch day, flip `currentQuizId` to the new quiz ID and deploy.
+- Registering a quiz in the `quizzes` map does not make it the default live quiz by itself.
+- You can still preview a staged quiz directly at `/quiz/{quizId}` before launch.
 
 ## Step-by-Step Instructions
 
@@ -104,11 +107,35 @@ This command ensures:
    - Note: Questions and their options are shuffled per session; the content is identical for all players.
 4. Verify that the new quiz is the default redirect if you updated `currentQuizId`.
 
+### 5.1 Launch-Day Checklist
+
+Before flipping `currentQuizId` or merging to production, confirm:
+
+- the quiz file name, exported `id`, and registry key all match
+- the intro copy and title are final
+- the timer feels right for the difficulty level
+- every question has the intended correct answer after review
+- the direct route `/quiz/{quizId}` works in preview or localhost
+- `npm run test:quizzes` passes
+
+After production deploy, confirm:
+
+- `/quiz/{quizId}` loads in production
+- `/` redirects to the expected live quiz
+- a test submission reaches the leaderboard if you are doing an end-to-end launch check
+- the previous week's quiz is still reachable directly if needed
+
 ### 6. Commit and Deploy
 
 1. Stage changes in GitHub Desktop (or your preferred tool).
 2. Commit with a message like `Add Week N: Topic quiz`.
 3. Push to `dev` for preview, test the Vercel URL, then merge into `main`.
+
+Recommended release pattern:
+
+- Add and register the quiz early
+- Keep `currentQuizId` on the current live quiz while content is being reviewed
+- Flip `currentQuizId` in a small, explicit launch commit when the quiz should go live
 
 ## Display Name Policy
 
@@ -118,6 +145,7 @@ Leaderboard entries enforce unique display names per quiz to keep scores attribu
 
 - **`npm run test:quizzes` fails**: read the error message-it typically reports the file or field that's missing.
 - **Quiz 404s in the browser**: ensure the quiz ID matches in the file name, `id` field, and registry entry.
+- **The new quiz exists but `/` still goes to the previous week**: update `currentQuizId` in `src/quizzes/index.js` and redeploy.
 - **Build fails with `Can't resolve './week-XX-...'`**: make sure the quiz file is under `src/quizzes/` and the import in `src/quizzes/index.js` matches the filename slug.
 - **`react-scripts: command not found`**: run `npm install` from the project root (`/Users/j.pace.admin/Documents/GitHub/DigiCertQuiz`).
 - **Timer appears incorrect**: verify the `maxTime` value in your quiz file.

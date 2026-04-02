@@ -1,5 +1,9 @@
 Bug-Fixing Sprint: Score Submission False Positives
 
+Historical note
+- This file is a dated sprint artifact from March 2026, not the current operating runbook.
+- For current guidance, use `docs/admin.md`, `docs/hardening.md`, and `docs/turnkey-handoff.md`.
+
 Sprint Date
 - Target start: March 28, 2026
 - Duration: 1 working day for diagnosis + first fixes, with follow-up if production data shows wider impact
@@ -217,28 +221,3 @@ Testing Snapshot (April 1, 2026)
   - `src/utils/quizSubmission.js`
 
 Follow-On Backlog
-
-P1: Add component tests for the leaderboard views
-- Target `src/components/FullLeaderboard.js`
-- Target `src/components/CumulativeMergedLeaderboard.js`
-- Cover:
-  - route parameter handling
-  - loading and empty states
-  - successful data rendering
-  - error states
-
-P1: Add a true browser-level refresh/resume test
-- Exercise the highest-value real flow end to end:
-  - start quiz
-  - refresh tab
-  - resume same run
-  - finish and save
-- This remains the most realistic anti-cheat regression test not yet automated.
-
-P2: Close the remaining `QuizGame.js` branch gaps
-- Focus on lower-frequency save-failure and fallback branches that are still uncovered in the coverage report.
-- Especially useful if rules or save semantics change again.
-
-P2: Raise service and utility branch coverage from “good” to “nearly complete”
-- `firebaseAuth.js` is already at full statement coverage, but still has a couple of unhit branch edges.
-- `quizAudit.js` and `leaderboardSort.js` still have some uncovered branch paths that could be closed with small targeted tests.

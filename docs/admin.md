@@ -1,142 +1,247 @@
-Admin FAQ – DigiCert Quiz Hardening
+# DigiCert Quiz Admin Runbook
 
-Quick Links
-- Rules v1 (first‑score‑only): docs/firebase-rules.v1.json
-- Rules v2 (name/fingerprint enforcement): docs/firebase-rules.v2.json
-- Rules v3 (attempt reservation at quiz start): docs/firebase-rules.v3.json
-- Rules v2.1 (machine prints enforcement): docs/firebase-rules.v2.1.json
-- Plan and guidance: docs/hardening.md
-- Observe‑only machine prints: written under `machinePrints/{quizId}/{fpMachine}` (no enforcement in v2)
+This is the operational runbook for Firebase-backed quiz support.
 
-Quiz IDs
-- Each quiz has an ID like `week-1-key-sovereignty`.
-- Paths use this ID under `leaderboard/{quizId}/…`, `nameIndex/{quizId}/…`, `fingerprints/{quizId}/…`, `machinePrints/{quizId}/…`.
+## Quick Links
 
-Data Model (writes)
-- Leaderboard record (per user): `leaderboard/{quizId}/{uid}`
-  - Fields: `name`, `nameSlug`, `score`, `timestamp` (server set), `fp`, `fpMachine`
-- Server-side attempt record (per started run): `attempts/{quizId}/{uid}`
-  - Fields include: `name`, `nameSlug`, `fp`, `fpMachine`, `questionSet`, `currentQuestion`, `totalScore`, `timeLeft`, `questionDeadlineAt`, `showFeedback`, `isCorrect`, `status`, `createdAt`, `updatedAt`, `completedAt`
-- Indexes (enforced in rules):
-  - `nameIndex/{quizId}/{nameSlug}` → `uid`
-  - `fingerprints/{quizId}/{fp}` → `uid`
-  - `machinePrints/{quizId}/{fpMachine}` → `uid` (enforced only in v2.1)
-  - `attemptFingerprints/{quizId}/{fp}` → `uid` (v3)
+- `docs/firebase-rules.v1.json`: first-score-only per anonymous uid
+- `docs/firebase-rules.v2.json`: adds normalized-name and browser/device fingerprint enforcement
+- `docs/firebase-rules.v3.json`: reserves attempts at quiz start and supports resume
+- `docs/hardening.md`: rollout and anti-replay context
 
-How to Apply Rules v1 (first‑score‑only)
-1) Open Firebase Console → your project `digicert-product-quiz`.
-2) Realtime Database → Rules.
-3) Replace the contents with the JSON at docs/firebase-rules.v1.json and Publish.
-4) Optional: adjust `score` max limit if needed (default 1000).
+Current recommendation:
 
-How to Upgrade to Rules v2 (enforce name + fingerprint)
-1) Confirm most clients have shipped (app writes `nameSlug` + `fp`).
-2) In Firebase Console → Realtime Database → Rules, paste docs/firebase-rules.v2.json and Publish.
-3) Monitor write errors; if elevated, revert to v1 and investigate.
+- Run `v3` unless you intentionally need a rollback
 
-How to Upgrade to Rules v3 (reserve attempts at quiz start)
-1) Deploy the app version that writes `attempts/{quizId}/{uid}` and `attemptFingerprints/{quizId}/{fp}`.
-2) In Firebase Console → Realtime Database → Rules, paste docs/firebase-rules.v3.json and Publish.
-3) Verify:
-   - starting a quiz immediately creates an `attempts/{quizId}/{uid}` record
-   - refreshing resumes the same run
-   - clearing local storage in the same browser no longer allows a fresh start
+Important note:
 
-Post-Deploy Smoke Test for v3
-1) Fresh start
-   - Open a quiz in a clean browser session and click Start.
-   - Confirm the app moves to question 1 without an error.
-   - Confirm Realtime Database now contains both:
-     - `attempts/{quizId}/{uid}`
-     - `attemptFingerprints/{quizId}/{fp}`
-2) Refresh resume
-   - Refresh mid-question.
-   - Confirm the same run resumes on the same question and the timer has continued counting down.
-3) Same-browser replay block
-   - Clear local storage or open a fresh session in the same browser profile.
-   - Confirm the quiz does not start a new run and instead restores or blocks based on the existing reservation.
-4) Save path
-   - Finish the quiz.
-   - Confirm the score is saved, the attempt becomes `completed`, and the player cannot start a second run.
+- `machinePrints/{quizId}/{fpMachine}` is still observe-only in this repo
+- There is no checked-in `docs/firebase-rules.v2.1.json`
 
-Known v3 Failure Modes
-- `We couldn't verify quiz eligibility right now. Please refresh and try again.`
-  - Likely cause: `attemptFingerprints/{quizId}/{fp}` is missing read access in the published rules.
-- `Could not start the quiz right now. Please try again.`
-  - Likely cause: the published `attempts` validation is out of date and is rejecting nullable fields such as `selectedAnswer`, `questionDeadlineAt`, or `completedAt`.
-- If either message appears after a rules update, republish the full current `docs/firebase-rules.v3.json` rather than merging fragments into the console editor.
+## Quiz IDs and Paths
 
-Optional: Observe‑Only Machine Prints
-- The app writes `machinePrints/{quizId}/{fpMachine}` separately on a best-effort basis after a successful indexed score save. Rules v2 allow these writes but do not enforce them on leaderboard validation.
-- Use this to measure how many distinct uids share the same machine print before deciding to tighten further.
+Each quiz uses a slug such as `week-21-cert-central-part-3`.
 
-Free a Device (fingerprint) to Allow a Replay (v2)
-- Go to Realtime Database → Data.
-- Navigate to `fingerprints/{quizId}` and locate the hashed key for the device (fp).
-- Delete `fingerprints/{quizId}/{fp}` to release the device lock.
+Common Firebase paths:
 
-Change/Correct a Player’s Display Name (v2)
-1) Find the player’s `uid` under `leaderboard/{quizId}` (key is the uid). Confirm by matching `name/score/timestamp`.
-2) Compute the old/new slugs:
-   - old: the value in `leaderboard/{quizId}/{uid}/nameSlug`
-   - new: lowercased, punctuation‑stripped, spaces to hyphens (same as app)
-3) Update both:
-   - Set `leaderboard/{quizId}/{uid}/name` to the new display name
-   - Set `leaderboard/{quizId}/{uid}/nameSlug` to the new slug
-   - Delete `nameIndex/{quizId}/{oldSlug}`
-   - Create `nameIndex/{quizId}/{newSlug}` with value `uid`
+- `leaderboard/{quizId}/{uid}`
+- `nameIndex/{quizId}/{nameSlug}`
+- `fingerprints/{quizId}/{fp}`
+- `machinePrints/{quizId}/{fpMachine}`
+- `attempts/{quizId}/{uid}`
+- `attemptFingerprints/{quizId}/{fp}`
 
-Allow a Player a Fresh Attempt (v1 or v2)
-- v1 only (first‑score‑only): delete `leaderboard/{quizId}/{uid}`.
-- v2: also delete the device fingerprint and (optionally) the name index if reusing the name:
-  - `leaderboard/{quizId}/{uid}`
-  - `fingerprints/{quizId}/{fp}` (value of `fp` is in the player’s leaderboard record)
-  - `nameIndex/{quizId}/{nameSlug}` (if you need to free the name)
-  - If you later enforce machine prints, also delete `machinePrints/{quizId}/{fpMachine}`
+## Data Model Snapshot
 
-Allow a Player a Fresh Attempt (v3)
-- Delete all of the player’s reservation and score records for that quiz:
-  - `attempts/{quizId}/{uid}`
-  - `attemptFingerprints/{quizId}/{fp}`
-  - `leaderboard/{quizId}/{uid}` if they already submitted
-  - `fingerprints/{quizId}/{fp}` if they already submitted
-  - `nameIndex/{quizId}/{nameSlug}` if you need to free the display name too
+### Leaderboard record
 
-Investigate “Permission denied” Errors
-- Second attempt from same browser: blocked by v1 (`!data.exists()`).
-- Incognito/same device after v2: blocked by `fingerprints` mapping.
-- Restart attempt after clearing storage in the same browser after v3: blocked by `attemptFingerprints` mapping.
-- Duplicate display name after v2: blocked by `nameIndex` mapping.
- - Different browser on same machine after v2.1: blocked by `machinePrints` mapping.
+Path:
 
-Adjust Score Cap in Rules
-- In the rules’ `.validate`, change the upper bound (default `<= 1000`).
-- Rough formula: `maxTime × numberOfQuestions`. For the current quiz: `100 × 5 = 500`.
+- `leaderboard/{quizId}/{uid}`
 
-Rollback
-- To relax restrictions: paste docs/firebase-rules.v1.json into the Rules editor and publish.
-- App remains compatible; it falls back to a single leaderboard write if index writes are denied.
+Typical fields:
 
-Where to Find a Player’s UID
-- Realtime Database → `leaderboard/{quizId}` → each child key is the player’s `uid`.
-- You can match by `name` and `score` to identify the correct record.
+- `name`
+- `nameSlug`
+- `score`
+- `timestamp`
+- `fp`
 
-Notes
-- The device fingerprint stored is a salted SHA-256 hash (no raw device data).
-- Reads are public; writes require anonymous auth and pass rules checks.
+### Attempt record (`v3`)
 
-Restore / Manually Add a Leaderboard Entry
-1) In Firebase Console → Realtime Database → Data, identify the quizId (it’s the string used in the URL after `/quiz/`).
-2) Pick the `uid` key for the record:
-   - Best: use the original uid (if `nameIndex/{quizId}/{nameSlug}` still exists, its value is the uid).
-   - If you don’t know it, create a new key like `manual-restore-2025-12-17` (note: this won’t be tied to the original player/device locks).
-3) Create/update `leaderboard/{quizId}/{uid}` with at least these fields:
-   - v1 rules: `{ name, score, timestamp }`
-   - v2 rules: `{ name, nameSlug, score, timestamp, fp }`
-   Notes:
-   - `timestamp` is milliseconds since epoch (a number). Use “now” if you don’t know the original.
-   - `nameSlug` is: trim/collapse spaces, lowercase, strip punctuation (keep a–z/0–9/spaces), then replace spaces with `-`.
-4) If you’re on v2, also restore the indexes so uniqueness/anti-replay behavior matches the app:
-   - `nameIndex/{quizId}/{nameSlug}` = `uid`
-   - `fingerprints/{quizId}/{fp}` = `uid`
-   - `machinePrints/{quizId}/{fpMachine}` = `uid` (optional/observe-only unless you enforce it and only if you know the machine print)
+Path:
+
+- `attempts/{quizId}/{uid}`
+
+Typical fields include:
+
+- `name`
+- `nameSlug`
+- `fp`
+- `fpMachine`
+- `questionSet`
+- `currentQuestion`
+- `totalScore`
+- `timeLeft`
+- `questionDeadlineAt`
+- `selectedAnswer`
+- `showFeedback`
+- `isCorrect`
+- `status`
+- `createdAt`
+- `updatedAt`
+- `completedAt`
+
+### Index records
+
+- `nameIndex/{quizId}/{nameSlug}` -> `uid`
+- `fingerprints/{quizId}/{fp}` -> `uid`
+- `attemptFingerprints/{quizId}/{fp}` -> `uid`
+- `machinePrints/{quizId}/{fpMachine}` -> `uid` for observation only
+
+## Applying Rules
+
+### Apply `v1`
+
+1. Open Firebase Console.
+2. Go to Realtime Database -> Rules.
+3. Paste `docs/firebase-rules.v1.json`.
+4. Publish.
+
+Use `v1` only as a temporary rollback or compatibility mode.
+
+### Apply `v2`
+
+1. Confirm you want normalized-name and browser/device fingerprint enforcement.
+2. In Realtime Database -> Rules, paste `docs/firebase-rules.v2.json`.
+3. Publish.
+4. Watch for save failures caused by duplicate `nameSlug` or `fp`.
+
+### Apply `v3`
+
+1. In Realtime Database -> Rules, paste `docs/firebase-rules.v3.json`.
+2. Publish.
+3. Verify:
+   - starting a quiz creates `attempts/{quizId}/{uid}`
+   - starting a quiz creates `attemptFingerprints/{quizId}/{fp}`
+   - refresh resumes the same run
+   - completing the quiz marks the attempt `completed`
+
+## Post-Deploy Smoke Test for `v3`
+
+1. Open a quiz in a fresh browser session.
+2. Click Start and confirm question 1 loads.
+3. In Firebase, confirm both of these now exist:
+   - `attempts/{quizId}/{uid}`
+   - `attemptFingerprints/{quizId}/{fp}`
+4. Refresh mid-quiz and confirm the same run resumes.
+5. Finish the quiz and confirm:
+   - the leaderboard row is written
+   - the attempt is marked `completed`
+   - the player cannot start a second run
+
+## Common Support Tasks
+
+### Free a player for a fresh retry (`v3`)
+
+Delete the player's quiz-specific records:
+
+- `attempts/{quizId}/{uid}`
+- `attemptFingerprints/{quizId}/{fp}`
+- `leaderboard/{quizId}/{uid}` if a score was already saved
+- `fingerprints/{quizId}/{fp}` if a score was already saved
+- `nameIndex/{quizId}/{nameSlug}` if you also need to free the display name
+
+Optional cleanup:
+
+- `machinePrints/{quizId}/{fpMachine}` if you are manually clearing every related trace for investigation
+
+### Free a player for a fresh retry (`v1` or `v2`)
+
+- `v1`: delete `leaderboard/{quizId}/{uid}`
+- `v2`: also delete any related uniqueness locks:
+  - `fingerprints/{quizId}/{fp}`
+  - `nameIndex/{quizId}/{nameSlug}`
+
+### Change a player's display name
+
+1. Find the player under `leaderboard/{quizId}`.
+2. Note the current `uid` and `nameSlug`.
+3. Update the leaderboard record with the corrected `name` and `nameSlug`.
+4. Delete the old `nameIndex/{quizId}/{oldSlug}` row.
+5. Create `nameIndex/{quizId}/{newSlug}` with value `uid`.
+
+Name slug rules match the app:
+
+- trim whitespace
+- lowercase
+- strip punctuation
+- convert spaces to `-`
+
+### Restore or manually add a leaderboard entry
+
+1. Choose the `quizId`.
+2. Use the original `uid` if you know it; otherwise pick a deliberate manual key.
+3. Create or update `leaderboard/{quizId}/{uid}`.
+
+Minimum payloads:
+
+- `v1`: `{ name, score, timestamp }`
+- `v2` and `v3`: `{ name, nameSlug, score, timestamp, fp }`
+
+If you are restoring a `v2` or `v3` entry, also restore:
+
+- `nameIndex/{quizId}/{nameSlug}` = `uid`
+- `fingerprints/{quizId}/{fp}` = `uid`
+
+Restore `attempts` and `attemptFingerprints` only if you specifically need the run to remain resumable rather than simply restoring the score.
+
+## Investigating Common Failures
+
+### "We couldn't verify quiz eligibility right now. Please refresh and try again."
+
+Most likely causes:
+
+- `attemptFingerprints/{quizId}/{fp}` does not have the expected authenticated read access in the published rules
+- the published rules are older than the current app flow
+
+Action:
+
+- Republish the full current `docs/firebase-rules.v3.json`
+
+### "Could not start the quiz right now. Please try again."
+
+Most likely causes:
+
+- the `attempts` validation in Firebase is out of date
+- nullable fields such as `selectedAnswer`, `questionDeadlineAt`, or `completedAt` are being rejected
+
+Action:
+
+- Republish the full current `docs/firebase-rules.v3.json`
+
+### "This device appears to have already been used for this quiz."
+
+Check:
+
+- `fingerprints/{quizId}/{fp}`
+
+If that path belongs to a different `uid`, the duplicate-fingerprint rule is working as designed.
+
+### Duplicate display name error
+
+Check:
+
+- `nameIndex/{quizId}/{nameSlug}`
+
+If it points at a different `uid`, the normalized display name is already claimed.
+
+## Rollback Guidance
+
+Safest rollback path:
+
+- Publish `docs/firebase-rules.v1.json`
+
+Compatibility note:
+
+- The current client still contains a fallback single-write path for legacy `v1` behavior if the indexed root write is rejected with `401` or `403`
+- That keeps emergency rollback viable, but `v3` remains the intended steady state
+
+## Score Cap
+
+The rules files use a generous upper bound for `score`.
+
+If you need to change it:
+
+- update the score validation in the published rules
+- use `maxTime * numberOfQuestions` as the baseline
+
+Example:
+
+- a 5-question quiz at 100 seconds each has a natural max score of `500`
+
+## Notes
+
+- Reads are public or authenticated depending on the rules version you publish
+- Writes require Firebase anonymous auth and must satisfy the active rules
+- Device fingerprints are hashed values, not raw device attributes

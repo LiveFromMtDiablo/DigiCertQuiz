@@ -1,218 +1,225 @@
-# DigiCert Quiz – Turnkey Handoff Guide
+# DigiCert Quiz Handoff Guide
 
-This guide packages everything needed to stand up your own copy of the DigiCert Quiz stack using **GitHub**, **Vercel**, and **Firebase**, and then operate it without engineering support.
+This guide is the practical handoff path for standing up a fresh copy of the DigiCert Quiz stack and transferring it to a non-engineering owner.
 
-Use it in either of two ways:
-- As the checklist an engineer follows to set things up and then transfer ownership.
-- As the self-service runbook a marketing/ops team follows to create a fresh instance.
+The current stack is:
 
----
+- GitHub for source control
+- Vercel for hosting the React single-page app
+- Firebase Realtime Database + Anonymous Auth for quiz eligibility, attempts, and leaderboards
 
-## 1. What You Own in This Stack
+## What This Repo Assumes
 
-Each quiz deployment consists of three things you fully control:
+Before you copy this stack, it helps to know what is hardcoded in the repo today:
 
-- **GitHub repository**
-  - Contains all quiz source code and quiz content.
-  - Recommended: one repo per quiz programme or brand.
-- **Vercel project**
-  - Builds and hosts the React single-page app.
-  - Auto-deploys on pushes to your chosen branch (e.g., `main`).
-- **Firebase project**
-  - Stores quiz leaderboards and anti-replay data in **Realtime Database**.
-  - Handles anonymous auth for quiz players.
+- Firebase web-app config lives in `src/services/firebaseConfig.js`
+- Client-side routing depends on `vercel.json` rewrites for `/quiz/*` and `/leaderboard/*`
+- The default live quiz route comes from `currentQuizId` in `src/quizzes/index.js`
+- The recommended Firebase rules file is `docs/firebase-rules.v3.json`
+- `machinePrints/{quizId}/{fpMachine}` is collected as an observe-only signal; there is no checked-in `v2.1` rules file in this repo
 
-You can create multiple completely independent deployments by repeating this guide with new GitHub/Vercel/Firebase projects.
+## 1. Accounts and Access You Need
 
----
+- A GitHub account that can create a repository
+- A Vercel account or team that can import the repository
+- A Firebase project in the right Google org and billing context
+- Local Node.js + npm if you want to verify locally before handing off
 
-## 2. Prerequisites
+## 2. Create the GitHub Repository
 
-Before starting, make sure you have:
+Use either of these paths:
 
-- A GitHub account with permission to create repositories.
-- A Vercel account (can be linked to GitHub).
-- A Firebase project OR permission to create one in the correct Google Cloud org.
-- Node.js and npm locally if you plan to run the app on your laptop (optional but recommended).
+### Engineer-prepared handoff
 
----
+1. Create a new private repository in the destination org.
+2. Push this codebase into that repo.
+3. Transfer or share admin access with the marketing/ops owner.
+4. Remove personal engineering access after the handoff is complete if that is part of the transition plan.
 
-## 3. Create / Copy the GitHub Repository
+### Self-service copy
 
-You have two options. In both cases, the repo contents should match this folder (excluding `node_modules` and local-only files).
+1. Create a new private repository under the destination org or user.
+2. Copy this codebase into it.
+3. Push the project contents.
 
-### Option A – Engineer prepares and transfers
+Recommended ownership outcome:
 
-1. On GitHub, create a new **private** repository (e.g., `product-quiz-2025`).
-2. From this directory, initialize and push:
-   - `git init`
-   - `git remote add origin <new-repo-url>`
-   - `git add .`
-   - `git commit -m "Initial commit: DigiCert quiz"`
-   - `git push -u origin main`
-3. In GitHub, transfer repository ownership to the marketing-owned org / user.
-4. Ensure marketing has **Admin** rights; then remove your personal access if desired.
+- The repo lives under the long-term business owner
+- At least two non-engineering admins have access
+- The default branch for production deploys is documented
 
-### Option B – Marketing self-service
+## 3. Create and Configure Firebase
 
-1. Download the code bundle or clone the template repo you were given.
-2. Create a new GitHub repo under your own org/user.
-3. Push the contents of this project to that repo.
+### 3.1 Create the project
 
-Once the repo exists under marketing’s GitHub, the rest of the setup is self-contained.
+1. In Firebase Console, create a new project.
+2. Add a Web app under Project Settings.
+3. Enable Anonymous Authentication.
+4. Create a Realtime Database in the desired region.
 
----
+### 3.2 Wire the app to the new Firebase project
 
-## 4. Set Up Firebase (Leaderboard Backend)
+Copy the Firebase config from the new web app into `src/services/firebaseConfig.js`.
 
-You will create a dedicated Firebase project for this quiz (or reuse an existing one if already provisioned for quizzes).
+Keep the same object shape:
 
-### 4.1 Create the Firebase project and web app
+- `apiKey`
+- `authDomain`
+- `databaseURL`
+- `projectId`
+- `storageBucket`
+- `messagingSenderId`
+- `appId`
+- `measurementId`
 
-1. Go to **Firebase Console** → **Add project**.
-2. Name it something like `product-quiz-2025` and finish project creation.
-3. In the new project:
-   - Go to **Build → Realtime Database** and create a database.
-   - Choose a location appropriate for your region.
-4. Go to **Build → Authentication → Sign-in method**:
-   - Enable **Anonymous** sign-in.
-5. Go to **Project settings → General → Your apps**:
-   - Add a **Web app** (</>) if one does not exist.
-   - Copy the generated **Firebase config** snippet; you will paste these values into the app code in the next section.
+Important note:
 
-### 4.2 Apply database rules
+- These values are browser-visible configuration, not private server credentials.
+- Changing Firebase projects requires a code change and redeploy because this repo does not currently read them from Vercel environment variables.
 
-The repo contains recommended Realtime Database rules under `docs/`:
+### 3.3 Publish database rules
 
-- `docs/firebase-rules.v1.json` – first-score-only per user.
-- `docs/firebase-rules.v2.json` – adds name and device fingerprint enforcement.
+Recommended choice:
 
-Pick the rules version appropriate for your rollout (see `docs/admin.md` and `docs/hardening.md` for details).
+- Publish `docs/firebase-rules.v3.json`
 
-To apply:
+Why `v3` is the recommended baseline:
 
-1. In Firebase Console, go to **Build → Realtime Database → Rules**.
-2. Replace the existing rules with the JSON from your chosen file.
-3. Click **Publish**.
+- It reserves quiz attempts at start time
+- It prevents easy restart/replay after clearing local state
+- It matches the app's current attempt-resume flow
 
-You can tighten or relax rules later using the same process.
+Legacy files still in the repo:
 
-### 4.3 Wire the app to your Firebase project
+- `docs/firebase-rules.v1.json`: first-score-only by uid
+- `docs/firebase-rules.v2.json`: adds name and browser/device fingerprint enforcement
 
-The quiz app reads Firebase configuration from `src/services/firebaseConfig.js`.
+Use `v1` or `v2` only if you intentionally need a temporary rollback or troubleshooting step. The current app is built around the `v3` flow.
 
-1. Open `src/services/firebaseConfig.js`:
-   - Replace the existing `firebaseConfig` values with the config snippet from your Firebase Web app:
-   - Keep the object shape (`apiKey`, `authDomain`, `databaseURL`, `projectId`, `storageBucket`, `messagingSenderId`, `appId`, `measurementId`).
-2. Commit this change to your GitHub repo.
+## 4. Verify the Stack Locally
 
-Notes:
+From the repo root:
 
-- These values identify your Firebase project and are used from the browser; they are not secret credentials in the traditional sense, but you still control read/write access via the Realtime Database rules.
-- If you later rotate API keys or create a new Firebase project, repeat this step with the updated config.
+```sh
+npm install
+npm start
+```
 
----
+Then verify:
 
-## 5. Run and Verify Locally (Optional but Recommended)
+1. Open the local app URL.
+2. Visit a quiz route such as `/quiz/week-21-cert-central-part-3` or whichever quiz is currently live in `src/quizzes/index.js`.
+3. Start a quiz and confirm the run begins cleanly.
+4. Submit a test score and confirm Firebase writes appear where expected.
 
-Running the app locally lets you confirm everything works before connecting Vercel.
+For a `v3` setup, the important paths are:
 
-From the project root:
+- `attempts/{quizId}/{uid}`
+- `attemptFingerprints/{quizId}/{fp}`
+- `leaderboard/{quizId}/{uid}`
+- `nameIndex/{quizId}/{nameSlug}`
+- `fingerprints/{quizId}/{fp}`
 
-1. Install dependencies:
-   - `npm install`
-2. Start the dev server:
-   - `npm start`
-3. In your browser:
-   - Navigate to `/quiz/<quiz-id>` (e.g., `/quiz/week-1-key-sovereignty`).
-   - Submit a test score; confirm it appears in the Firebase Realtime Database under:
-     - `leaderboard/{quizId}/{uid}`
-   - If you need to repeat local anti-replay testing on the same machine, use the localhost-only `Reset Dev Fingerprint` helper on the intro or leaderboard screen.
-4. Optionally run schema checks for quizzes:
-   - `npm run test:quizzes`
+Optional validation:
 
-If writes are failing, check:
+```sh
+npm run test:quizzes
+```
 
-- That Anonymous auth is enabled.
-- That your chosen rules file is published.
-- That `firebaseConfig.js` points to the correct project and `databaseURL`.
+Localhost-only helper:
 
----
+- On localhost, the intro and leaderboard screens expose `Reset Dev Fingerprint`
+- It clears local quiz/auth state and rotates the local dev fingerprint seed
+- It is disabled in production
 
-## 6. Deploy with Vercel
+## 5. Deploy to Vercel
 
-Vercel builds and hosts the React app directly from your GitHub repo.
+### 5.1 Create the project
 
-### 6.1 Create the Vercel project
+1. In Vercel, choose `New Project`.
+2. Import the GitHub repository.
+3. Keep the standard Create React App build settings:
+   - Build command: `npm run build`
+   - Output directory: `build`
+4. Deploy.
 
-1. Log in to **Vercel** and click **New Project**.
-2. Choose **Import Git Repository** and select the quiz repo you created.
-3. Vercel should auto-detect this as a Create React App project.
-   - **Build command**: `npm run build`
-   - **Output directory**: `build`
-4. Click **Deploy**.
+### 5.2 Keep the routing rewrites
 
-This repo includes [`vercel.json`](../vercel.json) so direct visits to client-side routes like `/quiz/week-19-dns-part-3` and `/leaderboard/full` rewrite to the React app entrypoint. Keep that file in place if you continue using `BrowserRouter`.
+This repo depends on `vercel.json` so deep links like these load correctly:
 
-Once the first deployment finishes, Vercel will provide a preview URL and a production URL (typically on the `main` branch).
+- `/quiz/<quizId>`
+- `/leaderboard/full`
+- `/leaderboard/full/<quizId>`
+- `/leaderboard/cumulative`
 
-### 6.2 Ongoing deployments
+Do not remove `vercel.json` unless routing is redesigned.
 
-- Any push to the configured branch (e.g., `main`) triggers a new build and deployment.
-- For new quizzes:
-  - Follow `src/quizzes/README.md` to add quiz content.
-  - Commit and push; Vercel handles redeploying.
+### 5.3 Environment variables
 
-No Vercel environment variables are required for the current design; Firebase configuration lives in `firebaseConfig.js`.
+No Vercel environment variables are required for the current client app.
 
----
+That is convenient for handoff, but it also means:
 
-## 7. Operations and Self-Service
+- Firebase config changes require a commit
+- Vercel redeploys are needed when the Firebase project changes
 
-Once GitHub, Vercel, and Firebase are set up, marketing/ops can run this quiz programme independently.
+## 6. Day-2 Operating Tasks
 
-Key docs in this repo:
+### Add or stage a new quiz
 
-- Quiz content:
-  - `src/quizzes/README.md` – how to author, register, and validate new quizzes.
-- Architecture and behaviour:
-  - `QUIZ_ARCHITECTURE_PLAN.md` – how routing, leaderboards, and quiz data are structured.
-- Security and fairness:
-  - `docs/hardening.md` – anti-replay design and rules rollout plan.
-  - `docs/admin.md` – admin operations (free a device, change a name, adjust score caps, etc.).
+Follow `src/quizzes/README.md`.
 
-Typical recurring tasks:
+Important operational note:
 
-- **Add a new weekly quiz**
-  - Follow `src/quizzes/README.md`.
-  - Verify locally (optional) and then push to `main`.
-- **Take a leaderboard screenshot**
-  - Visit `/leaderboard/full` for the current quiz.
-  - Or `/leaderboard/full/{quizId}` for a specific quiz.
-- **Adjust fairness rules**
-  - Update Firebase Realtime Database rules using `docs/firebase-rules.*.json`.
+- You can add a new quiz file and register it without making it live immediately
+- The live default route is controlled by `currentQuizId` in `src/quizzes/index.js`
 
----
+### Take leaderboard screenshots
 
-## 8. Handing Off Ownership (Engineer → Marketing)
+- Weekly leaderboard: `/leaderboard/full`
+- Weekly leaderboard for a specific quiz: `/leaderboard/full/{quizId}`
+- Cumulative leaderboard: `/leaderboard/cumulative`
 
-If an engineer is setting things up initially and then stepping away, use this checklist to ensure a clean handoff:
+For cumulative reporting details, use `docs/cumulative-leaderboard.md`.
 
-- **GitHub**
-  - Repo lives under the marketing-owned org/user.
-  - At least two marketing/ops admins have `Admin` access.
-  - Any personal engineering accounts are removed (if desired).
-- **Vercel**
-  - Project is owned by the marketing/ops Vercel team.
-  - Production domain and preview URLs are documented.
-  - GitHub integration is connected under their account.
-- **Firebase**
-  - Firebase project is in the correct org/billing account.
-  - Marketing/ops admins have Owner/Editor permissions.
-  - Engineering accounts downgraded or removed once handoff is complete.
+### Admin or fairness changes
 
-After the above, the marketing team:
+Use:
 
-- Owns the full stack (code, hosting, and data).
-- Can add new quizzes and change rules without needing the original engineer.
-- Can replicate the quiz stack for another team/brand by repeating this document with a new GitHub repo, Vercel project, and Firebase project.
+- `docs/admin.md` for operational fixes and Firebase data edits
+- `docs/hardening.md` for rules strategy and rollout context
+
+## 7. Handoff Checklist
+
+Before the engineer fully steps away, confirm:
+
+- GitHub
+  - Repository is owned by the long-term org or business owner
+  - At least two non-engineering admins have admin access
+- Vercel
+  - Project is owned by the correct Vercel team
+  - Production URL is documented
+  - The connected Git provider is owned by the right account/team
+- Firebase
+  - Project lives in the correct billing/org context
+  - Marketing/ops owners can access Authentication and Realtime Database
+  - The published rules version is documented
+
+Also document these repo-specific decisions:
+
+- Which branch Vercel deploys to production
+- Which quiz is live now (`currentQuizId`)
+- Whether cumulative leaderboard reporting is part of the operating routine
+- Who is responsible for Firebase data cleanup if a player needs a retry
+
+## 8. Recommended Owner Docs
+
+If you hand this repo to another team, point them here first:
+
+- `README.md`
+- `src/quizzes/README.md`
+- `docs/admin.md`
+- `docs/hardening.md`
+- `docs/cumulative-leaderboard.md`
+
+That set is enough for most non-engineering ownership paths without needing a separate engineering walkthrough.
