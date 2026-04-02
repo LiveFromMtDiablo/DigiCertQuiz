@@ -42,6 +42,7 @@ const ALL_QUIZ_IDS = [
   "week-18-digicert-history",
   "week-19-dns-part-3",
   "week-20-tlm-part-4",
+  "week-21-cert-central-part-3",
 ];
 
 function getArgValue(flag) {
