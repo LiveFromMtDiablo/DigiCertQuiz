@@ -1,5 +1,9 @@
 Bug-Fixing Sprint: Score Submission False Positives
 
+Historical note
+- This file is a dated sprint artifact from March 2026, not the current operating runbook.
+- For current guidance, use `docs/admin.md`, `docs/hardening.md`, and `docs/turnkey-handoff.md`.
+
 Sprint Date
 - Target start: March 28, 2026
 - Duration: 1 working day for diagnosis + first fixes, with follow-up if production data shows wider impact
@@ -198,3 +202,22 @@ Expected Deliverables
 - Updated `QuizGame.js` error handling and start gating
 - Updated admin/support documentation
 - Short findings note from real production conflict review
+
+Testing Snapshot (April 1, 2026)
+- Automated regression coverage has been expanded beyond utilities into the main quiz flow.
+- Current status:
+  - 8 passing Jest suites
+  - 41 passing tests
+  - Coverage:
+    - 68.49% statements
+    - 58.65% branches
+    - 72.79% functions
+    - 69.84% lines
+- High-value covered areas now include:
+  - `src/components/QuizGame.js`
+  - `src/services/firebaseAuth.js`
+  - `src/App.js`
+  - `src/utils/quizEligibility.js`
+  - `src/utils/quizSubmission.js`
+
+Follow-On Backlog

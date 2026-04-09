@@ -6,9 +6,50 @@ Run commands from the repo root (`/Users/j.pace.admin/Documents/GitHub/DigiCertQ
 
 ```sh
 npm install
+npm start
 ```
 
 If you see `ENOENT ... /Users/<you>/package.json`, you're in the wrong directory. `cd` into this repo and rerun.
+
+When `npm start` finishes compiling, open the local dev URL it prints, usually `http://localhost:3000`.
+
+### Localhost Dev Fingerprint Reset
+
+On localhost only, the quiz intro and leaderboard screens show a `Reset Dev Fingerprint` helper.
+
+- It rotates a local-only fingerprint seed used by the browser and machine fingerprint hashes.
+- It clears cached anonymous Firebase auth.
+- It clears local quiz attempt and submitted flags.
+- It immediately re-runs eligibility checks so you can test fresh-start flows without manually clearing storage.
+
+This helper is intentionally disabled in production builds and should not appear for real users.
+
+## Testing
+
+Useful test commands:
+
+```sh
+# Run the full Jest suite once
+npm test -- --watchAll=false
+
+# Run the full suite with coverage output
+npm run test:coverage
+
+# Run only quiz-registry validation
+npm run test:quizzes
+
+# Run only the QuizGame component tests, including dev fingerprint reset coverage
+npm test -- --runTestsByPath src/components/QuizGame.test.js --watchAll=false
+```
+
+Coverage output is written to `/coverage`. Open `coverage/lcov-report/index.html` for the HTML report after running `npm run test:coverage`.
+
+Coverage currently includes the localhost-only dev fingerprint reset flow:
+
+- reset helper visibility on localhost
+- clearing cached auth and quiz locks
+- rotating the local dev fingerprint seed
+- deriving a different fingerprint after seed rotation
 
 ## Full Leaderboard (Screenshot View)
 
@@ -44,8 +85,11 @@ node scripts/cumulative-leaderboard.js \
 
 More details: `docs/cumulative-leaderboard.md`
 
-## Turnkey Handoff
+## Operations Docs
 
-For a step-by-step guide to setting up a fresh copy of this quiz stack on **GitHub**, **Vercel**, and **Firebase** (and then handing it over to a non-engineering team), see:
+The main runbooks live here:
 
-- `docs/turnkey-handoff.md`
+- `docs/turnkey-handoff.md` for full-stack setup and owner handoff
+- `docs/admin.md` for Firebase admin tasks and support fixes
+- `docs/hardening.md` for anti-replay and rules rollout context
+- `docs/cumulative-leaderboard.md` for cumulative leaderboard generation
