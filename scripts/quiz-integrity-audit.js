@@ -3,7 +3,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const API_KEY = "AIzaSyA1yq_R7RJF25bYpAAtxIeVz_t-V-BJcUk";
 const DB_URL = "https://digicert-product-quiz-default-rtdb.firebaseio.com";
 const DEFAULT_TIME_WINDOW_MINUTES = 5;
 
@@ -48,6 +47,21 @@ function resolveCurrentQuizId() {
   }
 
   return importMatch[1];
+}
+
+function resolveFirebaseApiKey() {
+  const envKey =
+    process.env.FIREBASE_API_KEY || process.env.REACT_APP_FIREBASE_API_KEY;
+  if (envKey) return envKey;
+
+  const configPath = path.join(__dirname, "..", "src", "services", "firebaseConfig.js");
+  const source = fs.readFileSync(configPath, "utf8");
+  const match = source.match(/apiKey:\s*"([^"]+)"/);
+  if (match) return match[1];
+
+  throw new Error(
+    "Could not resolve Firebase API key. Set FIREBASE_API_KEY (or REACT_APP_FIREBASE_API_KEY)."
+  );
 }
 
 function normalizeNameForMatch(name) {
@@ -287,8 +301,9 @@ function analyzeQuizIntegrity({
 }
 
 async function signInAnonymously() {
+  const apiKey = resolveFirebaseApiKey();
   const response = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${API_KEY}`,
+    `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
