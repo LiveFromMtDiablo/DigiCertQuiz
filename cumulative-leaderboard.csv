@@ -1,248 +1,264 @@
-Rank,Name,NameSlug,Total,W14-pam,W15-tlm-part-3,W16-cert-central-part-2,W17-document-trust,W18-digicert-history,W19-dns-part-3,W20-tlm-part-4,W21-cert-central-part-3
-1,"Lackern X",lackern-x,3831,477,465,469,486,476,488,487,483
-2,"Sneha Kelwa",sneha-kelwa,3573,474,462,454,464,380,473,483,383
-3,"Okafor Emmanuel",okafor-emmanuel,3291,391,482,488,487,,489,480,474
-4,"Fauzan Slamang",fauzan-slamang,3056,338,337,335,441,351,428,402,424
-5,"Aris Ktenioudakis",aris-ktenioudakis,2971,447,346,465,469,189,364,337,354
-6,"Mihai",mihai,2945,450,438,447,427,,373,459,351
-7,"Kriti Sharma",kriti-sharma,2838,471,449,,481,476,,483,478
-8,"Raju Muke",raju-muke,2816,426,463,374,447,275,,462,369
-9,"Mutomb Kayomb",mutomb-kayomb,2803,424,217,407,386,381,255,414,319
-10,"Brett Philp",brett-philp,2591,461,158,360,366,,452,447,347
-11,"Christiaan de Villiers",christiaan-de-villiers,2466,,432,466,257,384,182,453,292
-12,"Kelsey Berteaux",kelsey-berteaux,2428,179,247,156,451,382,254,433,326
-13,"Ashoke Kulandaivel",ashoke-kulandaivel,2422,,,484,488,480,,487,483
-14,"Shantanu Raj Soni",shantanu-raj-soni,2410,465,358,165,450,,434,226,312
-15,"Quinn Pitcher",quinn-pitcher,2351,453,452,442,,273,457,,274
-16,"shankar kambam",shankar-kambam,2320,,270,374,372,467,367,470,
-17,"Dean C",dean-c,2256,385,177,189,459,195,382,279,190
-18,"Leigh Teixeira",leigh-teixeira,2159,262,337,416,364,,,361,419
-19,"Ruchira",ruchira,2053,243,161,269,363,274,242,322,179
-20,"Riaan Pretorius",riaan-pretorius,2037,373,270,268,373,98,372,,283
-21,"JCT",jct,1949,455,,241,,476,257,171,349
-22,"Temmi Kalua",temmi-kalua,1888,,179,282,379,96,286,473,193
-23,"BobV",bobv,1725,,343,357,373,289,,,363
-24,"Labeeqah Rahman",labeeqah-rahman,1574,376,267,375,380,,,176,
-25,"Justin Case",justin-case,1527,382,279,286,384,,,196,
-26,"Todd Heron",todd-heron,1522,,,,400,286,266,338,232
-27,"Nicole Ferretti",nicole-ferretti,1512,,92,381,380,96,93,282,188
-28,"Anu Sivadasan",anu-sivadasan,1438,426,234,,339,,,113,326
-29,"Mithun Chaithanya",mithun-chaithanya,1396,,93,328,361,95,,244,275
-30,"Yogesh Chindarkar",yogesh-chindarkar,1367,,,317,319,,312,,419
-31,"Geoff G",geoff-g,1353,,322,280,,388,,,363
-32,"Candice",candice,1346,474,221,,371,280,,,
-33,"Darren S.",darren-s,1344,361,,205,426,,,,352
-34,"Mayur Madhawani",mayur-madhawani,1328,336,229,199,314,91,,159,
-35,"Maurizia",maurizia,1305,,313,169,368,,,323,132
-36,"Paolo Tropea",paolo-tropea,1231,,403,,375,94,,359,
-37,"Eilis Slattery",eilis-slattery,1213,358,172,,365,318,,,
-38,"Tyler",tyler,1204,,,479,,,468,257,
-39,"Lee Isbell",lee-isbell,1188,,280,,,,465,443,
-40,"mike f",mike-f,1185,,434,,377,,374,,
-41,"Ryan White",ryan-white,1183,,,356,379,,,448,
-42,"Valerie Ekegbo",valerie-ekegbo,1103,,,,364,97,282,,360
-43,"Ashwini Bhagat",ashwini-bhagat,1043,356,,,,424,,263,
-44,"Ben J",ben-j,1029,,176,,,,475,,378
-45,"Martyn Veale",martyn-veale,1007,,,,372,,,278,357
-46,"Brandon Jemmett",brandon-jemmett,973,351,84,,,98,279,69,92
-47,"Mayank Motwani",mayank-motwani,961,,,242,,430,289,,
-48,"Brian Deckman",brian-deckman,939,176,,256,,,185,322,
-49,"Domenica",domenica,923,,154,173,,0,182,242,172
-50,"Lackern",lackern,918,482,436,,,,,,
-51,"Mariano T",mariano-t,898,456,442,,,,,,
-52,"Alan",alan,886,,,,443,443,,,
-53,"Esther",esther,844,468,,376,,,,,
-54,"Vikas Kumar",vikas-kumar,815,,97,,363,182,,,173
-55,"Mohan D",mohan-d,808,,,344,373,0,91,,
-56,"Apurv Upreti",apurv-upreti,807,,,,256,,281,270,
-57,"Ayne",ayne,802,182,,,351,,269,,
-58,"Deepa V",deepa-v,782,259,,184,,339,,,
-59,"Taylor",taylor,747,369,,285,,0,93,,
-60,"Damiaan Habets",damiaan-habets,726,458,268,,,,,,
-61,"Anja Mouton",anja-mouton,710,360,159,191,,,,,
-62,"Harikrishna D",harikrishna-d,685,253,249,,,,183,,
-63,"Anon",anon,663,,,0,,287,187,,189
-64,"Emanuele",emanuele,641,,,184,,188,,269,
-65,"Ashlee",ashlee,638,,328,,,,310,,
-66,"Aaditya Dixit",aaditya-dixit,624,,,,,449,,,175
-67,"Karin",karin,611,264,157,,,190,,,
-68,"Jac Sher",jac-sher,607,,,,,,,358,249
-69,"Alex",alex,606,,,,,,,262,344
-70,"Ken M.",ken-m,605,359,246,,,,,,
-71,"Nipun Bhatnagar",nipun-bhatnagar,589,,,,,,339,,250
-72,"Sharanya Ravindra",sharanya-ravindra,582,,,,,409,173,,
-73,"Taff Veale",taff-veale,562,,,,,188,374,,
-74,"Alex C",alex-c,539,267,180,92,,,,,
-75,"Olive Mbombo",olive-mbombo,532,,,,,329,203,,
-76,"Tiphany",tiphany,527,,,,,94,,,433
-77,"Tomo",tomo,517,,176,,,,,341,
-78,"Michelle",michelle,513,,,263,250,,,,
-79,"Junaid Ahmad",junaid-ahmad,510,,,,,,338,172,
-80,"Krishna P",krishna-p,484,,,,484,,,,
-81,"Ashoke",ashoke,482,,482,,,,,,
-82,"Remy L",remy-l,479,479,,,,,,,
-83,"Gaurav Ranjan",gaurav-ranjan,477,,94,90,,194,,,99
-84,"Nas Burtscher",nas-burtscher,464,367,,,,,97,,
-85,"Brandon Nelson",brandon-nelson,463,,,,,,463,,
-86,"Bipin",bipin,459,,184,275,,,,,
-87,"Kimberly",kimberly,454,,,,,,454,,
-88,"Brett P",brett-p,453,266,,,,187,,,
-89,"Cloud",cloud,452,,,,,,,452,
-90,"Jasmin L",jasmin-l,447,447,,,,,,,
-91,"Geethesh Bhat",geethesh-bhat,444,,,,444,,,,
-92,"Melusi K",melusi-k,441,,,441,,,,,
-93,"Tausif Mohammad",tausif-mohammad,438,,,,,,,438,
-94,"Lane S",lane-s,437,98,339,,,,,,
-95,"Kanda",kanda,437,,,211,226,,,,
-96,"Lindsay",lindsay,437,,,,437,,,,
-97,"Kuldeep Sharma",kuldeep-sharma,434,,,,434,,,,
-98,"Stephane",stephane,431,431,,,,,,,
-99,"Byron Sineker",byron-sineker,429,,,,,429,,,
-100,"Malisetty Sumanth",malisetty-sumanth,428,,428,,,,,,
-101,"Amazza",amazza,421,,,,,421,,,
-102,"Siphosethu Mabheka",siphosethu-mabheka,419,,,,,,,419,
-103,"Adam",adam,407,,,,,407,,,
-104,"Ramya",ramya,403,403,,,,,,,
-105,"Ayush Agrawal",ayush-agrawal,390,390,,,,,,,
-106,"Todd H",todd-h,388,,215,173,,,,,
-107,"RemyL",remyl,384,,,,384,,,,
-108,"Stephanie Tunis",stephanie-tunis,379,,,,379,,,,
-109,"Msi",msi,378,378,,,,,,,
-110,"Ryan W - Valimail",ryan-w-valimail,378,,,,,378,,,
-111,"Gulam N",gulam-n,377,377,,,,,,,
-112,"Anja M",anja-m,377,,,,,,,,377
-113,"Ayush K",ayush-k,376,376,,,,,,,
-114,"anon2",anon2,374,,,374,,,,,
-115,"Michael Pryor",michael-pryor,374,,,,374,,,,
-116,"Nonoh",nonoh,374,,,,,374,,,
-117,"xx",xx,374,,,,,,374,,
-118,"Giliam Baetens",giliam-baetens,369,369,,,,,,,
-119,"Paolo T",paolo-t,366,366,,,,,,,
-120,"Sri",sri,366,,,,366,,,,
-121,"Martyn Taff Veale",martyn-taff-veale,362,,362,,,,,,
-122,"Robert Watts",robert-watts,361,,,,,,361,,
-123,"Preetam C",preetam-c,358,358,,,,,,,
-124,"Alec Berry",alec-berry,357,,,,,96,261,,
-125,"Satpreet",satpreet,355,,,,355,,,,
-126,"Srinidhi",srinidhi,353,,,,353,,,,
-127,"Bipinchandra",bipinchandra,352,,,,352,,,,
-128,"Blake T",blake-t,352,,,,,,258,,94
-129,"Fenna H",fenna-h,351,,,,351,,,,
-130,"Harihara Subramanian",harihara-subramanian,351,,,,,92,259,,
-131,"Shane",shane,350,350,,,,,,,
-132,"Michelle G",michelle-g,349,,,,,,168,,181
-133,"Mithun C",mithun-c,348,348,,,,,,,
-134,"Alheena",alheena,348,,,,348,,,,
-135,"PD",pd,347,,347,,,,,,
-136,"Alain Allen",alain-allen,346,,,,346,,,,
-137,"Ananth",ananth,339,,339,,,,,,
-138,"Shae W",shae-w,339,,,,339,,,,
-139,"Jac Sherrill",jac-sherrill,334,334,,,,,,,
-140,"Fenna Huang",fenna-huang,334,,,,,,,,334
-141,"Molly Manncik",molly-manncik,333,,333,,,,,,
-142,"Shohei Ohtani",shohei-ohtani,324,,,,,,,,324
-143,"Paritosh Dadhich",paritosh-dadhich,319,,,,319,,,,
-144,"Jessica Rummage",jessica-rummage,317,,,,,,317,,
-145,"Ripple",ripple,310,,,,310,,,,
-146,"wonk",wonk,307,307,,,,,,,
-147,"Ripple B",ripple-b,306,,,,,,306,,
-148,"h.s",hs,305,,,,,,305,,
-149,"Gireesh Punati",gireesh-punati,300,,,,,300,,,
-150,"Major Scales",major-scales,295,,,,,,,,295
-151,"Johannes Hoernlen",johannes-hoernlen,294,,294,,,,,,
-152,"Toufeeq Kalam",toufeeq-kalam,294,,,,,,,,294
-153,"sanjeev kumar",sanjeev-kumar,292,,,292,,,,,
-154,"Jacqueline S.",jacqueline-s,292,,,,,,292,,
-155,"Almir G",almir-g,291,,,,,,291,,
-156,"Karsha",karsha,290,,,,,,,290,
-157,"Darren",darren,287,,,,,,,,287
-158,"Andrew S",andrew-s,286,,,286,,,,,
-159,"max f",max-f,284,,284,,,,,,
-160,"fawwaz",fawwaz,284,,,,,,,,284
-161,"Diego M",diego-m,283,,,,,283,,,
-162,"Dune Claassen",dune-claassen,281,,,,,189,92,,
-163,"Jen R",jen-r,280,,90,93,,97,,,
-164,"Nas B",nas-b,279,,,,,,,,279
-165,"Minakshi Behera",minakshi-behera,278,,,,,,278,,
-166,"JM",jm,276,,,,,96,,,180
-167,"Jacqueline Sherrill",jacqueline-sherrill,274,,,,274,,,,
-168,"Smitha Rathin",smitha-rathin,274,,,,,274,,,
-169,"tanisha",tanisha,273,,,273,,,,,
-170,"Fed Fun Tiphany",fed-fun-tiphany,273,,,273,,,,,
-171,"Fenna",fenna,272,,272,,,,,,
-172,"Alan Grigsby",alan-grigsby,271,,,,,,271,,
-173,"Riaan.Pretorius",riaanpretorius,271,,,,,,,271,
-174,"Paul L",paul-l,271,,,,,,,,271
-175,"Norman P",norman-p,271,,,,,,,,271
-176,"stefan",stefan,269,,,,,,,175,94
-177,"Sidney Amadhila",sidney-amadhila,268,,,,,,,,268
-178,"Avinesh Kumar",avinesh-kumar,267,,267,,,,,,
-179,"Matteo Peli",matteo-peli,266,,,266,,,,,
-180,"Jenny J",jenny-j,266,,,,,,266,,
-181,"Sajag Chikarsal",sajag-chikarsal,265,,,,265,,,,
-182,"Maurizia January",maurizia-january,263,,,,,263,,,
-183,"Fairy",fairy,260,260,,,,,,,
-184,"Josefine",josefine,260,,,,260,,,,
-185,"Nutan Kumar",nutan-kumar,258,,,,,258,,,
-186,"Daymon P",daymon-p,256,,,256,,,,,
-187,"MW",mw,256,,,,,,,256,
-188,"kristen",kristen,252,,252,,,,,,
-189,"Jenny Jia",jenny-jia,252,,252,,,,,,
-190,"Pierre Davis",pierre-davis,252,,252,,,,,,
-191,"Vikash Sharma",vikash-sharma,243,,243,,,,,,
-192,"Maria Antonio",maria-antonio,219,219,,,,,,,
-193,"Carlwin M",carlwin-m,217,,217,,,,,,
-194,"Prashant Mirge",prashant-mirge,215,,215,,,,,,
-195,"Shivshankar Jalanila",shivshankar-jalanila,202,,,,,,202,,
-196,"Maddog",maddog,196,,,,,196,,,
-197,"Ima Soubeezi",ima-soubeezi,195,,,,,,,,195
-198,"Sam Spade",sam-spade,191,,,,,,,,191
-199,"Randolph Davies",randolph-davies,190,,,,,190,,,
-200,"Ren P",ren-p,190,,,,,,190,,
-201,"Nikhila Priya",nikhila-priya,189,,,,,,189,,
-202,"Priti Kumari",priti-kumari,189,,,,,,90,99,
-203,"Blake",blake,188,,,,,188,,,
-204,"Zach B",zach-b,188,,,,,188,,,
-205,"Rupal Sohane",rupal-sohane,186,,,,,,186,,
-206,"Brian P",brian-p,185,,,,,185,,,
-207,"Ananth Kumar K U",ananth-kumar-k-u,184,184,,,,,,,
-208,"Fabian",fabian,184,,,184,,,,,
-209,"Jaid",jaid,184,,,,,,184,,
-210,"Jason",jason,184,,,,,,,,184
-211,"Leann",leann,180,,,,,180,,,
-212,"test",test,180,,,,,,,180,
-213,"Justin Scricca",justin-scricca,178,,,,178,,,,
-214,"Tyler F",tyler-f,176,,176,,,,,,
-215,"Sam",sam,173,,,173,,,,,
-216,"Lindsay B",lindsay-b,172,,,,,172,,,
-217,"JG",jg,172,,,,,,,,172
-218,"vidhya",vidhya,171,,,,,,,171,
-219,"Ntinos",ntinos,168,,,,,,168,,
-220,"Mayank",mayank,166,166,,,,,,,
-221,"Fairy Ara",fairy-ara,163,,163,,,,,,
-222,"George C",george-c,162,,,,,,,,162
-223,"Prashanth A",prashanth-a,157,,157,,,,,,
-224,"Jacqueline Sher",jacqueline-sher,152,,,152,,,,,
-225,"Wallene",wallene,139,,139,,,,,,
-226,"Blake Taylor",blake-taylor,99,,99,,,,,,
-227,"Hano van Jaarsveld",hano-van-jaarsveld,99,,99,0,,,,,
-228,"Claire S",claire-s,99,,,,,,,99,
-229,"Fuatout de Duer",fuatout-de-duer,97,,,,,,97,,
-230,"Jeffrey Whitlock",jeffrey-whitlock,96,,,,,96,,,
-231,"Stephanie T",stephanie-t,96,,,,,,96,,
-232,"Hano",hano,94,,,,,,,,94
-233,"Chrisk",chrisk,93,,93,,,,,,
-234,"Sidney A",sidney-a,91,,,91,,,,,
-235,"Niranjana M",niranjana-m,88,,,,,,88,,
-236,"Katherine Kinlin",katherine-kinlin,87,,,,,,,,87
-237,"Fabian Kearns",fabian-kearns,86,,,,,,,,86
-238,"Bipi",bipi,79,,,,,,79,,
-239,"Shashidhar Iragar",shashidhar-iragar,76,76,,,,,,,
-240,"Chester",chester,0,0,,,,,,,
-241,"Daymon Pillay",daymon-pillay,0,,0,,,,,,
-242,"nobody",nobody,0,,0,,,,,,
-243,"Aumi",aumi,0,,0,,,,,,
-244,"Prachi Wadnerkar",prachi-wadnerkar,0,,,,,,0,,
-245,"Roy",roy,0,,,,,,,,0
-246,"Ron",ron,0,,,,,,,,0
-247,"mike",mike,0,,,,,,,,0
+Rank,Name,NameSlug,Total,W14-pam,W15-tlm-part-3,W16-cert-central-part-2,W17-document-trust,W18-digicert-history,W19-dns-part-3,W20-tlm-part-4,W21-cert-central-part-3,W22-digicert-history-part-2
+1,"Lackern X",lackern-x,3831,477,465,469,486,476,488,487,483,0
+2,"Okafor Emmanuel",okafor-emmanuel,3773,391,482,488,487,,489,480,474,482
+3,"Sneha Kelwa",sneha-kelwa,3670,474,462,454,464,380,473,483,383,97
+4,"Fauzan Slamang",fauzan-slamang,3460,338,337,335,441,351,428,402,424,404
+5,"Mihai",mihai,3221,450,438,447,427,,373,459,351,276
+6,"Kriti Sharma",kriti-sharma,3210,471,449,,481,476,,483,478,372
+7,"Brett Philp",brett-philp,3044,461,158,360,366,,452,447,347,453
+8,"Mutomb Kayomb",mutomb-kayomb,2982,424,217,407,386,381,255,414,319,179
+9,"Aris Ktenioudakis",aris-ktenioudakis,2971,447,346,465,469,189,364,337,354,
+10,"Ashoke Kulandaivel",ashoke-kulandaivel,2907,,,484,488,480,,487,483,485
+11,"Christiaan de Villiers",christiaan-de-villiers,2893,,432,466,257,384,182,453,292,427
+12,"Raju Muke",raju-muke,2816,426,463,374,447,275,,462,369,
+13,"Kelsey Berteaux",kelsey-berteaux,2770,179,247,156,451,382,254,433,326,342
+14,"Shantanu Raj Soni",shantanu-raj-soni,2741,465,358,165,450,,434,226,312,331
+15,"Quinn Pitcher",quinn-pitcher,2719,453,452,442,,273,457,,274,368
+16,"Dean C",dean-c,2545,385,177,189,459,195,382,279,190,289
+17,"Riaan Pretorius",riaan-pretorius,2507,373,270,268,373,98,372,,283,470
+18,"Ruchira",ruchira,2402,243,161,269,363,274,242,322,179,349
+19,"shankar kambam",shankar-kambam,2320,,270,374,372,467,367,470,,
+20,"JCT",jct,2310,455,,241,,476,257,171,349,361
+21,"Temmi Kalua",temmi-kalua,2174,,179,282,379,96,286,473,193,286
+22,"Leigh Teixeira",leigh-teixeira,2159,262,337,416,364,,,361,419,
+23,"BobV",bobv,2156,,343,357,373,289,,,363,431
+24,"Todd Heron",todd-heron,1880,,,,400,286,266,338,232,358
+25,"Labeeqah Rahman",labeeqah-rahman,1851,376,267,375,380,,,176,,277
+26,"Geoff G",geoff-g,1827,,322,280,,388,,,363,474
+27,"Darren S.",darren-s,1701,361,,205,426,,,,352,357
+28,"Yogesh Chindarkar",yogesh-chindarkar,1662,,,317,319,,312,,419,295
+29,"Maurizia",maurizia,1652,,313,169,368,,,323,132,347
+30,"Anu Sivadasan",anu-sivadasan,1633,426,234,,339,,,113,326,195
+31,"Paolo Tropea",paolo-tropea,1611,,403,,375,94,,359,,380
+32,"Nicole Ferretti",nicole-ferretti,1609,,92,381,380,96,93,282,188,97
+33,"Tyler",tyler,1584,,,479,,,468,257,,380
+34,"Valerie Ekegbo",valerie-ekegbo,1565,,,,364,97,282,,360,462
+35,"Justin Case",justin-case,1527,382,279,286,384,,,196,,
+36,"Mithun Chaithanya",mithun-chaithanya,1396,,93,328,361,95,,244,275,
+37,"Candice",candice,1346,474,221,,371,280,,,,
+38,"Mayur Madhawani",mayur-madhawani,1328,336,229,199,314,91,,159,,
+39,"Brian Deckman",brian-deckman,1280,176,,256,,,185,322,,341
+40,"Eilis Slattery",eilis-slattery,1213,358,172,,365,318,,,,
+41,"Mayank Motwani",mayank-motwani,1203,,,242,,430,289,,,242
+42,"Lee Isbell",lee-isbell,1188,,280,,,,465,443,,
+43,"mike f",mike-f,1185,,434,,377,,374,,,
+44,"Ryan White",ryan-white,1183,,,356,379,,,448,,
+45,"Taylor",taylor,1122,369,,285,,0,93,,,375
+46,"Domenica",domenica,1112,,154,173,,0,182,242,172,189
+47,"Mohan D",mohan-d,1087,,,344,373,0,91,,,279
+48,"Ashwini Bhagat",ashwini-bhagat,1043,356,,,,424,,263,,
+49,"Ken M.",ken-m,1039,359,246,,,,,,,434
+50,"Ben J",ben-j,1029,,176,,,,475,,378,
+51,"Martyn Veale",martyn-veale,1007,,,,372,,,278,357,
+52,"Brandon Jemmett",brandon-jemmett,973,351,84,,,98,279,69,92,
+53,"Lackern",lackern,918,482,436,,,,,,,
+54,"Alex C",alex-c,904,267,180,92,,,,,,365
+55,"Tiphany",tiphany,899,,,,,94,,,433,372
+56,"Mariano T",mariano-t,898,456,442,,,,,,,
+57,"Alan",alan,886,,,,443,443,,,,
+58,"Anon",anon,851,,,0,,287,187,,189,188
+59,"Esther",esther,844,468,,376,,,,,,
+60,"Vikas Kumar",vikas-kumar,815,,97,,363,182,,,173,
+61,"Apurv Upreti",apurv-upreti,807,,,,256,,281,270,,
+62,"Ayne",ayne,802,182,,,351,,269,,,
+63,"Deepa V",deepa-v,782,259,,184,,339,,,,
+64,"Damiaan Habets",damiaan-habets,726,458,268,,,,,,,
+65,"Anja Mouton",anja-mouton,710,360,159,191,,,,,,
+66,"Harikrishna D",harikrishna-d,685,253,249,,,,183,,,
+67,"Emanuele",emanuele,641,,,184,,188,,269,,
+68,"Ashlee",ashlee,638,,328,,,,310,,,
+69,"Aaditya Dixit",aaditya-dixit,624,,,,,449,,,175,
+70,"Karin",karin,611,264,157,,,190,,,,
+71,"Jac Sher",jac-sher,607,,,,,,,358,249,
+72,"Alex",alex,606,,,,,,,262,344,
+73,"Nipun Bhatnagar",nipun-bhatnagar,589,,,,,,339,,250,
+74,"Sharanya Ravindra",sharanya-ravindra,582,,,,,409,173,,,
+75,"Anja M",anja-m,564,,,,,,,,377,187
+76,"Taff Veale",taff-veale,562,,,,,188,374,,,
+77,"JM",jm,555,,,,,96,,,180,279
+78,"Olive Mbombo",olive-mbombo,532,,,,,329,203,,,
+79,"Tomo",tomo,517,,176,,,,,341,,
+80,"Michelle",michelle,513,,,263,250,,,,,
+81,"Junaid Ahmad",junaid-ahmad,510,,,,,,338,172,,
+82,"Krishna P",krishna-p,484,,,,484,,,,,
+83,"Ashoke",ashoke,482,,482,,,,,,,
+84,"Remy L",remy-l,479,479,,,,,,,,
+85,"Gaurav Ranjan",gaurav-ranjan,477,,94,90,,194,,,99,
+86,"matt s",matt-s,468,,,,,,,,,468
+87,"Nas Burtscher",nas-burtscher,464,367,,,,,97,,,
+88,"Brandon Nelson",brandon-nelson,463,,,,,,463,,,
+89,"Bipin",bipin,459,,184,275,,,,,,
+90,"Kimberly",kimberly,454,,,,,,454,,,
+91,"Brett P",brett-p,453,266,,,,187,,,,
+92,"Cloud",cloud,452,,,,,,,452,,
+93,"Jasmin L",jasmin-l,447,447,,,,,,,,
+94,"Geethesh Bhat",geethesh-bhat,444,,,,444,,,,,
+95,"Melusi K",melusi-k,441,,,441,,,,,,
+96,"Tausif Mohammad",tausif-mohammad,438,,,,,,,438,,
+97,"Lane S",lane-s,437,98,339,,,,,,,
+98,"Kanda",kanda,437,,,211,226,,,,,
+99,"Lindsay",lindsay,437,,,,437,,,,,
+100,"Kuldeep Sharma",kuldeep-sharma,434,,,,434,,,,,
+101,"Stephane",stephane,431,431,,,,,,,,
+102,"Byron Sineker",byron-sineker,429,,,,,429,,,,
+103,"Malisetty Sumanth",malisetty-sumanth,428,,428,,,,,,,
+104,"Amazza",amazza,421,,,,,421,,,,
+105,"Siphosethu Mabheka",siphosethu-mabheka,419,,,,,,,419,,
+106,"Stacey A",stacey-a,418,,,,,,,,,418
+107,"Adam",adam,407,,,,,407,,,,
+108,"Ramya",ramya,403,403,,,,,,,,
+109,"Ayush Agrawal",ayush-agrawal,390,390,,,,,,,,
+110,"Todd H",todd-h,388,,215,173,,,,,,
+111,"RemyL",remyl,384,,,,384,,,,,
+112,"Stephanie Tunis",stephanie-tunis,379,,,,379,,,,,
+113,"Msi",msi,378,378,,,,,,,,
+114,"Ryan W - Valimail",ryan-w-valimail,378,,,,,378,,,,
+115,"Gulam N",gulam-n,377,377,,,,,,,,
+116,"Ayush K",ayush-k,376,376,,,,,,,,
+117,"anon2",anon2,374,,,374,,,,,,
+118,"Michael Pryor",michael-pryor,374,,,,374,,,,,
+119,"Nonoh",nonoh,374,,,,,374,,,,
+120,"xx",xx,374,,,,,,374,,,
+121,"Sam M",sam-m,370,,,,,,,,,370
+122,"Giliam Baetens",giliam-baetens,369,369,,,,,,,,
+123,"Paolo T",paolo-t,366,366,,,,,,,,
+124,"Sri",sri,366,,,,366,,,,,
+125,"PrashanthR",prashanthr,365,,,,,,,,,365
+126,"Martyn Taff Veale",martyn-taff-veale,362,,362,,,,,,,
+127,"Robert Watts",robert-watts,361,,,,,,361,,,
+128,"Preetam C",preetam-c,358,358,,,,,,,,
+129,"Alec Berry",alec-berry,357,,,,,96,261,,,
+130,"Satpreet",satpreet,355,,,,355,,,,,
+131,"Srinidhi",srinidhi,353,,,,353,,,,,
+132,"Bipinchandra",bipinchandra,352,,,,352,,,,,
+133,"Blake T",blake-t,352,,,,,,258,,94,
+134,"Fenna H",fenna-h,351,,,,351,,,,,
+135,"Harihara Subramanian",harihara-subramanian,351,,,,,92,259,,,
+136,"Shane",shane,350,350,,,,,,,,
+137,"Michelle G",michelle-g,349,,,,,,168,,181,
+138,"Mithun C",mithun-c,348,348,,,,,,,,
+139,"Alheena",alheena,348,,,,348,,,,,
+140,"PD",pd,347,,347,,,,,,,
+141,"Alain Allen",alain-allen,346,,,,346,,,,,
+142,"Ananth",ananth,339,,339,,,,,,,
+143,"Shae W",shae-w,339,,,,339,,,,,
+144,"Jac Sherrill",jac-sherrill,334,334,,,,,,,,
+145,"Fenna Huang",fenna-huang,334,,,,,,,,334,
+146,"Molly Manncik",molly-manncik,333,,333,,,,,,,
+147,"Shohei Ohtani",shohei-ohtani,324,,,,,,,,324,
+148,"Paritosh Dadhich",paritosh-dadhich,319,,,,319,,,,,
+149,"Jessica Rummage",jessica-rummage,317,,,,,,317,,,
+150,"Ripple",ripple,310,,,,310,,,,,
+151,"wonk",wonk,307,307,,,,,,,,
+152,"Ripple B",ripple-b,306,,,,,,306,,,
+153,"h.s",hs,305,,,,,,305,,,
+154,"Gireesh Punati",gireesh-punati,300,,,,,300,,,,
+155,"Johannes Hoernlen",johannes-hoernlen,294,,294,,,,,,,
+156,"Toufeeq Kalam",toufeeq-kalam,294,,,,,,,,294,
+157,"sanjeev kumar",sanjeev-kumar,292,,,292,,,,,,
+158,"Jacqueline S.",jacqueline-s,292,,,,,,292,,,
+159,"Ravi Kumar M",ravi-kumar-m,292,,,,,,,,,292
+160,"Almir G",almir-g,291,,,,,,291,,,
+161,"Karsha",karsha,290,,,,,,,290,,
+162,"Darren",darren,287,,,,,,,,287,
+163,"Andrew S",andrew-s,286,,,286,,,,,,
+164,"max f",max-f,284,,284,,,,,,,
+165,"fawwaz",fawwaz,284,,,,,,,,284,
+166,"Diego M",diego-m,283,,,,,283,,,,
+167,"Dune Claassen",dune-claassen,281,,,,,189,92,,,
+168,"Jen R",jen-r,280,,90,93,,97,,,,
+169,"Anom",anom,280,,,,,,,,,280
+170,"Nas B",nas-b,279,,,,,,,,279,
+171,"abcd",abcd,279,,,,,,,,,279
+172,"Minakshi Behera",minakshi-behera,278,,,,,,278,,,
+173,"mike",mike,278,,,,,,,,0,278
+174,"McLovin",mclovin,277,,,,,,,,,277
+175,"Ivana N",ivana-n,277,,,,,,,,,277
+176,"Jacqueline Sherrill",jacqueline-sherrill,274,,,,274,,,,,
+177,"Smitha Rathin",smitha-rathin,274,,,,,274,,,,
+178,"tanisha",tanisha,273,,,273,,,,,,
+179,"Fed Fun Tiphany",fed-fun-tiphany,273,,,273,,,,,,
+180,"Fenna",fenna,272,,272,,,,,,,
+181,"Alan Grigsby",alan-grigsby,271,,,,,,271,,,
+182,"Riaan.Pretorius",riaanpretorius,271,,,,,,,271,,
+183,"Paul L",paul-l,271,,,,,,,,271,
+184,"Norman P",norman-p,271,,,,,,,,271,
+185,"stefan",stefan,269,,,,,,,175,94,
+186,"Sidney Amadhila",sidney-amadhila,268,,,,,,,,268,
+187,"Avinesh Kumar",avinesh-kumar,267,,267,,,,,,,
+188,"Matteo Peli",matteo-peli,266,,,266,,,,,,
+189,"Jenny J",jenny-j,266,,,,,,266,,,
+190,"Sajag Chikarsal",sajag-chikarsal,265,,,,265,,,,,
+191,"Maurizia January",maurizia-january,263,,,,,263,,,,
+192,"Fairy",fairy,260,260,,,,,,,,
+193,"Josefine",josefine,260,,,,260,,,,,
+194,"Nutan Kumar",nutan-kumar,258,,,,,258,,,,
+195,"Daymon P",daymon-p,256,,,256,,,,,,
+196,"MW",mw,256,,,,,,,256,,
+197,"kristen",kristen,252,,252,,,,,,,
+198,"Jenny Jia",jenny-jia,252,,252,,,,,,,
+199,"Pierre Davis",pierre-davis,252,,252,,,,,,,
+200,"Prashanth A",prashanth-a,249,,157,,,,,,,92
+201,"Vikash Sharma",vikash-sharma,243,,243,,,,,,,
+202,"Maria Antonio",maria-antonio,219,219,,,,,,,,
+203,"Carlwin M",carlwin-m,217,,217,,,,,,,
+204,"Prashant Mirge",prashant-mirge,215,,215,,,,,,,
+205,"Shivshankar Jalanila",shivshankar-jalanila,202,,,,,,202,,,
+206,"Maddog",maddog,196,,,,,196,,,,
+207,"Ima Soubeezi",ima-soubeezi,195,,,,,,,,195,
+208,"Sam Spade",sam-spade,191,,,,,,,,191,
+209,"Randolph Davies",randolph-davies,190,,,,,190,,,,
+210,"Ren P",ren-p,190,,,,,,190,,,
+211,"Nikhila Priya",nikhila-priya,189,,,,,,189,,,
+212,"Priti Kumari",priti-kumari,189,,,,,,90,99,,
+213,"Selena Qin",selena-qin,189,,,,,,,,,189
+214,"Chris C",chris-c,189,,,,,,,,,189
+215,"Blake",blake,188,,,,,188,,,,
+216,"Zach B",zach-b,188,,,,,188,,,,
+217,"Rupal Sohane",rupal-sohane,186,,,,,,186,,,
+218,"Brian P",brian-p,185,,,,,185,,,,
+219,"Ananth Kumar K U",ananth-kumar-k-u,184,184,,,,,,,,
+220,"Fabian",fabian,184,,,184,,,,,,
+221,"Jaid",jaid,184,,,,,,184,,,
+222,"Jason",jason,184,,,,,,,,184,
+223,"Leann",leann,180,,,,,180,,,,
+224,"test",test,180,,,,,,,180,,
+225,"Justin Scricca",justin-scricca,178,,,,178,,,,,
+226,"Tyler F",tyler-f,176,,176,,,,,,,
+227,"Sam",sam,173,,,173,,,,,,
+228,"Lindsay B",lindsay-b,172,,,,,172,,,,
+229,"JG",jg,172,,,,,,,,172,
+230,"vidhya",vidhya,171,,,,,,,171,,
+231,"Ntinos",ntinos,168,,,,,,168,,,
+232,"Mayank",mayank,166,166,,,,,,,,
+233,"Zeta EMEA-Tech",zeta-emeatech,164,,,,,,,,,164
+234,"Fairy Ara",fairy-ara,163,,163,,,,,,,
+235,"George C",george-c,162,,,,,,,,162,
+236,"Jacqueline Sher",jacqueline-sher,152,,,152,,,,,,
+237,"Wallene",wallene,139,,139,,,,,,,
+238,"Blake Taylor",blake-taylor,99,,99,,,,,,,
+239,"Hano van Jaarsveld",hano-van-jaarsveld,99,,99,0,,,,,,
+240,"Claire S",claire-s,99,,,,,,,99,,
+241,"Fuatout de Duer",fuatout-de-duer,97,,,,,,97,,,
+242,"Jeffrey Whitlock",jeffrey-whitlock,96,,,,,96,,,,
+243,"Stephanie T",stephanie-t,96,,,,,,96,,,
+244,"Hano",hano,94,,,,,,,,94,
+245,"Chrisk",chrisk,93,,93,,,,,,,
+246,"Rupal",rupal,92,,,,,,,,,92
+247,"Sidney A",sidney-a,91,,,91,,,,,,
+248,"Niranjana M",niranjana-m,88,,,,,,88,,,
+249,"Mithun",mithun,88,,,,,,,,,88
+250,"Mayur M.",mayur-m,88,,,,,,,,,88
+251,"Katherine Kinlin",katherine-kinlin,87,,,,,,,,87,
+252,"Fabian Kearns",fabian-kearns,86,,,,,,,,86,
+253,"Bipi",bipi,79,,,,,,79,,,
+254,"Shashidhar Iragar",shashidhar-iragar,76,76,,,,,,,,
+255,"Bram",bram,9,,,,,,,,,9
+256,"Chester",chester,0,0,,,,,,,,
+257,"Daymon Pillay",daymon-pillay,0,,0,,,,,,,
+258,"nobody",nobody,0,,0,,,,,,,
+259,"Aumi",aumi,0,,0,,,,,,,
+260,"Prachi Wadnerkar",prachi-wadnerkar,0,,,,,,0,,,
+261,"Roy",roy,0,,,,,,,,0,
+262,"Ron",ron,0,,,,,,,,0,
+263,"VK",vk,0,,,,,,,,,0
