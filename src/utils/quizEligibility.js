@@ -21,8 +21,7 @@ export function sanitizeName(value = "") {
 
 export function toNameSlug(value = "") {
   const clean = sanitizeName(value).toLowerCase();
-  const collapsed = clean.replace(/\s+/g, " ");
-  const stripped = collapsed.replace(/[^a-z0-9 ]+/g, "");
+  const stripped = clean.replace(/[^a-z0-9 ]+/g, "");
   return stripped.replace(/\s+/g, "-");
 }
 
