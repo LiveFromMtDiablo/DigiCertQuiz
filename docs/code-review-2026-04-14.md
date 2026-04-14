@@ -177,3 +177,38 @@ For spot-checking:
 - `QUIZ_ARCHITECTURE_PLAN.md`, `docs/hardening.md` — finding #7
 - `.gitignore`, repo root — finding #11
 - `scripts/` — finding #12
+
+---
+
+## 6. Response / Disposition
+
+Reviewed against the live repo and then actioned in the follow-up implementation pass.
+
+### Overall
+
+- The review was directionally useful, especially on CI, explicit error handling, constants, docs, and repo hygiene.
+- A few findings were overstated in this checkout:
+  - finding #2: test coverage was stronger than described, but still had a few worthwhile gaps
+  - finding #7: `QUIZ_ARCHITECTURE_PLAN.md` was stale in places, but not fully pre-hardening
+  - finding #11: root clutter and duplicate ignore rules were real, but the tracked/untracked picture was not fully accurate
+- Follow-up verification after implementation:
+  - `npm test -- --watchAll=false` passed
+  - `npm run build` passed
+  - no observed regressions were reported after validation
+
+### Finding-by-finding disposition
+
+| # | Disposition | Status | Notes |
+| --- | --- | --- | --- |
+| 1 | Accept | Deferred | `QuizGame.js` is still too large; major decomposition intentionally postponed. |
+| 2 | Partial accept | Implemented | Existing integration coverage was stronger than stated; added missing high-risk scenarios for duplicate fingerprint, `401`, `403`, and transient save retry behavior. |
+| 3 | Accept | Implemented | Replaced key silent catches with searchable logging and made transient vs fatal save behavior explicit. |
+| 4 | Accept | Deferred | State centralization remains a future refactor. |
+| 5 | Partial accept | Deferred | A service-layer extraction is still a good idea, but the original finding overstated how many components hit Firebase in the same way. |
+| 6 | Accept | Deferred | Shared leaderboard/view abstractions remain future cleanup. |
+| 7 | Partial accept | Implemented | Added `docs/architecture.md` and marked `QUIZ_ARCHITECTURE_PLAN.md` as historical/current-reference redirected. |
+| 8 | Accept | Implemented | Added GitHub Actions CI for `main` and `dev`. |
+| 9 | Accept | Implemented | Added named auth/quiz constants and removed key magic numbers from core flows. |
+| 10 | Partial accept | Deferred | Existing docs already covered much of the hardening model; a larger inline explanation pass is still optional future work. |
+| 11 | Partial accept | Implemented | De-duplicated `.gitignore` and untracked ignored generated/debug/design artifacts while keeping local files on disk; broader source relocation was deferred. |
+| 12 | Accept | Implemented | Added `scripts/README.md` documenting purpose, usage timing, and outputs. |
