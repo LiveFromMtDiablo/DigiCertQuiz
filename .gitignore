@@ -19,18 +19,22 @@ node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+firebase-debug.log
 
 # vercel
 .vercel
 DigiCertQuiz.code-workspace
-DNS_quizzes/2026.03.11 Product Quiz - DNS, Part 3.docx
-DNS_quizzes/2025.12.15 Product Quiz - DNS, Part 2.docx
-DNS_quizzes/2025.11.17 Product Quiz - DNS, Part 1.docx
-DNS_quizzes/2025.11.17 Product Quiz - DNS, Part 1.docx
-DNS_quizzes/2025.12.15 Product Quiz - DNS, Part 2.docx
-DNS_quizzes/2026.03.11 Product Quiz - DNS, Part 3.docx
-/TLMWeek20
-firebase-debug.log
-firebase-debug.log
-firebase-debug.log
+
+# authoring sources
 /CCWeek21
+/TLMWeek20
+/DNS_quizzes/
+
+# generated local reports
+/cumulative-leaderboard.csv
+/cumulative-leaderboard-merged.csv
+/cumulative-leaderboard_VANILLA.csv
+/potential-duplicates.csv
+
+# design sources
+/quiz_background.psd

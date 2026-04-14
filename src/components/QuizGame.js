@@ -5,6 +5,7 @@ import { AUTH_STORAGE_KEY, getValidAuth } from "../services/firebaseAuth";
 import { sortLeaderboardEntries } from "../utils/leaderboardSort";
 import {
   NAME_REGEX,
+  buildEligibilityState,
   sanitizeName,
   toNameSlug,
   classifyNameConflict,
@@ -18,9 +19,15 @@ import {
   writeIndexedScoreSubmission,
   writeMachinePrintObservation,
 } from "../utils/quizSubmission";
+import {
+  DEFAULT_QUIZ_MAX_TIME_SECONDS,
+  MAX_TRANSIENT_SAVE_RETRIES,
+  QUIZ_ATTEMPT_STORAGE_VERSION,
+  SAVE_RETRY_DELAY_MS,
+} from "../constants/quiz";
+import { logSilent } from "../utils/logging";
 
 const TROPHY_COLORS = ["text-yellow-500", "text-gray-400", "text-orange-500"];
-const QUIZ_ATTEMPT_STORAGE_VERSION = 1;
 const ATTEMPT_STATUS_IN_PROGRESS = "in_progress";
 const ATTEMPT_STATUS_COMPLETED = "completed";
 const DEV_FINGERPRINT_SEED_KEY = "devFingerprintSeed";
@@ -220,7 +227,13 @@ function isRestorableServerAttempt(attempt) {
   return Boolean(attempt && attempt.status !== ATTEMPT_STATUS_COMPLETED);
 }
 
-export default function QuizGame({ quizId, title, questions, maxTime = 100, intro }) {
+export default function QuizGame({
+  quizId,
+  title,
+  questions,
+  maxTime = DEFAULT_QUIZ_MAX_TIME_SECONDS,
+  intro,
+}) {
   const devFingerprintResetEnabled = isDevFingerprintResetEnabled();
   const devFingerprintSeed = getDevFingerprintSeed();
   const devFingerprintSeedLabel = formatDevFingerprintSeed(devFingerprintSeed);
@@ -245,6 +258,28 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
   const [isStartingAttempt, setIsStartingAttempt] = useState(false);
   const [devResetNotice, setDevResetNotice] = useState("");
   const [identityRefreshNonce, setIdentityRefreshNonce] = useState(0);
+
+  function markQuizSubmitted() {
+    setAlreadySubmitted(true);
+    try {
+      if (typeof localStorage !== "undefined") {
+        localStorage.setItem(`submitted:${quizId}`, "1");
+      }
+    } catch (error) {
+      logSilent("quiz.save.markSubmitted", error, { quizId });
+    }
+  }
+
+  function commitSaveFailure(failure) {
+    if (failure.reason === "already_submitted") {
+      markQuizSubmitted();
+    }
+    setError(failure.message);
+  }
+
+  async function waitForTransientSaveRetry() {
+    await new Promise((resolve) => setTimeout(resolve, SAVE_RETRY_DELAY_MS));
+  }
 
   // Secure RNG and shuffle helpers (per-session order randomization)
   function secureRandomInt(maxExclusive) {
@@ -657,7 +692,7 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
     let fp = null;
     const nameSlug = toNameSlug(name);
 
-    const applySaveFailure = async ({
+    const classifySaveFailureState = async ({
       responseStatus,
       responseBody = "",
       sourceError = null,
@@ -698,143 +733,159 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
         nameSlug,
         sourceError: sourceError?.message || null,
       });
-
-      if (failure.reason === "already_submitted") {
-        setAlreadySubmitted(true);
-        try {
-          if (typeof localStorage !== "undefined") {
-            localStorage.setItem(`submitted:${quizId}`, "1");
-          }
-        } catch (_) {}
-      }
-
-      setError(failure.message);
       return failure;
     };
 
-    try {
-      // Clamp score to a safe maximum (respect shuffled set length)
-      const activeQuestions = gameQuestions || questions;
-      const maxPossible = maxTime * activeQuestions.length;
-      const safeScore = clampQuizScore(score, maxPossible);
+    const attemptSave = async (retryCount = 0) => {
+      try {
+        // Clamp score to a safe maximum (respect shuffled set length)
+        const activeQuestions = gameQuestions || questions;
+        const maxPossible = maxTime * activeQuestions.length;
+        const safeScore = clampQuizScore(score, maxPossible);
 
-      // Ensure authenticated uid and token for protected write
-      auth = await getValidAuth();
-      const { idToken, uid } = auth;
-      fp = await getDeviceFingerprint(quizId);
-      const fpMachine = await getMachineFingerprint(quizId);
+        // Ensure authenticated uid and token for protected write
+        auth = await getValidAuth();
+        const { idToken, uid } = auth;
+        fp = await getDeviceFingerprint(quizId);
+        const fpMachine = await getMachineFingerprint(quizId);
 
-      const updates = buildIndexedScorePayload({
-        quizId,
-        uid,
-        name,
-        nameSlug,
-        score: safeScore,
-        fp,
-      });
-      // Observe-only machine-level print (no enforcement in rules yet)
-      updates[`machinePrints/${quizId}/${fpMachine}`] = uid;
-      if (gameQuestions) {
-        updates[`attempts/${quizId}/${uid}`] = buildAttemptRecord({
+        const updates = buildIndexedScorePayload({
+          quizId,
+          uid,
           name,
           nameSlug,
+          score: safeScore,
           fp,
-          fpMachine,
-          currentQuestion: activeQuestions.length - 1,
-          totalScore: safeScore,
-          timeLeft,
-          questionDeadlineAt: null,
-          selectedAnswer,
-          showFeedback: true,
-          isCorrect,
-          gameQuestions,
-          createdAt: attemptCreatedAt || Date.now(),
-          status: ATTEMPT_STATUS_COMPLETED,
-          completedAt: Date.now(),
         });
-        updates[`attemptFingerprints/${quizId}/${fp}`] = uid;
-      }
-
-      let response = await writeIndexedScoreSubmission({
-        dbUrl: DB_URL,
-        idToken,
-        payload: updates,
-      });
-
-      if (!response.ok && (response.status === 401 || response.status === 403)) {
-        // Likely rules v1 without permissions for nameIndex/fingerprints.
-        // Fallback to single write to leaderboard path only.
-        const newEntry = updates[`leaderboard/${quizId}/${uid}`];
-        response = await fetch(
-          `${DB_URL}/leaderboard/${quizId}/${uid}.json?auth=${encodeURIComponent(idToken)}`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(newEntry),
-          }
-        );
-      }
-
-      if (response.ok) {
-        await loadLeaderboard();
-        try {
-          if (typeof localStorage !== "undefined") {
-            localStorage.setItem(`submitted:${quizId}`, "1");
-            setAlreadySubmitted(true);
-          }
-        } catch (_) {}
-
-        setError("");
-
-        // Machine prints are observe-only today, so they must not break score saves.
-        try {
-          const machinePrintResponse = await writeMachinePrintObservation({
-            dbUrl: DB_URL,
-            idToken,
-            quizId,
-            uid,
+        // Observe-only machine-level print (no enforcement in rules yet)
+        updates[`machinePrints/${quizId}/${fpMachine}`] = uid;
+        if (gameQuestions) {
+          updates[`attempts/${quizId}/${uid}`] = buildAttemptRecord({
+            name,
+            nameSlug,
+            fp,
             fpMachine,
+            currentQuestion: activeQuestions.length - 1,
+            totalScore: safeScore,
+            timeLeft,
+            questionDeadlineAt: null,
+            selectedAnswer,
+            showFeedback: true,
+            isCorrect,
+            gameQuestions,
+            createdAt: attemptCreatedAt || Date.now(),
+            status: ATTEMPT_STATUS_COMPLETED,
+            completedAt: Date.now(),
           });
-          if (!machinePrintResponse.ok) {
+          updates[`attemptFingerprints/${quizId}/${fp}`] = uid;
+        }
+
+        let response = await writeIndexedScoreSubmission({
+          dbUrl: DB_URL,
+          idToken,
+          payload: updates,
+        });
+
+        if (!response.ok && (response.status === 401 || response.status === 403)) {
+          // Likely rules v1 without permissions for nameIndex/fingerprints.
+          // Fallback to single write to leaderboard path only.
+          const newEntry = updates[`leaderboard/${quizId}/${uid}`];
+          response = await fetch(
+            `${DB_URL}/leaderboard/${quizId}/${uid}.json?auth=${encodeURIComponent(idToken)}`,
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(newEntry),
+            }
+          );
+        }
+
+        if (response.ok) {
+          await loadLeaderboard();
+          markQuizSubmitted();
+          setError("");
+
+          // Machine prints are observe-only today, so they must not break score saves.
+          try {
+            const machinePrintResponse = await writeMachinePrintObservation({
+              dbUrl: DB_URL,
+              idToken,
+              quizId,
+              uid,
+              fpMachine,
+            });
+            if (!machinePrintResponse.ok) {
+              console.warn("Machine print observation failed:", {
+                quizId,
+                uid,
+                status: machinePrintResponse.status,
+              });
+            }
+          } catch (machinePrintError) {
             console.warn("Machine print observation failed:", {
               quizId,
               uid,
-              status: machinePrintResponse.status,
+              error: machinePrintError?.message || String(machinePrintError),
             });
           }
-        } catch (machinePrintError) {
-          console.warn("Machine print observation failed:", {
-            quizId,
-            uid,
-            error: machinePrintError?.message || String(machinePrintError),
-          });
+
+          return { ok: true, failure: null };
         }
 
-        return { ok: true, failure: null };
-      } else {
         let errText = "";
         try {
           errText = await response.text();
-        } catch (_) {}
-        const failure = await applySaveFailure({
+        } catch (error) {
+          logSilent("quiz.save.readResponseBody", error, {
+            quizId,
+            responseStatus: response.status,
+          });
+        }
+
+        const failure = await classifySaveFailureState({
           responseStatus: response.status,
           responseBody: errText,
         });
+        if (failure.retryable && retryCount < MAX_TRANSIENT_SAVE_RETRIES) {
+          console.warn("Transient score save failed; retrying once.", {
+            quizId,
+            responseStatus: response.status,
+            retryCount,
+          });
+          await waitForTransientSaveRetry();
+          return attemptSave(retryCount + 1);
+        }
+
+        commitSaveFailure(failure);
+        return {
+          ok: failure.reason === "already_submitted",
+          failure,
+        };
+      } catch (err) {
+        const failure = await classifySaveFailureState({
+          responseStatus: err?.status || 0,
+          sourceError: err,
+        });
+        if (failure.retryable && retryCount < MAX_TRANSIENT_SAVE_RETRIES) {
+          console.warn("Transient score save failed; retrying once.", {
+            quizId,
+            responseStatus: err?.status || 0,
+            retryCount,
+            error: err?.message || String(err),
+          });
+          await waitForTransientSaveRetry();
+          return attemptSave(retryCount + 1);
+        }
+
+        commitSaveFailure(failure);
         return {
           ok: failure.reason === "already_submitted",
           failure,
         };
       }
-    } catch (err) {
-      const failure = await applySaveFailure({
-        responseStatus: err?.status || 0,
-        sourceError: err,
-      });
-      return {
-        ok: failure.reason === "already_submitted",
-        failure,
-      };
-    }
+    };
+
+    return attemptSave();
   };
 
   useEffect(() => {
@@ -873,19 +924,39 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
         const fp = await getDeviceFingerprint(quizId);
         if (cancelled) return;
 
-        const [leaderboardRes, ownAttemptResult, fingerprintLocked] = await Promise.all([
-          fetch(`${DB_URL}/leaderboard/${quizId}/${uid}.json?auth=${encodeURIComponent(idToken)}`, {
-            cache: "no-store",
-          }),
-          fetchAttemptByUid(uid, idToken),
-          fetchFingerprintLockedAttempt(idToken, fp),
-        ]);
+        const completedFingerprintOwnerPromise = readProtectedData(
+          `fingerprints/${quizId}/${fp}`,
+          idToken
+        ).catch((error) => {
+          if (error?.status === 401 || error?.status === 403) {
+            logSilent("quiz.eligibility.completedFingerprintLookup", error, {
+              quizId,
+              status: error.status,
+            });
+            return null;
+          }
+          throw error;
+        });
+
+        const [leaderboardRes, ownAttemptResult, fingerprintLocked, completedFingerprintOwner] =
+          await Promise.all([
+            fetch(
+              `${DB_URL}/leaderboard/${quizId}/${uid}.json?auth=${encodeURIComponent(idToken)}`,
+              {
+                cache: "no-store",
+              }
+            ),
+            fetchAttemptByUid(uid, idToken),
+            fetchFingerprintLockedAttempt(idToken, fp),
+            completedFingerprintOwnerPromise,
+          ]);
 
         if (cancelled) return;
 
+        let existingSubmission = null;
         if (leaderboardRes.ok) {
-          const data = await leaderboardRes.json();
-          if (data) setAlreadySubmitted(true);
+          existingSubmission = await leaderboardRes.json();
+          if (existingSubmission) setAlreadySubmitted(true);
         }
 
         const canonicalAttempt = chooseCanonicalAttempt([
@@ -920,7 +991,23 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
           return;
         }
 
+        const eligibility = buildEligibilityState({
+          uid,
+          existingSubmission,
+          fingerprintOwner: completedFingerprintOwner,
+        });
+
+        if (eligibility.status === "blocked") {
+          if (eligibility.reason === "already_submitted") {
+            setAlreadySubmitted(true);
+          }
+          setEligibilityStatus("blocked");
+          setError(eligibility.message);
+          return;
+        }
+
         if (!cancelled) {
+          setError("");
           setEligibilityStatus("ready");
         }
       } catch (err) {
@@ -1077,7 +1164,9 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
           setError(nameConflict.message);
           return;
         }
-      } catch (_) {}
+      } catch (error) {
+        logSilent("quiz.start.nameIndexLookup", error, { quizId, nameSlug });
+      }
 
       const { response, attemptRecord } = await createServerAttempt({
         name: clean,
@@ -1107,7 +1196,12 @@ export default function QuizGame({ quizId, title, questions, maxTime = 100, intr
       let attemptReservationErrorBody = "";
       try {
         attemptReservationErrorBody = await response.text();
-      } catch (_) {}
+      } catch (error) {
+        logSilent("quiz.start.readReservationResponseBody", error, {
+          quizId,
+          responseStatus: response.status,
+        });
+      }
       console.error("Attempt reservation failed:", {
         quizId,
         status: response.status,

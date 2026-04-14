@@ -15,6 +15,15 @@ export const PERMISSION_SAVE_ERROR_MESSAGE =
   "We couldn't save your score because this entry did not pass the quiz eligibility checks.";
 export const GENERIC_SAVE_ERROR_MESSAGE = "Could not save score. Please try again.";
 
+function buildSaveFailure(reason, message, { severity = "fatal", retryable = false } = {}) {
+  return {
+    reason,
+    message,
+    severity,
+    retryable,
+  };
+}
+
 export function sanitizeName(value = "") {
   return String(value).trim().replace(/\s+/g, " ");
 }
@@ -71,42 +80,31 @@ export function classifySaveFailure({
   responseStatus,
 }) {
   if (existingSubmission) {
-    return {
-      reason: "already_submitted",
-      message: ALREADY_PLAYED_MESSAGE,
-    };
+    return buildSaveFailure("already_submitted", ALREADY_PLAYED_MESSAGE);
   }
 
   if (nameIndexOwner && nameIndexOwner !== uid) {
-    return {
-      reason: "duplicate_name",
-      message: DUPLICATE_NAME_MESSAGE,
-    };
+    return buildSaveFailure("duplicate_name", DUPLICATE_NAME_MESSAGE);
   }
 
   if (fingerprintOwner && fingerprintOwner !== uid) {
-    return {
-      reason: "duplicate_fingerprint",
-      message: DUPLICATE_FINGERPRINT_MESSAGE,
-    };
+    return buildSaveFailure("duplicate_fingerprint", DUPLICATE_FINGERPRINT_MESSAGE);
   }
 
   if (responseStatus === 401) {
-    return {
-      reason: "auth",
-      message: AUTH_SAVE_ERROR_MESSAGE,
-    };
+    return buildSaveFailure("auth", AUTH_SAVE_ERROR_MESSAGE);
   }
 
   if (responseStatus === 403) {
-    return {
-      reason: "permissions",
-      message: PERMISSION_SAVE_ERROR_MESSAGE,
-    };
+    return buildSaveFailure("permissions", PERMISSION_SAVE_ERROR_MESSAGE);
   }
 
-  return {
-    reason: "generic",
-    message: GENERIC_SAVE_ERROR_MESSAGE,
-  };
+  if (responseStatus === 0 || responseStatus >= 500) {
+    return buildSaveFailure("generic", GENERIC_SAVE_ERROR_MESSAGE, {
+      severity: "transient",
+      retryable: true,
+    });
+  }
+
+  return buildSaveFailure("generic", GENERIC_SAVE_ERROR_MESSAGE);
 }

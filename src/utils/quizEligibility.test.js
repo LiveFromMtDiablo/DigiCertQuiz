@@ -86,6 +86,8 @@ describe("quizEligibility", () => {
     ).toEqual({
       reason: "duplicate_name",
       message: DUPLICATE_NAME_MESSAGE,
+      severity: "fatal",
+      retryable: false,
     });
   });
 
@@ -101,6 +103,8 @@ describe("quizEligibility", () => {
     ).toEqual({
       reason: "auth",
       message: AUTH_SAVE_ERROR_MESSAGE,
+      severity: "fatal",
+      retryable: false,
     });
 
     expect(
@@ -114,6 +118,23 @@ describe("quizEligibility", () => {
     ).toEqual({
       reason: "generic",
       message: GENERIC_SAVE_ERROR_MESSAGE,
+      severity: "transient",
+      retryable: true,
+    });
+
+    expect(
+      classifySaveFailure({
+        uid: "uid-1",
+        existingSubmission: null,
+        nameIndexOwner: null,
+        fingerprintOwner: null,
+        responseStatus: 400,
+      })
+    ).toEqual({
+      reason: "generic",
+      message: GENERIC_SAVE_ERROR_MESSAGE,
+      severity: "fatal",
+      retryable: false,
     });
   });
 });

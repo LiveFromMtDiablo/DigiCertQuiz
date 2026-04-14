@@ -1,5 +1,9 @@
 # DigiCert Quiz - Multi-Quiz Architecture Plan
 
+> Historical note: this document is kept for implementation history and rollout context.
+> For the current architecture, use `docs/architecture.md`.
+> For current anti-replay and rules behavior, use `docs/hardening.md`.
+
 ## Status Update (Implemented)
 
 The refactor and security hardening are live. Highlights:

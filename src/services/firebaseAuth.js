@@ -1,14 +1,26 @@
 import { firebaseConfig } from "./firebaseConfig";
+import { AUTH_EXPIRY_SKEW_MS, AUTH_MIN_VALIDITY_MS } from "../constants/auth";
+import { logSilent } from "../utils/logging";
 
 const API_KEY = firebaseConfig.apiKey;
 export const AUTH_STORAGE_KEY = "firebaseAuth";
 let inFlightAuthPromise = null;
 
+function isAuthFresh(auth) {
+  return Boolean(
+    auth &&
+      auth.idToken &&
+      auth.expiresAt &&
+      auth.expiresAt > Date.now() + AUTH_MIN_VALIDITY_MS
+  );
+}
+
 function loadAuth() {
   try {
     const raw = localStorage.getItem(AUTH_STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;
-  } catch (_) {
+  } catch (error) {
+    logSilent("auth.loadAuth", error);
     return null;
   }
 }
@@ -16,7 +28,9 @@ function loadAuth() {
 function saveAuth(state) {
   try {
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(state));
-  } catch (_) {}
+  } catch (error) {
+    logSilent("auth.saveAuth", error);
+  }
 }
 
 async function signInAnonymously() {
@@ -30,7 +44,7 @@ async function signInAnonymously() {
   );
   if (!res.ok) throw new Error("Anonymous sign-in failed");
   const data = await res.json();
-  const expiresAt = Date.now() + Number(data.expiresIn || 3600) * 1000 - 30_000; // 30s skew
+  const expiresAt = Date.now() + Number(data.expiresIn || 3600) * 1000 - AUTH_EXPIRY_SKEW_MS;
   const auth = {
     uid: data.localId,
     idToken: data.idToken,
@@ -52,7 +66,7 @@ async function refreshIdToken(refreshToken) {
   );
   if (!res.ok) throw new Error("Token refresh failed");
   const data = await res.json();
-  const expiresAt = Date.now() + Number(data.expires_in || 3600) * 1000 - 30_000;
+  const expiresAt = Date.now() + Number(data.expires_in || 3600) * 1000 - AUTH_EXPIRY_SKEW_MS;
   const auth = {
     uid: data.user_id,
     idToken: data.id_token,
@@ -66,7 +80,7 @@ async function refreshIdToken(refreshToken) {
 export async function getValidAuth() {
   // Try cached
   let auth = loadAuth();
-  if (auth && auth.idToken && auth.expiresAt && auth.expiresAt > Date.now() + 5_000) {
+  if (isAuthFresh(auth)) {
     return auth;
   }
 
@@ -77,12 +91,7 @@ export async function getValidAuth() {
   const authRequestPromise = (async () => {
     // Re-read after taking the lock in case another caller finished first.
     let currentAuth = loadAuth();
-    if (
-      currentAuth &&
-      currentAuth.idToken &&
-      currentAuth.expiresAt &&
-      currentAuth.expiresAt > Date.now() + 5_000
-    ) {
+    if (isAuthFresh(currentAuth)) {
       return currentAuth;
     }
 
@@ -91,7 +100,10 @@ export async function getValidAuth() {
       try {
         currentAuth = await refreshIdToken(currentAuth.refreshToken);
         return currentAuth;
-      } catch (_) {
+      } catch (error) {
+        logSilent("auth.refreshIdToken", error, {
+          action: "fall_back_to_anonymous_sign_in",
+        });
         // fall through to sign-in
       }
     }

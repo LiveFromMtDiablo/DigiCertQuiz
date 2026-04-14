@@ -113,6 +113,10 @@ function installFetchMock(override = () => undefined) {
       return Promise.resolve(jsonResponse(null));
     }
 
+    if (method === "GET" && url.includes(`/fingerprints/${QUIZ_ID}/`)) {
+      return Promise.resolve(jsonResponse(null));
+    }
+
     if (method === "GET" && url.includes(`/nameIndex/${QUIZ_ID}/`)) {
       return Promise.resolve(jsonResponse(null));
     }
@@ -548,6 +552,27 @@ describe("QuizGame", () => {
 
     expect(input.disabled).toBe(true);
     expect(button.disabled).toBe(true);
+  });
+
+  it("blocks quiz start when another uid already owns the completed fingerprint", async () => {
+    installFetchMock(({ url, method }) => {
+      if (method === "GET" && url.includes(`/fingerprints/${QUIZ_ID}/`)) {
+        return jsonResponse("uid-other");
+      }
+      return undefined;
+    });
+
+    await renderQuizGame();
+
+    await waitFor(() =>
+      container.textContent.includes("This device appears to have already been used for this quiz.")
+    );
+
+    await changeName("Taylor");
+    await flushAsync();
+
+    expect(getButton("Start Quiz").disabled).toBe(true);
+    expect(container.textContent).not.toContain("Question 1 of 2");
   });
 
   it("completes the quiz, saves the final score, and returns to the leaderboard", async () => {
@@ -998,7 +1023,7 @@ describe("QuizGame", () => {
     expect(container.textContent).toContain("200");
   });
 
-  it("keeps the final question recoverable when the first save attempt fails generically", async () => {
+  it("automatically retries one transient score save failure before completing", async () => {
     const leaderboardAfterSave = {
       [AUTH.uid]: {
         name: "Taylor",
@@ -1052,10 +1077,158 @@ describe("QuizGame", () => {
     await completeQuizPerfectly("Taylor");
     await clickButton("View Results");
 
+    await waitFor(() => container.textContent.includes("Quiz Complete!"));
+
+    expect(saveAttempts).toBe(2);
+    expect(container.textContent).toContain("Taylor, your final score:");
+    expect(container.textContent).not.toContain("Try Saving Again");
+  });
+
+  it("surfaces auth-specific save failures when both save writes are unauthorized", async () => {
+    installFetchMock(({ url, method, options }) => {
+      if (
+        method === "PATCH" &&
+        url === `${DB_URL}/.json?auth=${AUTH.idToken}` &&
+        JSON.parse(options.body || "{}")[`leaderboard/${QUIZ_ID}/${AUTH.uid}`]
+      ) {
+        return jsonResponse("unauthorized", { ok: false, status: 401 });
+      }
+
+      if (
+        method === "PUT" &&
+        url === `${DB_URL}/leaderboard/${QUIZ_ID}/${AUTH.uid}.json?auth=${AUTH.idToken}`
+      ) {
+        return jsonResponse("unauthorized", { ok: false, status: 401 });
+      }
+
+      if (method === "GET" && url.includes(`/fingerprints/${QUIZ_ID}/`)) {
+        return jsonResponse(null);
+      }
+
+      if (
+        method === "PATCH" &&
+        url.includes(`/attempts/${QUIZ_ID}/${AUTH.uid}.json?auth=${AUTH.idToken}`)
+      ) {
+        return jsonResponse({});
+      }
+
+      return undefined;
+    });
+
+    await completeQuizPerfectly("Taylor");
+    await clickButton("View Results");
+
+    await waitFor(() =>
+      container.textContent.includes("We couldn't verify your session while saving your score.")
+    );
+
+    expect(container.textContent).toContain("Try Saving Again");
+    expect(container.textContent).not.toContain("Quiz Complete!");
+  });
+
+  it("surfaces permissions-specific save failures when both save writes are forbidden", async () => {
+    installFetchMock(({ url, method, options }) => {
+      if (
+        method === "PATCH" &&
+        url === `${DB_URL}/.json?auth=${AUTH.idToken}` &&
+        JSON.parse(options.body || "{}")[`leaderboard/${QUIZ_ID}/${AUTH.uid}`]
+      ) {
+        return jsonResponse("forbidden", { ok: false, status: 403 });
+      }
+
+      if (
+        method === "PUT" &&
+        url === `${DB_URL}/leaderboard/${QUIZ_ID}/${AUTH.uid}.json?auth=${AUTH.idToken}`
+      ) {
+        return jsonResponse("forbidden", { ok: false, status: 403 });
+      }
+
+      if (method === "GET" && url.includes(`/fingerprints/${QUIZ_ID}/`)) {
+        return jsonResponse(null);
+      }
+
+      if (
+        method === "PATCH" &&
+        url.includes(`/attempts/${QUIZ_ID}/${AUTH.uid}.json?auth=${AUTH.idToken}`)
+      ) {
+        return jsonResponse({});
+      }
+
+      return undefined;
+    });
+
+    await completeQuizPerfectly("Taylor");
+    await clickButton("View Results");
+
+    await waitFor(() =>
+      container.textContent.includes(
+        "We couldn't save your score because this entry did not pass the quiz eligibility checks."
+      )
+    );
+
+    expect(container.textContent).toContain("Try Saving Again");
+    expect(container.textContent).not.toContain("Quiz Complete!");
+  });
+
+  it("keeps the final question recoverable when automatic retry still cannot save the score", async () => {
+    const leaderboardAfterSave = {
+      [AUTH.uid]: {
+        name: "Taylor",
+        score: 200,
+        timestamp: NOW,
+        fp: "fp-1",
+      },
+    };
+    let saveAttempts = 0;
+
+    installFetchMock(({ url, method, options }) => {
+      if (
+        method === "PATCH" &&
+        url === `${DB_URL}/.json?auth=${AUTH.idToken}` &&
+        JSON.parse(options.body || "{}")[`leaderboard/${QUIZ_ID}/${AUTH.uid}`]
+      ) {
+        saveAttempts += 1;
+        return saveAttempts <= 2
+          ? jsonResponse("server exploded", { ok: false, status: 500 })
+          : jsonResponse({});
+      }
+
+      if (method === "GET" && url.includes(`/fingerprints/${QUIZ_ID}/`)) {
+        return jsonResponse(null);
+      }
+
+      if (
+        method === "GET" &&
+        url.includes(`/leaderboard/${QUIZ_ID}.json?`)
+      ) {
+        return jsonResponse(saveAttempts >= 2 ? leaderboardAfterSave : {});
+      }
+
+      if (
+        method === "PATCH" &&
+        url.includes(`/attempts/${QUIZ_ID}/${AUTH.uid}.json?auth=${AUTH.idToken}`)
+      ) {
+        return jsonResponse({});
+      }
+
+      if (
+        method === "PUT" &&
+        url === `${DB_URL}/machinePrints/${QUIZ_ID}/machine-1.json?auth=${AUTH.idToken}`
+      ) {
+        return jsonResponse("uid-1");
+      }
+
+      return undefined;
+    });
+
+    await completeQuizPerfectly("Taylor");
+    await clickButton("View Results");
+
     await waitFor(() =>
       container.textContent.includes("Could not save score. Please try again.")
     );
 
+    expect(saveAttempts).toBe(2);
     expect(container.textContent).toContain("Question 2 of 2");
     expect(container.textContent).toContain("Try Saving Again");
     expect(container.textContent).not.toContain("Quiz Complete!");
@@ -1066,7 +1239,7 @@ describe("QuizGame", () => {
 
     expect(container.textContent).toContain("Taylor, your final score:");
     expect(container.textContent).toContain("200");
-    expect(saveAttempts).toBe(2);
+    expect(saveAttempts).toBe(3);
   });
 
   it("surfaces already-submitted save failures and stores the submitted flag", async () => {
