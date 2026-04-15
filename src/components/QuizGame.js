@@ -8,9 +8,6 @@ import {
   fetchFingerprintLockedAttempt,
   createServerAttempt,
   syncServerAttempt as syncServerAttemptRequest,
-  submitIndexedScore,
-  submitLegacyLeaderboardScore,
-  submitMachinePrintObservation,
 } from "../services/leaderboardApi";
 import {
   NAME_REGEX,
@@ -18,14 +15,9 @@ import {
   sanitizeName,
   toNameSlug,
   classifyNameConflict,
-  classifySaveFailure,
   ELIGIBILITY_CHECKING_MESSAGE,
   ELIGIBILITY_ERROR_MESSAGE,
 } from "../utils/quizEligibility";
-import {
-  clampQuizScore,
-  buildIndexedScorePayload,
-} from "../utils/quizSubmission";
 import {
   isDevFingerprintResetEnabled,
   getDevFingerprintSeed,
@@ -47,11 +39,10 @@ import {
 } from "../utils/quizAttemptState";
 import {
   DEFAULT_QUIZ_MAX_TIME_SECONDS,
-  MAX_TRANSIENT_SAVE_RETRIES,
   QUIZ_ATTEMPT_STORAGE_VERSION,
-  SAVE_RETRY_DELAY_MS,
 } from "../constants/quiz";
 import { logSilent } from "../utils/logging";
+import { useLeaderboardSubmission } from "../hooks/useLeaderboardSubmission";
 
 const TROPHY_COLORS = ["text-yellow-500", "text-gray-400", "text-orange-500"];
 const STALE_ATTEMPT_LOCK_MESSAGE =
@@ -107,17 +98,6 @@ export default function QuizGame({
     } catch (error) {
       logSilent("quiz.save.markSubmitted", error, { quizId });
     }
-  }
-
-  function commitSaveFailure(failure) {
-    if (failure.reason === "already_submitted") {
-      markQuizSubmitted();
-    }
-    setError(failure.message);
-  }
-
-  async function waitForTransientSaveRetry() {
-    await new Promise((resolve) => setTimeout(resolve, SAVE_RETRY_DELAY_MS));
   }
 
   // Secure RNG and shuffle helpers (per-session order randomization)
@@ -300,8 +280,8 @@ export default function QuizGame({
   async function getAttemptIdentity() {
     const { uid, idToken } = await getValidAuth();
     const [fp, fpMachine] = await Promise.all([
-      getDeviceFingerprint(quizId),
-      getMachineFingerprint(quizId),
+      getDeviceFingerprint({ salt: quizId }),
+      getMachineFingerprint({ salt: quizId }),
     ]);
     return { uid, idToken, fp, fpMachine };
   }
@@ -344,212 +324,19 @@ export default function QuizGame({
     }
   }, [quizId]);
 
-  // Save score for this quiz
-  const saveScore = async (name, score) => {
-    let auth = null;
-    let fp = null;
-    const nameSlug = toNameSlug(name);
-
-    const classifySaveFailureState = async ({
-      responseStatus,
-      responseBody = "",
-      sourceError = null,
-    }) => {
-      let existingSubmission = null;
-      let nameIndexOwner = null;
-      let fingerprintOwner = null;
-
-      try {
-        auth = auth || (await getValidAuth());
-        fp = fp || (await getDeviceFingerprint(quizId));
-        [existingSubmission, nameIndexOwner, fingerprintOwner] = await Promise.all([
-          readProtectedData({
-            path: `leaderboard/${quizId}/${auth.uid}`,
-            idToken: auth.idToken,
-          }),
-          readProtectedData({
-            path: `nameIndex/${quizId}/${nameSlug}`,
-            idToken: auth.idToken,
-          }),
-          readProtectedData({
-            path: `fingerprints/${quizId}/${fp}`,
-            idToken: auth.idToken,
-          }),
-        ]);
-      } catch (classificationError) {
-        console.error("Error classifying save failure:", classificationError);
-      }
-
-      const failure = classifySaveFailure({
-        uid: auth?.uid,
-        existingSubmission,
-        nameIndexOwner,
-        fingerprintOwner,
-        responseStatus,
-      });
-
-      console.error("Save failed:", {
-        quizId,
-        responseStatus,
-        responseBody,
-        failure,
-        existingSubmission: Boolean(existingSubmission),
-        nameIndexOwner,
-        fingerprintOwner,
-        uid: auth?.uid,
-        nameSlug,
-        sourceError: sourceError?.message || null,
-      });
-      return failure;
-    };
-
-    const attemptSave = async (retryCount = 0) => {
-      try {
-        // Clamp score to a safe maximum (respect shuffled set length)
-        const activeQuestions = gameQuestions || questions;
-        const maxPossible = maxTime * activeQuestions.length;
-        const safeScore = clampQuizScore(score, maxPossible);
-
-        // Ensure authenticated uid and token for protected write
-        auth = await getValidAuth();
-        const { idToken, uid } = auth;
-        fp = await getDeviceFingerprint(quizId);
-        const fpMachine = await getMachineFingerprint(quizId);
-
-        const updates = buildIndexedScorePayload({
-          quizId,
-          uid,
-          name,
-          nameSlug,
-          score: safeScore,
-          fp,
-        });
-        // Observe-only machine-level print (no enforcement in rules yet)
-        updates[`machinePrints/${quizId}/${fpMachine}`] = uid;
-        if (gameQuestions) {
-          updates[`attempts/${quizId}/${uid}`] = buildAttemptRecord({
-            name,
-            nameSlug,
-            fp,
-            fpMachine,
-            currentQuestion: activeQuestions.length - 1,
-            totalScore: safeScore,
-            timeLeft,
-            questionDeadlineAt: null,
-            selectedAnswer,
-            showFeedback: true,
-            isCorrect,
-            gameQuestions,
-            createdAt: attemptCreatedAt || Date.now(),
-            status: ATTEMPT_STATUS_COMPLETED,
-            completedAt: Date.now(),
-          });
-          updates[`attemptFingerprints/${quizId}/${fp}`] = uid;
-        }
-
-        let response = await submitIndexedScore({
-          idToken,
-          payload: updates,
-        });
-
-        if (!response.ok && (response.status === 401 || response.status === 403)) {
-          // Likely rules v1 without permissions for nameIndex/fingerprints.
-          // Fallback to single write to leaderboard path only.
-          const newEntry = updates[`leaderboard/${quizId}/${uid}`];
-          response = await submitLegacyLeaderboardScore({
-            quizId,
-            uid,
-            idToken,
-            entry: newEntry,
-          });
-        }
-
-        if (response.ok) {
-          await loadLeaderboard();
-          markQuizSubmitted();
-          setError("");
-
-          // Machine prints are observe-only today, so they must not break score saves.
-          try {
-            const machinePrintResponse = await submitMachinePrintObservation({
-              idToken,
-              quizId,
-              uid,
-              fpMachine,
-            });
-            if (!machinePrintResponse.ok) {
-              console.warn("Machine print observation failed:", {
-                quizId,
-                uid,
-                status: machinePrintResponse.status,
-              });
-            }
-          } catch (machinePrintError) {
-            console.warn("Machine print observation failed:", {
-              quizId,
-              uid,
-              error: machinePrintError?.message || String(machinePrintError),
-            });
-          }
-
-          return { ok: true, failure: null };
-        }
-
-        let errText = "";
-        try {
-          errText = await response.text();
-        } catch (error) {
-          logSilent("quiz.save.readResponseBody", error, {
-            quizId,
-            responseStatus: response.status,
-          });
-        }
-
-        const failure = await classifySaveFailureState({
-          responseStatus: response.status,
-          responseBody: errText,
-        });
-        if (failure.retryable && retryCount < MAX_TRANSIENT_SAVE_RETRIES) {
-          console.warn("Transient score save failed; retrying once.", {
-            quizId,
-            responseStatus: response.status,
-            retryCount,
-          });
-          await waitForTransientSaveRetry();
-          return attemptSave(retryCount + 1);
-        }
-
-        commitSaveFailure(failure);
-        return {
-          ok: failure.reason === "already_submitted",
-          failure,
-        };
-      } catch (err) {
-        const failure = await classifySaveFailureState({
-          responseStatus: err?.status || 0,
-          sourceError: err,
-        });
-        if (failure.retryable && retryCount < MAX_TRANSIENT_SAVE_RETRIES) {
-          console.warn("Transient score save failed; retrying once.", {
-            quizId,
-            responseStatus: err?.status || 0,
-            retryCount,
-            error: err?.message || String(err),
-          });
-          await waitForTransientSaveRetry();
-          return attemptSave(retryCount + 1);
-        }
-
-        commitSaveFailure(failure);
-        return {
-          ok: failure.reason === "already_submitted",
-          failure,
-        };
-      }
-    };
-
-    return attemptSave();
-  };
+  const saveScore = useLeaderboardSubmission({
+    quizId,
+    questions,
+    maxTime,
+    gameQuestions,
+    timeLeft,
+    selectedAnswer,
+    isCorrect,
+    attemptCreatedAt,
+    loadLeaderboard,
+    markQuizSubmitted,
+    setError,
+  });
 
   useEffect(() => {
     if (screen === "intro" || screen === "leaderboard") {
@@ -584,7 +371,7 @@ export default function QuizGame({
         const localAttempt = loadStoredAttempt(quizId);
         const { uid, idToken } = await getValidAuth();
         if (cancelled) return;
-        const fp = await getDeviceFingerprint(quizId);
+        const fp = await getDeviceFingerprint({ salt: quizId });
         if (cancelled) return;
 
         const completedFingerprintOwnerPromise = readProtectedData({
@@ -914,7 +701,7 @@ export default function QuizGame({
       });
 
       const auth = await getValidAuth();
-      const fingerprint = await getDeviceFingerprint(quizId);
+      const fingerprint = await getDeviceFingerprint({ salt: quizId });
       const [ownAttempt, fingerprintLocked] = await Promise.all([
         fetchAttemptByUid({ quizId, uid: auth.uid, idToken: auth.idToken }),
         fetchFingerprintLockedAttempt({ quizId, idToken: auth.idToken, fp: fingerprint }),
