@@ -27,6 +27,25 @@ import {
   buildIndexedScorePayload,
 } from "../utils/quizSubmission";
 import {
+  isDevFingerprintResetEnabled,
+  getDevFingerprintSeed,
+  rotateDevFingerprintSeed,
+  formatDevFingerprintSeed,
+  getDeviceFingerprint,
+  getMachineFingerprint,
+} from "../utils/deviceFingerprint";
+import {
+  loadStoredAttempt,
+  saveStoredAttempt,
+  clearStoredAttempt,
+  isValidQuestionSet,
+  parseQuestionSet,
+  computeRestoredTimeLeft,
+  buildAttemptRecord,
+  chooseCanonicalAttempt,
+  ATTEMPT_STATUS_COMPLETED,
+} from "../utils/quizAttemptState";
+import {
   DEFAULT_QUIZ_MAX_TIME_SECONDS,
   MAX_TRANSIENT_SAVE_RETRIES,
   QUIZ_ATTEMPT_STORAGE_VERSION,
@@ -35,9 +54,6 @@ import {
 import { logSilent } from "../utils/logging";
 
 const TROPHY_COLORS = ["text-yellow-500", "text-gray-400", "text-orange-500"];
-const ATTEMPT_STATUS_IN_PROGRESS = "in_progress";
-const ATTEMPT_STATUS_COMPLETED = "completed";
-const DEV_FINGERPRINT_SEED_KEY = "devFingerprintSeed";
 const STALE_ATTEMPT_LOCK_MESSAGE =
   "This browser has a stale saved-attempt lock for this quiz. Please contact the quiz organizer to clear it.";
 
@@ -49,173 +65,6 @@ const SCREEN_BACKGROUND_STYLE = {
   backgroundPosition: "top left, center",
   backgroundSize: "auto, cover",
 };
-
-function getAttemptStorageKey(quizId) {
-  return `quizAttempt:${quizId}`;
-}
-
-function loadStoredAttempt(quizId) {
-  try {
-    const raw = localStorage.getItem(getAttemptStorageKey(quizId));
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return parsed?.version === QUIZ_ATTEMPT_STORAGE_VERSION ? parsed : null;
-  } catch (_) {
-    return null;
-  }
-}
-
-function saveStoredAttempt(quizId, attempt) {
-  try {
-    localStorage.setItem(getAttemptStorageKey(quizId), JSON.stringify(attempt));
-  } catch (_) {}
-}
-
-function clearStoredAttempt(quizId) {
-  try {
-    localStorage.removeItem(getAttemptStorageKey(quizId));
-  } catch (_) {}
-}
-
-function isDevFingerprintResetEnabled() {
-  if (process.env.NODE_ENV === "production" || typeof window === "undefined") {
-    return false;
-  }
-
-  const hostname = window.location?.hostname || "";
-  return (
-    hostname === "localhost" ||
-    hostname === "127.0.0.1" ||
-    hostname === "::1" ||
-    hostname === "[::1]"
-  );
-}
-
-function getDevFingerprintSeed() {
-  if (!isDevFingerprintResetEnabled()) return "";
-
-  try {
-    return localStorage.getItem(DEV_FINGERPRINT_SEED_KEY) || "";
-  } catch (_) {
-    return "";
-  }
-}
-
-function createDevFingerprintSeed() {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-
-  return `dev-${Date.now().toString(36)}-${Math.random().toString(16).slice(2)}`;
-}
-
-function rotateDevFingerprintSeed() {
-  const nextSeed = createDevFingerprintSeed();
-
-  try {
-    const keysToRemove = [];
-    for (let index = 0; index < localStorage.length; index += 1) {
-      const key = localStorage.key(index);
-      if (!key) continue;
-      if (
-        key === AUTH_STORAGE_KEY ||
-        key.startsWith("submitted:") ||
-        key.startsWith("quizAttempt:")
-      ) {
-        keysToRemove.push(key);
-      }
-    }
-
-    keysToRemove.forEach((key) => localStorage.removeItem(key));
-    localStorage.setItem(DEV_FINGERPRINT_SEED_KEY, nextSeed);
-  } catch (_) {}
-
-  return nextSeed;
-}
-
-function formatDevFingerprintSeed(seed) {
-  return seed || "default (no override)";
-}
-
-async function sha256Hex(input) {
-  const enc = new TextEncoder();
-  const data = enc.encode(input);
-  if (typeof crypto === "undefined" || !crypto.subtle) {
-    // Fallback non-crypto hash (should rarely run)
-    let h = 5381;
-    for (let i = 0; i < data.length; i++) h = ((h << 5) + h) + data[i];
-    return (h >>> 0).toString(16).padStart(8, "0");
-  }
-  const digest = await crypto.subtle.digest("SHA-256", data);
-  const bytes = new Uint8Array(digest);
-  return Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-async function getDeviceFingerprint(salt) {
-  try {
-    const nav = typeof navigator !== "undefined" ? navigator : {};
-    const scr = typeof screen !== "undefined" ? screen : {};
-    const devSeed = getDevFingerprintSeed();
-    const tz =
-      (Intl &&
-        Intl.DateTimeFormat &&
-        Intl.DateTimeFormat().resolvedOptions().timeZone) ||
-      "";
-    const parts = [
-      String(salt || ""),
-      String(nav.userAgent || ""),
-      String(nav.platform || ""),
-      String(nav.language || ""),
-      String(tz || ""),
-      String(scr.width || 0),
-      String(scr.height || 0),
-      String(scr.colorDepth || 0),
-      String(typeof devicePixelRatio !== "undefined" ? devicePixelRatio : 1),
-      String(nav.hardwareConcurrency || 0),
-      String(nav.deviceMemory || 0),
-      String("ontouchstart" in (typeof window !== "undefined" ? window : {})),
-      String(devSeed || ""),
-    ];
-    return sha256Hex(parts.join("|"));
-  } catch (_) {
-    return sha256Hex(`fallback|${salt}|${Date.now()}`);
-  }
-}
-
-async function getMachineFingerprint(salt) {
-  // Browser-agnostic: exclude userAgent to approximate machine identity across browsers
-  try {
-    const nav = typeof navigator !== "undefined" ? navigator : {};
-    const scr = typeof screen !== "undefined" ? screen : {};
-    const devSeed = getDevFingerprintSeed();
-    const tz =
-      (Intl &&
-        Intl.DateTimeFormat &&
-        Intl.DateTimeFormat().resolvedOptions().timeZone) ||
-      "";
-    const parts = [
-      String(salt || ""),
-      String(nav.platform || ""),
-      String(nav.language || ""),
-      String(tz || ""),
-      String(scr.width || 0),
-      String(scr.height || 0),
-      String(scr.colorDepth || 0),
-      String(typeof devicePixelRatio !== "undefined" ? devicePixelRatio : 1),
-      String(nav.hardwareConcurrency || 0),
-      String(nav.deviceMemory || 0),
-      String("ontouchstart" in (typeof window !== "undefined" ? window : {})),
-      String(devSeed || ""),
-    ];
-    return sha256Hex(parts.join("|"));
-  } catch (_) {
-    return sha256Hex(`fallbackMachine|${salt}|${Date.now()}`);
-  }
-}
-
-function isRestorableServerAttempt(attempt) {
-  return Boolean(attempt && attempt.status !== ATTEMPT_STATUS_COMPLETED);
-}
 
 export default function QuizGame({
   quizId,
@@ -352,7 +201,7 @@ export default function QuizGame({
     const activeQuestions = Array.isArray(attempt?.gameQuestions)
       ? attempt.gameQuestions
       : null;
-    if (!isValidQuestionSet(activeQuestions)) {
+    if (!isValidQuestionSet(activeQuestions, { expectedLength: questions.length })) {
       clearStoredAttempt(quizId);
       return false;
     }
@@ -363,11 +212,12 @@ export default function QuizGame({
     );
     const storedDeadlineAt =
       typeof attempt.questionDeadlineAt === "number" ? attempt.questionDeadlineAt : null;
-    const restoredTimeLeft = attempt.showFeedback
-      ? Math.max(0, Number(attempt.timeLeft) || 0)
-      : storedDeadlineAt
-        ? Math.max(0, Math.ceil((storedDeadlineAt - Date.now()) / 1000))
-        : maxTime;
+    const restoredTimeLeft = computeRestoredTimeLeft({
+      showFeedback: attempt.showFeedback,
+      timeLeft: attempt.timeLeft,
+      questionDeadlineAt: storedDeadlineAt,
+      maxTime,
+    });
 
     setPlayerName(typeof attempt.playerName === "string" ? attempt.playerName : "");
     setGameQuestions(activeQuestions);
@@ -407,72 +257,10 @@ export default function QuizGame({
     setResumeNotice("");
   }
 
-  function isValidQuestionSet(activeQuestions) {
-    return (
-      Array.isArray(activeQuestions) &&
-      activeQuestions.length === questions.length &&
-      activeQuestions.every(
-        (question) =>
-          question &&
-          typeof question.question === "string" &&
-          Array.isArray(question.options) &&
-          typeof question.correctAnswer === "number"
-      )
-    );
-  }
-
-  function serializeQuestionSet(activeQuestions) {
-    return JSON.stringify(activeQuestions);
-  }
-
-  function parseQuestionSet(serialized) {
-    try {
-      const parsed = JSON.parse(serialized);
-      return isValidQuestionSet(parsed) ? parsed : null;
-    } catch (_) {
-      return null;
-    }
-  }
-
-  function buildAttemptRecord({
-    name,
-    nameSlug,
-    fp,
-    fpMachine,
-    currentQuestion: questionIndex,
-    totalScore: score,
-    timeLeft: secondsLeft,
-    questionDeadlineAt: deadlineAt,
-    selectedAnswer: answerIndex,
-    showFeedback: showingFeedback,
-    isCorrect: answeredCorrectly,
-    gameQuestions: activeQuestions,
-    createdAt = Date.now(),
-    status = ATTEMPT_STATUS_IN_PROGRESS,
-    completedAt = null,
-  }) {
-    return {
-      name,
-      nameSlug,
-      fp,
-      fpMachine,
-      questionSet: serializeQuestionSet(activeQuestions),
-      currentQuestion: questionIndex,
-      totalScore: score,
-      timeLeft: secondsLeft,
-      questionDeadlineAt: deadlineAt,
-      selectedAnswer: answerIndex,
-      showFeedback: showingFeedback,
-      isCorrect: answeredCorrectly,
-      status,
-      createdAt,
-      updatedAt: Date.now(),
-      completedAt,
-    };
-  }
-
   function restoreServerAttempt(attempt) {
-    const activeQuestions = parseQuestionSet(attempt?.questionSet);
+    const activeQuestions = parseQuestionSet(attempt?.questionSet, {
+      expectedLength: questions.length,
+    });
     if (!activeQuestions) return false;
 
     const safeQuestionIndex = Math.min(
@@ -481,11 +269,12 @@ export default function QuizGame({
     );
     const storedDeadlineAt =
       typeof attempt.questionDeadlineAt === "number" ? attempt.questionDeadlineAt : null;
-    const restoredTimeLeft = Boolean(attempt.showFeedback)
-      ? Math.max(0, Number(attempt.timeLeft) || 0)
-      : storedDeadlineAt
-        ? Math.max(0, Math.ceil((storedDeadlineAt - Date.now()) / 1000))
-        : maxTime;
+    const restoredTimeLeft = computeRestoredTimeLeft({
+      showFeedback: Boolean(attempt.showFeedback),
+      timeLeft: attempt.timeLeft,
+      questionDeadlineAt: storedDeadlineAt,
+      maxTime,
+    });
 
     setPlayerName(typeof attempt.name === "string" ? attempt.name : "");
     setGameQuestions(activeQuestions);
@@ -532,35 +321,6 @@ export default function QuizGame({
     } catch (err) {
       console.warn("Attempt sync failed:", err);
     }
-  }
-
-  function chooseCanonicalAttempt(candidates) {
-    const validCandidates = (candidates || []).filter((candidate) => {
-      if (!candidate?.attempt) return false;
-      if (candidate.source === "local") {
-        return isValidQuestionSet(candidate.attempt.gameQuestions);
-      }
-      return isRestorableServerAttempt(candidate.attempt) && parseQuestionSet(candidate.attempt.questionSet);
-    });
-
-    if (validCandidates.length === 0) return null;
-
-    if (validCandidates.length > 1) {
-      console.warn("Multiple attempt snapshots found; restoring the most recent one.", {
-        quizId,
-        sources: validCandidates.map((candidate) => candidate.source),
-      });
-    }
-
-    validCandidates.sort((left, right) => {
-      const leftUpdatedAt =
-        Number(left.attempt.updatedAt) || Number(left.attempt.createdAt) || 0;
-      const rightUpdatedAt =
-        Number(right.attempt.updatedAt) || Number(right.attempt.createdAt) || 0;
-      return rightUpdatedAt - leftUpdatedAt;
-    });
-
-    return validCandidates[0];
   }
 
   // Load leaderboard for this quiz
@@ -890,7 +650,16 @@ export default function QuizGame({
                 uid: fingerprintLocked.ownerUid,
               }
             : null,
-        ]);
+        ], {
+          expectedQuestionCount: questions.length,
+        });
+
+        if (canonicalAttempt && [localAttempt, ownAttemptResult?.data, fingerprintLocked?.attemptResult?.data].filter(Boolean).length > 1) {
+          console.warn("Multiple attempt snapshots found; restoring the most recent one.", {
+            quizId,
+            sources: [localAttempt ? "local" : null, ownAttemptResult?.data ? "server-own" : null, fingerprintLocked?.attemptResult?.data ? "server-fingerprint" : null].filter(Boolean),
+          });
+        }
 
         if (canonicalAttempt?.source === "local") {
           restoreStoredAttempt(canonicalAttempt.attempt);
@@ -1162,7 +931,19 @@ export default function QuizGame({
               uid: fingerprintLocked.ownerUid,
             }
           : null,
-      ]);
+      ], {
+        expectedQuestionCount: questions.length,
+      });
+
+      if (canonicalAttempt && [ownAttempt?.data, fingerprintLocked?.attemptResult?.data].filter(Boolean).length > 1) {
+        console.warn("Multiple attempt snapshots found; restoring the most recent one.", {
+          quizId,
+          sources: [
+            ownAttempt?.data ? "server-own" : null,
+            fingerprintLocked?.attemptResult?.data ? "server-fingerprint" : null,
+          ].filter(Boolean),
+        });
+      }
 
       if (canonicalAttempt?.attempt) {
         restoreServerAttempt(canonicalAttempt.attempt);
@@ -1292,7 +1073,7 @@ export default function QuizGame({
   };
 
   const handleResetDevFingerprint = () => {
-    rotateDevFingerprintSeed();
+    rotateDevFingerprintSeed({ authStorageKey: AUTH_STORAGE_KEY });
     clearStoredAttempt(quizId);
     resetGameState("intro");
     setAlreadySubmitted(false);
