@@ -43,6 +43,7 @@ import {
 } from "../constants/quiz";
 import { logSilent } from "../utils/logging";
 import { useLeaderboardSubmission } from "../hooks/useLeaderboardSubmission";
+import { useQuizState } from "../hooks/useQuizState";
 
 const TROPHY_COLORS = ["text-yellow-500", "text-gray-400", "text-orange-500"];
 const STALE_ATTEMPT_LOCK_MESSAGE =
@@ -67,26 +68,46 @@ export default function QuizGame({
   const devFingerprintResetEnabled = isDevFingerprintResetEnabled();
   const devFingerprintSeed = getDevFingerprintSeed();
   const devFingerprintSeedLabel = formatDevFingerprintSeed(devFingerprintSeed);
-  const [screen, setScreen] = useState("intro");
-  const [playerName, setPlayerName] = useState("");
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(maxTime);
-  const [questionDeadlineAt, setQuestionDeadlineAt] = useState(null);
-  const [selectedAnswer, setSelectedAnswer] = useState(null);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [isCorrect, setIsCorrect] = useState(false);
-  const [totalScore, setTotalScore] = useState(0);
+  const {
+    screen,
+    playerName,
+    currentQuestion,
+    timeLeft,
+    questionDeadlineAt,
+    selectedAnswer,
+    showFeedback,
+    isCorrect,
+    totalScore,
+    error,
+    finalScoreValue,
+    gameQuestions,
+    resumeNotice,
+    attemptCreatedAt,
+    isStartingAttempt,
+    devResetNotice,
+    setScreen,
+    setPlayerName,
+    setCurrentQuestion,
+    setTimeLeft,
+    setQuestionDeadlineAt,
+    setSelectedAnswer,
+    setShowFeedback,
+    setIsCorrect,
+    setTotalScore,
+    setError,
+    setFinalScoreValue,
+    setGameQuestions,
+    setResumeNotice,
+    setAttemptCreatedAt,
+    setIsStartingAttempt,
+    setDevResetNotice,
+    mergeQuizState,
+    resetQuizState,
+  } = useQuizState(maxTime);
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
-  const [finalScoreValue, setFinalScoreValue] = useState(null);
-  const [gameQuestions, setGameQuestions] = useState(null);
-  const [resumeNotice, setResumeNotice] = useState("");
-  const [attemptCreatedAt, setAttemptCreatedAt] = useState(null);
   const [eligibilityStatus, setEligibilityStatus] = useState("checking");
-  const [isStartingAttempt, setIsStartingAttempt] = useState(false);
-  const [devResetNotice, setDevResetNotice] = useState("");
   const [identityRefreshNonce, setIdentityRefreshNonce] = useState(0);
 
   function markQuizSubmitted() {
@@ -199,42 +220,29 @@ export default function QuizGame({
       maxTime,
     });
 
-    setPlayerName(typeof attempt.playerName === "string" ? attempt.playerName : "");
-    setGameQuestions(activeQuestions);
-    setCurrentQuestion(safeQuestionIndex);
-    setSelectedAnswer(
-      typeof attempt.selectedAnswer === "number" ? attempt.selectedAnswer : null
-    );
-    setShowFeedback(Boolean(attempt.showFeedback));
-    setIsCorrect(Boolean(attempt.isCorrect));
-    setTotalScore(Math.max(0, Number(attempt.totalScore) || 0));
-    setFinalScoreValue(null);
-    setAttemptCreatedAt(
-      typeof attempt.createdAt === "number" ? attempt.createdAt : Date.now()
-    );
-    setQuestionDeadlineAt(attempt.showFeedback ? null : storedDeadlineAt);
-    setTimeLeft(restoredTimeLeft);
-    setScreen("question");
-    setError("");
-    setResumeNotice("Your in-progress quiz was restored. Refreshing will not restart it.");
+    mergeQuizState({
+      playerName: typeof attempt.playerName === "string" ? attempt.playerName : "",
+      gameQuestions: activeQuestions,
+      currentQuestion: safeQuestionIndex,
+      selectedAnswer:
+        typeof attempt.selectedAnswer === "number" ? attempt.selectedAnswer : null,
+      showFeedback: Boolean(attempt.showFeedback),
+      isCorrect: Boolean(attempt.isCorrect),
+      totalScore: Math.max(0, Number(attempt.totalScore) || 0),
+      finalScoreValue: null,
+      attemptCreatedAt:
+        typeof attempt.createdAt === "number" ? attempt.createdAt : Date.now(),
+      questionDeadlineAt: attempt.showFeedback ? null : storedDeadlineAt,
+      timeLeft: restoredTimeLeft,
+      screen: "question",
+      error: "",
+      resumeNotice: "Your in-progress quiz was restored. Refreshing will not restart it.",
+    });
     return true;
   }
 
   function resetGameState(nextScreen = "intro") {
-    setScreen(nextScreen);
-    setPlayerName("");
-    setCurrentQuestion(0);
-    setTimeLeft(maxTime);
-    setQuestionDeadlineAt(null);
-    setSelectedAnswer(null);
-    setShowFeedback(false);
-    setIsCorrect(false);
-    setTotalScore(0);
-    setError("");
-    setFinalScoreValue(null);
-    setAttemptCreatedAt(null);
-    setGameQuestions(null);
-    setResumeNotice("");
+    resetQuizState(nextScreen);
   }
 
   function restoreServerAttempt(attempt) {
@@ -256,24 +264,24 @@ export default function QuizGame({
       maxTime,
     });
 
-    setPlayerName(typeof attempt.name === "string" ? attempt.name : "");
-    setGameQuestions(activeQuestions);
-    setCurrentQuestion(safeQuestionIndex);
-    setSelectedAnswer(
-      typeof attempt.selectedAnswer === "number" ? attempt.selectedAnswer : null
-    );
-    setShowFeedback(Boolean(attempt.showFeedback));
-    setIsCorrect(Boolean(attempt.isCorrect));
-    setTotalScore(Math.max(0, Number(attempt.totalScore) || 0));
-    setFinalScoreValue(null);
-    setAttemptCreatedAt(
-      typeof attempt.createdAt === "number" ? attempt.createdAt : Date.now()
-    );
-    setQuestionDeadlineAt(Boolean(attempt.showFeedback) ? null : storedDeadlineAt);
-    setTimeLeft(restoredTimeLeft);
-    setScreen("question");
-    setError("");
-    setResumeNotice("Your in-progress quiz was restored from the server.");
+    mergeQuizState({
+      playerName: typeof attempt.name === "string" ? attempt.name : "",
+      gameQuestions: activeQuestions,
+      currentQuestion: safeQuestionIndex,
+      selectedAnswer:
+        typeof attempt.selectedAnswer === "number" ? attempt.selectedAnswer : null,
+      showFeedback: Boolean(attempt.showFeedback),
+      isCorrect: Boolean(attempt.isCorrect),
+      totalScore: Math.max(0, Number(attempt.totalScore) || 0),
+      finalScoreValue: null,
+      attemptCreatedAt:
+        typeof attempt.createdAt === "number" ? attempt.createdAt : Date.now(),
+      questionDeadlineAt: Boolean(attempt.showFeedback) ? null : storedDeadlineAt,
+      timeLeft: restoredTimeLeft,
+      screen: "question",
+      error: "",
+      resumeNotice: "Your in-progress quiz was restored from the server.",
+    });
     return true;
   }
 
@@ -346,7 +354,11 @@ export default function QuizGame({
 
   useEffect(() => {
     setEligibilityStatus("checking");
+    const preservedDevResetNotice = devResetNotice;
     resetGameState("intro");
+    if (preservedDevResetNotice) {
+      setDevResetNotice(preservedDevResetNotice);
+    }
     restoreStoredAttempt(loadStoredAttempt(quizId));
   }, [identityRefreshNonce, quizId]);
 
