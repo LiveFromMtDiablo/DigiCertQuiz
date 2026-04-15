@@ -17,6 +17,7 @@ Important note:
 
 - `machinePrints/{quizId}/{fpMachine}` is still observe-only in this repo
 - There is no checked-in `docs/firebase-rules.v2.1.json`
+- `vercel.json` sets `Cache-Control: no-cache, no-store, must-revalidate` on `/`, `/quiz/*`, and `/leaderboard/*` so Safari does not hold onto a stale SPA shell after deploys
 
 ## Quiz IDs and Paths
 

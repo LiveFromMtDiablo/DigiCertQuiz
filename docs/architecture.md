@@ -4,10 +4,11 @@ This is the current high-level reference for how the quiz app is wired today.
 
 ## Routing
 
-- `/` redirects to the quiz exported as `currentQuizId` from `src/quizzes/index.js`.
+- `/` renders the quiz exported as `currentQuizId` from `src/quizzes/index.js`.
 - `/quiz/:quizId` loads a specific weekly quiz through the quiz registry.
 - `/leaderboard/full` and `/leaderboard/full/:quizId` render the screenshot-friendly Top 30 leaderboard view.
 - `/leaderboard/cumulative` renders the merged cumulative leaderboard sourced from `public/cumulative-leaderboard-merged.csv`.
+- `vercel.json` keeps SPA rewrites for `/quiz/*` and `/leaderboard/*`, and also disables aggressive caching on the SPA entry HTML. This avoids Safari serving a stale shell at `/` after deploys.
 
 ## Quiz Registry
 
