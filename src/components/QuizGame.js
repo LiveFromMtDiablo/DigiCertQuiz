@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { Clock, CheckCircle, XCircle, Trophy } from "lucide-react";
 import { AUTH_STORAGE_KEY, getValidAuth } from "../services/firebaseAuth";
 import {
   readProtectedData,
@@ -35,7 +34,6 @@ import {
   computeRestoredTimeLeft,
   buildAttemptRecord,
   chooseCanonicalAttempt,
-  ATTEMPT_STATUS_COMPLETED,
 } from "../utils/quizAttemptState";
 import {
   DEFAULT_QUIZ_MAX_TIME_SECONDS,
@@ -44,19 +42,12 @@ import {
 import { logSilent } from "../utils/logging";
 import { useLeaderboardSubmission } from "../hooks/useLeaderboardSubmission";
 import { useQuizState } from "../hooks/useQuizState";
+import IntroScreen from "./quiz-game/IntroScreen";
+import QuestionScreen from "./quiz-game/QuestionScreen";
+import LeaderboardScreen from "./quiz-game/LeaderboardScreen";
 
-const TROPHY_COLORS = ["text-yellow-500", "text-gray-400", "text-orange-500"];
 const STALE_ATTEMPT_LOCK_MESSAGE =
   "This browser has a stale saved-attempt lock for this quiz. Please contact the quiz organizer to clear it.";
-
-const SCREEN_BACKGROUND_STYLE = {
-  backgroundImage:
-    'url("/images/quiz_background2.png"), linear-gradient(to bottom right, #3b82f6, #9333ea)',
-  backgroundRepeat: "no-repeat, no-repeat",
-  backgroundAttachment: "fixed, fixed",
-  backgroundPosition: "top left, center",
-  backgroundSize: "auto, cover",
-};
 
 export default function QuizGame({
   quizId,
@@ -886,383 +877,68 @@ export default function QuizGame({
   };
 
   if (screen === "intro") {
+    const handleViewLeaderboard = () => {
+      setFinalScoreValue(null);
+      setScreen("leaderboard");
+    };
+
     return (
-      <div
-        className="min-h-screen flex items-center justify-center p-4"
-        style={SCREEN_BACKGROUND_STYLE}
-      >
-        <div className="bg-white rounded-lg shadow-2xl p-8 max-w-2xl w-full">
-          <div className="text-center mb-8">
-            <img
-              src="/images/digicert-blue-logo-large.jpg"
-              alt="DigiCert"
-              className="h-16 mx-auto mb-4 object-contain"
-            />
-            <h1
-              className="text-4xl font-bold mb-2"
-              style={{ color: "#0e75ba" }}
-            >
-              {title}
-            </h1>
-            {intro ? (
-              <p className="text-gray-600">{intro}</p>
-            ) : null}
-          </div>
-
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-              {error}
-            </div>
-          )}
-
-          {alreadySubmitted && (
-            <div className="bg-yellow-50 border-2 border-yellow-200 text-yellow-800 px-4 py-3 rounded mb-4">
-              You’ve already played this quiz. Thanks for participating! You can view the leaderboard below.
-            </div>
-          )}
-
-          {eligibilityStatus === "checking" && (
-            <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded mb-4">
-              {ELIGIBILITY_CHECKING_MESSAGE}
-            </div>
-          )}
-
-          {devResetNotice && devFingerprintResetEnabled && (
-            <div className="bg-slate-50 border border-slate-300 text-slate-700 px-4 py-3 rounded mb-4">
-              {devResetNotice}
-            </div>
-          )}
-
-          <div className="bg-blue-50 rounded-lg p-6 mb-6 shadow-lg">
-            <div className="md:flex md:items-center">
-              <div className="md:flex-1 md:pr-6">
-                <h2 className="text-xl font-semibold text-gray-800 mb-3">How It Works:</h2>
-                <ul className="space-y-2 text-gray-700">
-                  <li className="flex items-start">
-                    <span className="text-blue-600 mr-2">•</span>
-                    <span>Each question starts with {maxTime} points</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-blue-600 mr-2">•</span>
-                    <span>You lose 1 point per second, so answer quickly!</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-blue-600 mr-2">•</span>
-                    <span>No replays, please! Only your first score counts ^_^</span>
-                  </li>
-                </ul>
-              </div>
-              <div className="hidden lg:flex lg:pl-6 justify-end">
-                <img
-                  src="/images/quiz_icon.png"
-                  alt="Quiz icon"
-                  className="w-24 h-24 object-contain"
-                />
-              </div>
-            </div>
-          </div>
-
-          {leaderboard.length > 0 && (
-            <div className="bg-yellow-50 rounded-lg p-4 mb-6 shadow-lg">
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">This Week's High Scores:</h3>
-              <div className="space-y-1">
-                {leaderboard.slice(0, 3).map((entry, index) => (
-                  <div
-                    key={index}
-                    className="grid grid-cols-3 items-center bg-white rounded-lg px-4 py-3 text-sm"
-                    style={{ gridTemplateColumns: "1fr auto auto" }}
-                  >
-                    <span className="text-blue-600 font-bold text-base md:text-lg">
-                      {index + 1}. {entry.name}
-                    </span>
-                    <span className="font-semibold text-blue-600 text-base md:text-lg pr-4 md:pr-6">
-                      {entry.score}
-                    </span>
-                    <Trophy
-                      className={`w-9 h-9 ${TROPHY_COLORS[index] ?? "text-blue-400"} justify-self-center`}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <input
-              type="text"
-              value={playerName}
-              onChange={(e) => setPlayerName(e.target.value)}
-              placeholder="Enter your name to start"
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={alreadySubmitted}
-            />
-            <button
-              onClick={handleStart}
-              disabled={
-                !playerName.trim() ||
-                alreadySubmitted ||
-                eligibilityStatus !== "ready" ||
-                isStartingAttempt
-              }
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-lg font-semibold text-lg hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {eligibilityStatus === "checking"
-                ? "Checking eligibility..."
-                : isStartingAttempt
-                  ? "Starting securely..."
-                  : "Start Quiz"}
-            </button>
-            <button
-              onClick={() => { setFinalScoreValue(null); setScreen("leaderboard"); }}
-              className="w-full border-2 border-blue-600 text-blue-700 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-all"
-            >
-              View the leaderboard top 25
-            </button>
-            {devFingerprintResetEnabled && (
-              <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                <p className="mb-3">
-                  Local dev helper: rotate the browser fingerprint seed and clear cached anonymous auth plus saved attempt locks.
-                </p>
-                <p className="mb-3 text-xs text-slate-600">
-                  Current dev seed:{" "}
-                  <span className="rounded bg-white px-1.5 py-0.5 font-mono text-[11px] text-slate-800">
-                    {devFingerprintSeedLabel}
-                  </span>
-                </p>
-                <button
-                  onClick={handleResetDevFingerprint}
-                  className="w-full rounded-lg border border-slate-400 bg-white px-4 py-3 font-semibold text-slate-800 transition-all hover:bg-slate-100"
-                >
-                  Reset Dev Fingerprint
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      <IntroScreen
+        title={title}
+        intro={intro}
+        error={error}
+        alreadySubmitted={alreadySubmitted}
+        eligibilityStatus={eligibilityStatus}
+        eligibilityCheckingMessage={ELIGIBILITY_CHECKING_MESSAGE}
+        devResetNotice={devResetNotice}
+        devFingerprintResetEnabled={devFingerprintResetEnabled}
+        devFingerprintSeedLabel={devFingerprintSeedLabel}
+        maxTime={maxTime}
+        leaderboard={leaderboard}
+        playerName={playerName}
+        isStartingAttempt={isStartingAttempt}
+        onPlayerNameChange={setPlayerName}
+        onStart={handleStart}
+        onViewLeaderboard={handleViewLeaderboard}
+        onResetDevFingerprint={handleResetDevFingerprint}
+      />
     );
   }
 
   if (screen === "question") {
     const activeQuestions = gameQuestions || questions;
-    const question = activeQuestions[currentQuestion];
     return (
-      <div
-        className="min-h-screen flex items-center justify-center p-4"
-        style={SCREEN_BACKGROUND_STYLE}
-      >
-        <div className="bg-white rounded-lg shadow-2xl p-8 max-w-2xl w-full">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-2">
-              <Clock className="w-6 h-6 text-blue-600" />
-              <span className="text-xl font-semibold text-gray-800">Time Left: {timeLeft}s</span>
-            </div>
-            <span className="text-xl font-semibold text-gray-800">Score: {totalScore}</span>
-          </div>
-
-          {resumeNotice && (
-            <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-              {resumeNotice}
-            </div>
-          )}
-
-          <div className="mb-6">
-            {error && (
-              <div className="mb-4 rounded-lg border border-red-300 bg-red-100 px-4 py-3 text-red-800">
-                {error}
-              </div>
-            )}
-            <div className="text-sm text-gray-600 mb-2">
-              Question {currentQuestion + 1} of {activeQuestions.length}
-            </div>
-            <h2 className="text-2xl font-bold text-gray-800">{question.question}</h2>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 mb-6">
-            {question.options.map((option, index) => (
-              <button
-                key={index}
-                onClick={() => !showFeedback && setSelectedAnswer(index)}
-                disabled={showFeedback}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  selectedAnswer === index ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-300"
-                } ${showFeedback ? "cursor-not-allowed" : "cursor-pointer"} ${
-                  showFeedback && index === question.correctAnswer
-                    ? "bg-green-50 border-green-500"
-                    : ""
-                } ${
-                  showFeedback && selectedAnswer === index && !isCorrect
-                    ? "bg-red-50 border-red-500"
-                    : ""
-                }`}
-              >
-                <div className="flex items-center justify-center gap-3 text-center">
-                  <span className="text-gray-800 text-center">{option}</span>
-                  {showFeedback && index === question.correctAnswer && (
-                    <CheckCircle className="w-8 h-8 text-green-600 shrink-0" />
-                  )}
-                  {showFeedback && selectedAnswer === index && !isCorrect && (
-                    <XCircle className="w-8 h-8 text-red-600 shrink-0" />
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
-
-          {showFeedback && (
-            <div className={`p-4 rounded-lg mb-6 ${isCorrect ? "bg-green-50 border-2 border-green-200" : "bg-red-50 border-2 border-red-200"}`}>
-              <div className="flex items-center space-x-2 mb-2">
-                {isCorrect ? (
-                  <CheckCircle className="w-6 h-6 text-green-600" />
-                ) : (
-                  <XCircle className="w-6 h-6 text-red-600" />
-                )}
-                <span className={`font-semibold ${isCorrect ? "text-green-700" : "text-red-700"}`}>
-                  {isCorrect ? "Correct!" : "Incorrect"}
-                </span>
-              </div>
-              {isCorrect ? (
-                <p className="text-green-700">
-                  You earned <span className="font-bold">{timeLeft}</span> points!
-                </p>
-              ) : (
-                <p className="text-red-700">
-                  The correct answer was: <span className="font-bold">{question.options[question.correctAnswer]}</span>
-                </p>
-              )}
-            </div>
-          )}
-
-          {!showFeedback ? (
-            <button
-              onClick={handleSubmitAnswer}
-              disabled={selectedAnswer === null || timeLeft === 0}
-              className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Submit Answer
-            </button>
-          ) : (
-            <button
-              onClick={handleNextQuestion}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-lg font-semibold text-lg hover:from-blue-700 hover:to-purple-700 transition-all"
-            >
-              {currentQuestion < (gameQuestions ? gameQuestions.length : questions.length) - 1
-                ? "Next Question"
-                : error
-                  ? "Try Saving Again"
-                  : "View Results"}
-            </button>
-          )}
-        </div>
-      </div>
+      <QuestionScreen
+        activeQuestions={activeQuestions}
+        currentQuestion={currentQuestion}
+        timeLeft={timeLeft}
+        totalScore={totalScore}
+        resumeNotice={resumeNotice}
+        error={error}
+        selectedAnswer={selectedAnswer}
+        showFeedback={showFeedback}
+        isCorrect={isCorrect}
+        onSelectAnswer={setSelectedAnswer}
+        onSubmitAnswer={handleSubmitAnswer}
+        onNextQuestion={handleNextQuestion}
+      />
     );
   }
 
   if (screen === "leaderboard") {
-    const currentPlayerEntry =
-      finalScoreValue != null && playerName
-        ? leaderboard.find((entry) => entry.name === playerName && entry.score === finalScoreValue)
-        : null;
-
     return (
-      <div
-        className="min-h-screen flex items-center justify-center p-4"
-        style={SCREEN_BACKGROUND_STYLE}
-      >
-        <div className="bg-white rounded-lg shadow-2xl p-8 max-w-2xl w-full">
-          {error && (
-            <div className="mb-4 p-3 rounded bg-red-100 border border-red-300 text-red-800">
-              {error}
-            </div>
-          )}
-          <div className="text-center mb-8">
-            <img
-              src="/images/digicert-blue-logo-large.jpg"
-              alt="DigiCert"
-              className="h-20 mx-auto mb-4 object-contain"
-            />
-            {finalScoreValue != null && playerName && (
-              <>
-                <h1 className="text-4xl font-bold mb-4" style={{ color: "#0e75ba" }}>Quiz Complete!</h1>
-                <p className="text-xl text-gray-600">
-                  {playerName}, your final score: <span className="font-bold text-blue-600">{finalScoreValue}</span>
-                </p>
-              </>
-            )}
-          </div>
-
-          <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg p-6 mb-6 shadow-lg">
-            <div className="flex items-center justify-between mb-4">
-              <h2
-                className="text-2xl font-bold"
-                style={{ color: "#0e75ba" }}
-              >
-                Global Leaderboard
-              </h2>
-              <div className="flex items-center">
-                <button
-                  onClick={loadLeaderboard}
-                  className="px-3 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700"
-                  disabled={loading}
-                >
-                  {loading ? 'Refreshing…' : 'Refresh'}
-                </button>
-              </div>
-            </div>
-            <div className="space-y-2">
-              {loading ? (
-                <p className="text-center text-gray-600">Loading leaderboard...</p>
-              ) : leaderboard.length === 0 ? (
-                <p className="text-center text-gray-600">Be the first to play!</p>
-              ) : (
-                leaderboard.slice(0, 25).map((entry, index) => (
-                  <div
-                    key={index}
-                    className={`flex items-center justify-between p-4 rounded-lg ${
-                      entry.timestamp === currentPlayerEntry?.timestamp ? "bg-blue-100 border-2 border-blue-500" : "bg-white"
-                    }`}
-                  >
-                    <div className="flex items-center space-x-4">
-                      <span
-                        className={`text-2xl font-bold ${
-                          index === 0 ? "text-yellow-500" : index === 1 ? "text-gray-400" : index === 2 ? "text-orange-600" : "text-gray-500"
-                        }`}
-                      >
-                        #{index + 1}
-                      </span>
-                      <span className="font-semibold text-gray-800">{entry.name}</span>
-                    </div>
-                    <span className="text-xl font-bold text-blue-600">{entry.score}</span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          <button
-            onClick={handleRestart}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-lg font-semibold text-lg hover:from-blue-700 hover:to-purple-700 transition-all"
-          >
-            Return to Start
-          </button>
-          {devFingerprintResetEnabled && (
-            <div className="mt-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-              <p className="mb-3 text-xs text-slate-600">
-                Current dev seed:{" "}
-                <span className="rounded bg-white px-1.5 py-0.5 font-mono text-[11px] text-slate-800">
-                  {devFingerprintSeedLabel}
-                </span>
-              </p>
-              <button
-                onClick={handleResetDevFingerprint}
-                className="w-full rounded-lg border border-slate-400 bg-white py-3 font-semibold text-slate-800 transition-all hover:bg-slate-100"
-              >
-                Reset Dev Fingerprint
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
+      <LeaderboardScreen
+        error={error}
+        finalScoreValue={finalScoreValue}
+        playerName={playerName}
+        leaderboard={leaderboard}
+        loading={loading}
+        onRefresh={loadLeaderboard}
+        onRestart={handleRestart}
+        devFingerprintResetEnabled={devFingerprintResetEnabled}
+        devFingerprintSeedLabel={devFingerprintSeedLabel}
+        onResetDevFingerprint={handleResetDevFingerprint}
+      />
     );
   }
 

@@ -17,9 +17,15 @@ This is the current high-level reference for how the quiz app is wired today.
 
 ## Runtime Flow
 
-- `src/components/QuizGame.js` owns the live quiz experience: intro, question flow, timer-based scoring, local resume state, server-backed attempt restore, and final save behavior.
+- `src/components/QuizGame.js` is now the orchestration layer for the live quiz flow. It coordinates auth, eligibility, attempt restore, timer effects, and screen transitions.
+- `src/components/quiz-game/IntroScreen.js`, `QuestionScreen.js`, and `LeaderboardScreen.js` own the rendered UI for the three quiz states.
+- `src/hooks/useQuizState.js` holds reducer-backed runtime quiz state and reset/merge helpers.
+- `src/hooks/useLeaderboardSubmission.js` owns final score submission, retry, and failure classification behavior.
+- `src/utils/quizAttemptState.js` owns local attempt serialization, restore helpers, question-set parsing, and canonical snapshot selection.
+- `src/utils/deviceFingerprint.js` owns browser and machine fingerprint derivation plus the local dev reset helper behavior.
 - `src/services/firebaseAuth.js` handles anonymous Firebase auth with cached-token reuse, refresh, and in-flight de-duplication.
-- Quiz save behavior writes the leaderboard entry plus hardening indexes through Firebase REST calls, with a legacy fallback write for older rules deployments.
+- `src/services/leaderboardApi.js` owns Firebase REST reads/writes for leaderboard fetches, attempt reservation/sync, attempt lookup, and score persistence, including the legacy fallback write path.
+- `src/constants/ui.js` centralizes shared quiz chrome such as the background treatment and trophy colors used across leaderboard views.
 
 ## Hardening Model
 

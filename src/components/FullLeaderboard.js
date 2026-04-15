@@ -4,15 +4,10 @@ import { getValidAuth } from "../services/firebaseAuth";
 import { fetchQuizLeaderboard } from "../services/leaderboardApi";
 import { currentQuizId, getQuiz } from "../quizzes";
 import { Trophy } from "lucide-react";
-
-const SCREEN_BACKGROUND_STYLE = {
-  backgroundImage:
-    'url("/images/quiz_background2.png"), linear-gradient(to bottom right, #3b82f6, #9333ea)',
-  backgroundRepeat: "no-repeat, no-repeat",
-  backgroundAttachment: "fixed, fixed",
-  backgroundPosition: "top left, center",
-  backgroundSize: "auto, cover",
-};
+import {
+  QUIZ_SCREEN_BACKGROUND_STYLE,
+  QUIZ_TROPHY_COLORS,
+} from "../constants/ui";
 
 export default function FullLeaderboard() {
   const { quizId: paramQuizId } = useParams();
@@ -49,8 +44,6 @@ export default function FullLeaderboard() {
     top30.slice(20, 30),
   ], [top30]);
 
-  const TROPHY_COLORS = ["text-yellow-500", "text-gray-400", "text-orange-500"];
-
   const today = useMemo(() => {
     try {
       return new Intl.DateTimeFormat(undefined, {
@@ -70,7 +63,7 @@ export default function FullLeaderboard() {
   }, [quiz]);
 
   return (
-    <div className="min-h-screen overflow-hidden p-6" style={SCREEN_BACKGROUND_STYLE}>
+    <div className="min-h-screen overflow-hidden p-6" style={QUIZ_SCREEN_BACKGROUND_STYLE}>
       <div className="mx-auto w-full max-w-6xl bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl p-8">
         <div className="flex items-center justify-between border-b pb-4 mb-6">
           <div className="flex items-center gap-4 min-w-0">
@@ -136,7 +129,7 @@ export default function FullLeaderboard() {
                       <div className="flex items-center gap-2 ml-2">
                         {rank <= 3 ? (
                           <Trophy
-                            className={`w-5 h-5 ${TROPHY_COLORS[rank - 1]}`}
+                            className={`w-5 h-5 ${QUIZ_TROPHY_COLORS[rank - 1]}`}
                             aria-hidden="true"
                           />
                         ) : null}
