@@ -1,12 +1,13 @@
 import React from "react";
-import { Routes, Route, Navigate, useParams, Link } from "react-router-dom";
+import { Routes, Route, useParams, Link } from "react-router-dom";
 import QuizGame from "./components/QuizGame";
 import FullLeaderboard from "./components/FullLeaderboard";
 import CumulativeMergedLeaderboard from "./components/CumulativeMergedLeaderboard";
 import { getQuiz, currentQuizId } from "./quizzes";
 
-function QuizPage() {
-  const { quizId } = useParams();
+function QuizPage({ quizIdOverride = null }) {
+  const { quizId: routeQuizId } = useParams();
+  const quizId = quizIdOverride || routeQuizId;
   const quiz = getQuiz(quizId);
 
   if (!quiz) {
@@ -56,7 +57,7 @@ function NotFound() {
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to={`/quiz/${currentQuizId}`} replace />} />
+      <Route path="/" element={<QuizPage quizIdOverride={currentQuizId} />} />
       <Route path="/quiz/:quizId" element={<QuizPage />} />
       <Route path="/leaderboard/full" element={<FullLeaderboard />} />
       <Route path="/leaderboard/full/:quizId" element={<FullLeaderboard />} />
