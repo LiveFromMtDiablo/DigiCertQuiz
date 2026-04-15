@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { DB_URL } from "../services/firebaseConfig";
 import { getValidAuth } from "../services/firebaseAuth";
+import { fetchQuizLeaderboard } from "../services/leaderboardApi";
 import { currentQuizId, getQuiz } from "../quizzes";
 import { Trophy } from "lucide-react";
-import { sortLeaderboardEntries } from "../utils/leaderboardSort";
 
 const SCREEN_BACKGROUND_STYLE = {
   backgroundImage:
@@ -28,14 +27,7 @@ export default function FullLeaderboard() {
     try {
       setLoading(true);
       const { idToken } = await getValidAuth();
-      const url = `${DB_URL}/leaderboard/${quizId}.json?auth=${encodeURIComponent(
-        idToken
-      )}&t=${Date.now()}`;
-      const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) throw new Error(`Failed to load leaderboard: ${res.status}`);
-      const data = await res.json();
-      const entries = data && typeof data === "object" ? Object.values(data) : [];
-      const sorted = sortLeaderboardEntries(entries);
+      const sorted = await fetchQuizLeaderboard({ quizId, idToken });
       setLeaderboard(sorted);
       setError("");
     } catch (e) {

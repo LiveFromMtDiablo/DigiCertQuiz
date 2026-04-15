@@ -1,8 +1,17 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Clock, CheckCircle, XCircle, Trophy } from "lucide-react";
-import { DB_URL } from "../services/firebaseConfig";
 import { AUTH_STORAGE_KEY, getValidAuth } from "../services/firebaseAuth";
-import { sortLeaderboardEntries } from "../utils/leaderboardSort";
+import {
+  readProtectedData,
+  fetchQuizLeaderboard,
+  fetchAttemptByUid,
+  fetchFingerprintLockedAttempt,
+  createServerAttempt,
+  syncServerAttempt as syncServerAttemptRequest,
+  submitIndexedScore,
+  submitLegacyLeaderboardScore,
+  submitMachinePrintObservation,
+} from "../services/leaderboardApi";
 import {
   NAME_REGEX,
   buildEligibilityState,
@@ -16,8 +25,6 @@ import {
 import {
   clampQuizScore,
   buildIndexedScorePayload,
-  writeIndexedScoreSubmission,
-  writeMachinePrintObservation,
 } from "../utils/quizSubmission";
 import {
   DEFAULT_QUIZ_MAX_TIME_SECONDS,
@@ -204,23 +211,6 @@ async function getMachineFingerprint(salt) {
   } catch (_) {
     return sha256Hex(`fallbackMachine|${salt}|${Date.now()}`);
   }
-}
-
-async function readProtectedData(path, idToken) {
-  const response = await fetch(
-    `${DB_URL}/${path}.json?auth=${encodeURIComponent(idToken)}&t=${Date.now()}`,
-    {
-      cache: "no-store",
-    }
-  );
-
-  if (!response.ok) {
-    const error = new Error(`Failed to read ${path}`);
-    error.status = response.status;
-    throw error;
-  }
-
-  return response.json();
 }
 
 function isRestorableServerAttempt(attempt) {
@@ -527,53 +517,20 @@ export default function QuizGame({
     return { uid, idToken, fp, fpMachine };
   }
 
-  async function fetchOwnAttempt() {
-    const { uid, idToken } = await getValidAuth();
-    return fetchAttemptByUid(uid, idToken);
-  }
-
-  async function fetchAttemptByUid(uid, idToken) {
-    if (!uid) {
-      return { res: null, data: null, uid: null };
-    }
-
-    const res = await fetch(
-      `${DB_URL}/attempts/${quizId}/${uid}.json?auth=${encodeURIComponent(idToken)}&t=${Date.now()}`,
-      { cache: "no-store" }
-    );
-    if (!res.ok) return { res, data: null, uid };
-    const data = await res.json();
-    return { res, data, uid };
-  }
-
-  async function fetchFingerprintLockedAttempt(idToken, fp) {
-    if (!fp) {
-      return { ownerUid: null, attemptResult: null, lookupStatus: "skipped" };
-    }
-
+  async function syncCurrentServerAttempt(snapshot) {
     try {
-      const ownerUid = await readProtectedData(
-        `attemptFingerprints/${quizId}/${fp}`,
-        idToken
-      );
-      if (!ownerUid) {
-        return { ownerUid: null, attemptResult: null, lookupStatus: "ok" };
-      }
-
-      const attemptResult = await fetchAttemptByUid(ownerUid, idToken);
-      return { ownerUid, attemptResult, lookupStatus: "ok" };
-    } catch (err) {
-      console.warn("Fingerprint-locked attempt lookup failed; continuing without it.", {
+      const { uid, idToken } = await getValidAuth();
+      const res = await syncServerAttemptRequest({
         quizId,
-        status: err?.status || null,
-        message: err?.message || String(err),
+        uid,
+        idToken,
+        snapshot,
       });
-      return {
-        ownerUid: null,
-        attemptResult: null,
-        lookupStatus: "unavailable",
-        error: err,
-      };
+      if (!res.ok) {
+        console.warn("Attempt sync failed:", res.status);
+      }
+    } catch (err) {
+      console.warn("Attempt sync failed:", err);
     }
   }
 
@@ -606,76 +563,17 @@ export default function QuizGame({
     return validCandidates[0];
   }
 
-  async function createServerAttempt({
-    name,
-    nameSlug,
-    gameQuestions: activeQuestions,
-    questionDeadlineAt: deadlineAt,
-  }) {
-    const { uid, idToken, fp, fpMachine } = await getAttemptIdentity();
-    const attemptRecord = buildAttemptRecord({
-      name,
-      nameSlug,
-      fp,
-      fpMachine,
-      currentQuestion: 0,
-      totalScore: 0,
-      timeLeft: maxTime,
-      questionDeadlineAt: deadlineAt,
-      selectedAnswer: null,
-      showFeedback: false,
-      isCorrect: false,
-      gameQuestions: activeQuestions,
-    });
-
-    const updates = {};
-    updates[`attempts/${quizId}/${uid}`] = attemptRecord;
-    updates[`attemptFingerprints/${quizId}/${fp}`] = uid;
-
-    const response = await fetch(`${DB_URL}/.json?auth=${encodeURIComponent(idToken)}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updates),
-    });
-
-    return { response, attemptRecord };
-  }
-
-  async function syncServerAttempt(snapshot) {
-    try {
-      const { uid, idToken } = await getValidAuth();
-      const res = await fetch(
-        `${DB_URL}/attempts/${quizId}/${uid}.json?auth=${encodeURIComponent(idToken)}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(snapshot),
-        }
-      );
-      if (!res.ok) {
-        console.warn("Attempt sync failed:", res.status);
-      }
-    } catch (err) {
-      console.warn("Attempt sync failed:", err);
-    }
-  }
   // Load leaderboard for this quiz
   const loadLeaderboard = useCallback(async () => {
     try {
       setLoading(true);
       const { idToken } = await getValidAuth();
-      const url = `${DB_URL}/leaderboard/${quizId}.json?auth=${encodeURIComponent(idToken)}&t=${Date.now()}`;
-      const response = await fetch(url, {
-        cache: "no-store",
+      const leaderboardArray = await fetchQuizLeaderboard({
+        quizId,
+        idToken,
       });
-      if (response.ok) {
-        const data = await response.json();
-        const entries = data && typeof data === 'object' ? Object.values(data) : [];
-        // Log count for troubleshooting
-        try { console.debug('[leaderboard]', quizId, 'entries:', entries.length); } catch (_) {}
-        const leaderboardArray = sortLeaderboardEntries(entries);
-        setLeaderboard(leaderboardArray);
-      }
+      try { console.debug('[leaderboard]', quizId, 'entries:', leaderboardArray.length); } catch (_) {}
+      setLeaderboard(leaderboardArray);
       setLoading(false);
     } catch (err) {
       console.error("Error loading leaderboard:", err);
@@ -705,9 +603,18 @@ export default function QuizGame({
         auth = auth || (await getValidAuth());
         fp = fp || (await getDeviceFingerprint(quizId));
         [existingSubmission, nameIndexOwner, fingerprintOwner] = await Promise.all([
-          readProtectedData(`leaderboard/${quizId}/${auth.uid}`, auth.idToken),
-          readProtectedData(`nameIndex/${quizId}/${nameSlug}`, auth.idToken),
-          readProtectedData(`fingerprints/${quizId}/${fp}`, auth.idToken),
+          readProtectedData({
+            path: `leaderboard/${quizId}/${auth.uid}`,
+            idToken: auth.idToken,
+          }),
+          readProtectedData({
+            path: `nameIndex/${quizId}/${nameSlug}`,
+            idToken: auth.idToken,
+          }),
+          readProtectedData({
+            path: `fingerprints/${quizId}/${fp}`,
+            idToken: auth.idToken,
+          }),
         ]);
       } catch (classificationError) {
         console.error("Error classifying save failure:", classificationError);
@@ -780,8 +687,7 @@ export default function QuizGame({
           updates[`attemptFingerprints/${quizId}/${fp}`] = uid;
         }
 
-        let response = await writeIndexedScoreSubmission({
-          dbUrl: DB_URL,
+        let response = await submitIndexedScore({
           idToken,
           payload: updates,
         });
@@ -790,14 +696,12 @@ export default function QuizGame({
           // Likely rules v1 without permissions for nameIndex/fingerprints.
           // Fallback to single write to leaderboard path only.
           const newEntry = updates[`leaderboard/${quizId}/${uid}`];
-          response = await fetch(
-            `${DB_URL}/leaderboard/${quizId}/${uid}.json?auth=${encodeURIComponent(idToken)}`,
-            {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(newEntry),
-            }
-          );
+          response = await submitLegacyLeaderboardScore({
+            quizId,
+            uid,
+            idToken,
+            entry: newEntry,
+          });
         }
 
         if (response.ok) {
@@ -807,8 +711,7 @@ export default function QuizGame({
 
           // Machine prints are observe-only today, so they must not break score saves.
           try {
-            const machinePrintResponse = await writeMachinePrintObservation({
-              dbUrl: DB_URL,
+            const machinePrintResponse = await submitMachinePrintObservation({
               idToken,
               quizId,
               uid,
@@ -924,10 +827,10 @@ export default function QuizGame({
         const fp = await getDeviceFingerprint(quizId);
         if (cancelled) return;
 
-        const completedFingerprintOwnerPromise = readProtectedData(
-          `fingerprints/${quizId}/${fp}`,
-          idToken
-        ).catch((error) => {
+        const completedFingerprintOwnerPromise = readProtectedData({
+          path: `fingerprints/${quizId}/${fp}`,
+          idToken,
+        }).catch((error) => {
           if (error?.status === 401 || error?.status === 403) {
             logSilent("quiz.eligibility.completedFingerprintLookup", error, {
               quizId,
@@ -940,22 +843,38 @@ export default function QuizGame({
 
         const [leaderboardRes, ownAttemptResult, fingerprintLocked, completedFingerprintOwner] =
           await Promise.all([
-            fetch(
-              `${DB_URL}/leaderboard/${quizId}/${uid}.json?auth=${encodeURIComponent(idToken)}`,
-              {
-                cache: "no-store",
-              }
-            ),
-            fetchAttemptByUid(uid, idToken),
-            fetchFingerprintLockedAttempt(idToken, fp),
+            readProtectedData({
+              path: `leaderboard/${quizId}/${uid}`,
+              idToken,
+            })
+              .then((data) => ({
+                ok: true,
+                data,
+              }))
+              .catch((error) => {
+                if (error?.status === 401 || error?.status === 403 || error?.status === 404) {
+                  return { ok: false, data: null, status: error.status };
+                }
+                throw error;
+              }),
+            fetchAttemptByUid({ quizId, uid, idToken }),
+            fetchFingerprintLockedAttempt({ quizId, idToken, fp }),
             completedFingerprintOwnerPromise,
           ]);
 
         if (cancelled) return;
 
+        if (fingerprintLocked?.lookupStatus === "unavailable") {
+          console.warn("Fingerprint-locked attempt lookup failed; continuing without it.", {
+            quizId,
+            status: fingerprintLocked.error?.status || null,
+            message: fingerprintLocked.error?.message || String(fingerprintLocked.error),
+          });
+        }
+
         let existingSubmission = null;
         if (leaderboardRes.ok) {
-          existingSubmission = await leaderboardRes.json();
+          existingSubmission = leaderboardRes.data;
           if (existingSubmission) setAlreadySubmitted(true);
         }
 
@@ -1042,7 +961,7 @@ export default function QuizGame({
     setQuestionDeadlineAt(null);
     setIsCorrect(false);
     setShowFeedback(true);
-    void syncServerAttempt({
+    void syncCurrentServerAttempt({
       currentQuestion,
       totalScore,
       timeLeft: 0,
@@ -1152,10 +1071,10 @@ export default function QuizGame({
       const nameSlug = toNameSlug(clean);
       try {
         const auth = await getValidAuth();
-        const nameIndexOwner = await readProtectedData(
-          `nameIndex/${quizId}/${nameSlug}`,
-          auth.idToken
-        );
+        const nameIndexOwner = await readProtectedData({
+          path: `nameIndex/${quizId}/${nameSlug}`,
+          idToken: auth.idToken,
+        });
         const nameConflict = classifyNameConflict({
           uid: auth.uid,
           nameIndexOwner,
@@ -1168,11 +1087,28 @@ export default function QuizGame({
         logSilent("quiz.start.nameIndexLookup", error, { quizId, nameSlug });
       }
 
-      const { response, attemptRecord } = await createServerAttempt({
+      const { uid, idToken, fp, fpMachine } = await getAttemptIdentity();
+      const attemptRecord = buildAttemptRecord({
         name: clean,
         nameSlug,
-        gameQuestions: shuffledQuestions,
+        fp,
+        fpMachine,
+        currentQuestion: 0,
+        totalScore: 0,
+        timeLeft: maxTime,
         questionDeadlineAt: firstQuestionDeadlineAt,
+        selectedAnswer: null,
+        showFeedback: false,
+        isCorrect: false,
+        gameQuestions: shuffledQuestions,
+      });
+
+      const { response } = await createServerAttempt({
+        quizId,
+        uid,
+        idToken,
+        fp,
+        attemptRecord,
       });
 
       if (response.ok) {
@@ -1209,10 +1145,10 @@ export default function QuizGame({
       });
 
       const auth = await getValidAuth();
-      const fp = await getDeviceFingerprint(quizId);
+      const fingerprint = await getDeviceFingerprint(quizId);
       const [ownAttempt, fingerprintLocked] = await Promise.all([
-        fetchAttemptByUid(auth.uid, auth.idToken),
-        fetchFingerprintLockedAttempt(auth.idToken, fp),
+        fetchAttemptByUid({ quizId, uid: auth.uid, idToken: auth.idToken }),
+        fetchFingerprintLockedAttempt({ quizId, idToken: auth.idToken, fp: fingerprint }),
       ]);
 
       const canonicalAttempt = chooseCanonicalAttempt([
@@ -1304,7 +1240,7 @@ export default function QuizGame({
     }
 
     if (gameQuestions) {
-      void syncServerAttempt({
+      void syncCurrentServerAttempt({
         currentQuestion,
         totalScore: nextTotalScore,
         timeLeft,
@@ -1329,7 +1265,7 @@ export default function QuizGame({
       setQuestionDeadlineAt(nextDeadlineAt);
       setTimeLeft(maxTime);
       if (gameQuestions) {
-        void syncServerAttempt({
+        void syncCurrentServerAttempt({
           currentQuestion: nextQuestionIndex,
           timeLeft: maxTime,
           questionDeadlineAt: nextDeadlineAt,
