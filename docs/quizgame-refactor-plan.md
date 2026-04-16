@@ -13,19 +13,27 @@ It is intended to answer four questions at every handoff:
 
 ## Current State
 
-As of April 15, 2026:
+As of April 15, 2026, after Phases 1 through 6:
 
-- `src/components/QuizGame.js` is 1,754 lines.
-- The component currently owns:
-  - intro / question / leaderboard rendering
-  - timer and scoring flow
-  - local attempt persistence
-  - server attempt restore and synchronization
-  - device fingerprint and dev reset behavior
+- `src/components/QuizGame.js` is 946 lines.
+- The following boundaries have already been extracted:
+  - `src/services/leaderboardApi.js`
+  - `src/utils/quizAttemptState.js`
+  - `src/utils/deviceFingerprint.js`
+  - `src/hooks/useLeaderboardSubmission.js`
+  - `src/hooks/useQuizState.js`
+  - `src/components/quiz-game/IntroScreen.js`
+  - `src/components/quiz-game/QuestionScreen.js`
+  - `src/components/quiz-game/LeaderboardScreen.js`
+  - `src/constants/ui.js`
+- `QuizGame` is now mostly an orchestration component, but it still owns:
+  - eligibility checking
+  - canonical attempt lookup and restore orchestration
   - leaderboard loading
-  - final score submission and save-failure classification
-- `src/components/QuizGame.test.js` already provides strong integration-style coverage for the highest-risk branches.
-- `src/utils/quizEligibility.js`, `src/utils/quizSubmission.js`, and `src/utils/leaderboardSort.js` already model the preferred pattern: focused logic files with paired tests.
+  - timer effects and question transition side effects
+  - screen composition and callback wiring
+- `src/components/QuizGame.test.js` still provides strong integration-style coverage for the highest-risk branches.
+- The next refactor target is no longer raw extraction. It is thinning the remaining orchestrator logic without destabilizing current flows.
 
 ## Goals
 
@@ -469,7 +477,105 @@ Integration tests to keep green:
 - `QuizGame` mainly composes hooks plus presentational screens.
 - Shared leaderboard visuals are no longer duplicated.
 
-## Phase 7: Cleanup, Docs, And Optional Follow-Ons
+## Phase 7: Thin The Remaining QuizGame Orchestrator
+
+### Objective
+
+Reduce the remaining cognitive load in `QuizGame.js` by moving the two densest orchestration blocks into named hooks:
+
+- eligibility / existing-attempt discovery
+- attempt restore / refresh hydration
+
+This phase should leave `QuizGame` as a smaller composition shell that wires together hooks, callbacks, and presentational screens.
+
+### Scope
+
+Extract a `useQuizEligibility()` hook for:
+
+- loading the current leaderboard summary when needed
+- checking local submitted flags
+- checking server submission state
+- checking completed fingerprint ownership
+- checking reserved attempt ownership
+- choosing the canonical attempt candidate
+- surfacing blocked / ready / error eligibility states
+
+Extract a `useAttemptRestore()` hook or pure helper-backed hook for:
+
+- restoring local attempts
+- restoring server attempts
+- choosing between local and server snapshots
+- clearing stale local snapshots when a fresher server snapshot wins
+- returning the exact hydration payload needed by `useQuizState`
+
+Keep the following in `QuizGame` for now:
+
+- timer effects
+- answer submission / next-question flow
+- screen-level callback wiring
+
+This phase should not change leaderboard semantics, hardening behavior, or current user-facing copy.
+
+### Suggested Exports
+
+- `src/hooks/useQuizEligibility.js`
+  - returns:
+    - `eligibilityStatus`
+    - `alreadySubmitted`
+    - `loadLeaderboard`
+    - any resolved restore candidate needed by `QuizGame`
+- `src/hooks/useAttemptRestore.js`
+  - exports:
+    - `restoreStoredAttemptState`
+    - `restoreServerAttemptState`
+    - `resolveCanonicalAttemptState`
+  - exact naming can vary, but the boundary should make restore behavior discoverable without opening `QuizGame.js`
+
+### Files
+
+- add `src/hooks/useQuizEligibility.js`
+- add `src/hooks/useAttemptRestore.js` or `src/utils/quizRestore.js`
+- add corresponding test files
+- update `src/components/QuizGame.js`
+- optionally update `docs/architecture.md` if the final boundaries change materially
+
+### Tests To Add
+
+Hook / helper tests:
+
+- eligibility returns `ready` when there is no existing score and no conflicting fingerprint owner
+- eligibility returns `blocked` when the current uid already has a leaderboard entry
+- eligibility returns `blocked` when another uid owns the completed fingerprint
+- eligibility returns stale-lock error when the reserved attempt fingerprint exists but the attempt snapshot is missing
+- canonical restore prefers the newest valid snapshot across local, server-own, and server-fingerprint candidates
+- restore helpers produce the expected hydration payload for local attempts
+- restore helpers produce the expected hydration payload for server attempts
+- restore helpers reject malformed or mismatched question sets cleanly
+
+Integration tests to keep green in `src/components/QuizGame.test.js`:
+
+- local restore after refresh
+- timed-out restored question becomes incorrect feedback
+- server snapshot preferred over stale local snapshot
+- stale fingerprint lock with no attempt blocks start
+- already-submitted start blocking
+- degraded fingerprint lookup handling
+
+### Implementation Notes
+
+- Prefer passing in small dependencies and callbacks rather than having the new hooks reach deeply into component state.
+- Keep the return shape explicit, even if it feels a little verbose at first. Readability matters more here than aggressive abstraction.
+- If `IntroScreen` prop counts remain awkward after the eligibility extraction, group props into domain objects only where that grouping clarifies ownership.
+- Add lightweight logging at restore / eligibility catch boundaries if a failure currently disappears without any diagnostic trail.
+
+### Done When
+
+- `QuizGame.js` is materially smaller than 946 lines and easier to scan top-to-bottom.
+- The long eligibility effect is no longer embedded inline in `QuizGame`.
+- Restore orchestration is no longer split across multiple large helper blocks in `QuizGame`.
+- Existing integration tests stay green and the new hook/helper tests cover the extraction boundary directly.
+
+## Phase 8: Cleanup, Docs, And Optional Follow-Ons
 
 ### Objective
 
@@ -546,11 +652,20 @@ Deliverable:
 
 - finish Phase 5
 - Phase 6
-- Phase 7
 
 Deliverable:
 
-- thin `QuizGame` shell plus presentational screens and updated docs
+- thin `QuizGame` shell plus presentational screens
+
+### Sprint E
+
+- Phase 7
+- Phase 8
+
+Deliverable:
+
+- `QuizGame` orchestration thinned further
+- remaining docs and cleanup follow-ons landed
 
 ## Session Handoff Checklist
 
@@ -579,6 +694,9 @@ Useful targeted commands while iterating:
 - `npm test -- --watchAll=false --runTestsByPath src/components/QuizGame.test.js`
 - `npm test -- --watchAll=false --runTestsByPath src/services/leaderboardApi.test.js`
 - `npm test -- --watchAll=false --runTestsByPath src/utils/quizAttemptState.test.js`
+- `npm test -- --watchAll=false --runTestsByPath src/hooks/useQuizState.test.js`
+- `npm test -- --watchAll=false --runTestsByPath src/hooks/useQuizEligibility.test.js`
+- `npm test -- --watchAll=false --runTestsByPath src/hooks/useAttemptRestore.test.js`
 
 ## Success Criteria
 

@@ -21,6 +21,7 @@ import week20 from "./week-20-tlm-part-4";
 import week21 from "./week-21-cert-central-part-3";
 import week22 from "./week-22-digicert-history-part-2";
 import week23 from "./week-23-pqc";
+import week24 from "./week-24-email-trust";
 
 export const quizzes = {
   [week1.id]: week1,
@@ -46,6 +47,7 @@ export const quizzes = {
   [week21.id]: week21,
   [week22.id]: week22,
   [week23.id]: week23,
+  [week24.id]: week24,
 };
 
 export const currentQuizId = week23.id;
