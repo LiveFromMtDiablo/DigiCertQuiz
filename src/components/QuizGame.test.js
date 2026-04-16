@@ -552,6 +552,9 @@ describe("QuizGame", () => {
 
     expect(input.disabled).toBe(true);
     expect(button.disabled).toBe(true);
+    expect(
+      (container.textContent.match(/already played this quiz/gi) || []).length
+    ).toBe(1);
   });
 
   it("blocks quiz start when another uid already owns the completed fingerprint", async () => {
