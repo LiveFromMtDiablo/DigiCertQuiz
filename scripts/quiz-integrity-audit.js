@@ -5,6 +5,8 @@ const path = require("node:path");
 
 const DB_URL = "https://digicert-product-quiz-default-rtdb.firebaseio.com";
 const DEFAULT_TIME_WINDOW_MINUTES = 5;
+const AUTH_TOKEN = process.env.AUTH_TOKEN || "";
+const ACCESS_TOKEN = process.env.ACCESS_TOKEN || "";
 
 function getArgValue(flag) {
   const inlinePrefix = `${flag}=`;
@@ -319,9 +321,16 @@ async function signInAnonymously() {
 }
 
 async function fetchProtectedJson(pathname, idToken) {
-  const response = await fetch(
-    `${DB_URL}/${pathname}.json?auth=${encodeURIComponent(idToken)}`
-  );
+  const url = ACCESS_TOKEN
+    ? `${DB_URL}/${pathname}.json`
+    : `${DB_URL}/${pathname}.json?auth=${encodeURIComponent(idToken)}`;
+  const response = await fetch(url, ACCESS_TOKEN
+    ? {
+        headers: {
+          Authorization: `Bearer ${ACCESS_TOKEN}`,
+        },
+      }
+    : undefined);
   if (!response.ok) {
     throw new Error(`Failed to fetch ${pathname} (${response.status})`);
   }
@@ -354,7 +363,7 @@ async function main() {
   const timeWindowMinutes = parsePositiveIntArg("--window-minutes", DEFAULT_TIME_WINDOW_MINUTES);
   const jsonMode = process.argv.includes("--json");
 
-  const auth = await signInAnonymously();
+  const auth = AUTH_TOKEN ? { idToken: AUTH_TOKEN } : await signInAnonymously();
   const [leaderboard, nameIndex, fingerprints] = await Promise.all([
     fetchProtectedJson(`leaderboard/${quizId}`, auth.idToken),
     fetchProtectedJson(`nameIndex/${quizId}`, auth.idToken),
