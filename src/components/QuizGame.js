@@ -478,9 +478,11 @@ export default function QuizGame({
         if (eligibility.status === "blocked") {
           if (eligibility.reason === "already_submitted") {
             setAlreadySubmitted(true);
+            setError("");
+          } else {
+            setError(eligibility.message);
           }
           setEligibilityStatus("blocked");
-          setError(eligibility.message);
           return;
         }
 
