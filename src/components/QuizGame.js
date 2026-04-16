@@ -600,7 +600,6 @@ export default function QuizGame({
       return;
     }
     if (eligibilityStatus === "checking") {
-      setError(ELIGIBILITY_CHECKING_MESSAGE);
       return;
     }
     if (eligibilityStatus === "error" || isStartingAttempt) {

@@ -24,6 +24,17 @@ export default function IntroScreen({
   onViewLeaderboard,
   onResetDevFingerprint,
 }) {
+  const duplicateAlreadyPlayedError =
+    alreadySubmitted &&
+    typeof error === "string" &&
+    /already played this quiz/i.test(error);
+  const duplicateEligibilityCheckingError =
+    eligibilityStatus === "checking" && error === eligibilityCheckingMessage;
+  const visibleError =
+    error && !duplicateAlreadyPlayedError && !duplicateEligibilityCheckingError
+      ? error
+      : "";
+
   return (
     <div
       className="min-h-screen flex items-center justify-center p-4"
@@ -42,9 +53,9 @@ export default function IntroScreen({
           {intro ? <p className="text-gray-600">{intro}</p> : null}
         </div>
 
-        {error && (
+        {visibleError && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
+            {visibleError}
           </div>
         )}
 
