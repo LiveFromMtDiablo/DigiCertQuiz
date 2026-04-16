@@ -11,6 +11,8 @@ export const DUPLICATE_FINGERPRINT_MESSAGE =
   "This device appears to have already been used for this quiz. If you believe this is a mistake, please contact the quiz organizer.";
 export const AUTH_SAVE_ERROR_MESSAGE =
   "We couldn't verify your session while saving your score. Please refresh and try again.";
+export const AUTH_START_ERROR_MESSAGE =
+  "We couldn't verify your session while starting the quiz. Please refresh and try again.";
 export const PERMISSION_SAVE_ERROR_MESSAGE =
   "We couldn't save your score because this entry did not pass the quiz eligibility checks.";
 export const GENERIC_SAVE_ERROR_MESSAGE = "Could not save score. Please try again.";

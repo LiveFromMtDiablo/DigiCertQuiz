@@ -71,34 +71,36 @@ export default function LeaderboardScreen({
             ) : leaderboard.length === 0 ? (
               <p className="text-center text-gray-600">Be the first to play!</p>
             ) : (
-              leaderboard.slice(0, 25).map((entry, index) => (
-                <div
-                  key={index}
-                  className={`flex items-center justify-between p-4 rounded-lg ${
-                    entry.timestamp === currentPlayerEntry?.timestamp
-                      ? "bg-blue-100 border-2 border-blue-500"
-                      : "bg-white"
-                  }`}
-                >
-                  <div className="flex items-center space-x-4">
-                    <span
-                      className={`text-2xl font-bold ${
-                        index === 0
-                          ? "text-yellow-500"
-                          : index === 1
-                            ? "text-gray-400"
-                            : index === 2
-                              ? "text-orange-600"
-                              : "text-gray-500"
-                      }`}
-                    >
-                      #{index + 1}
-                    </span>
-                    <span className="font-semibold text-gray-800">{entry.name}</span>
-                  </div>
-                  <span className="text-xl font-bold text-blue-600">{entry.score}</span>
-                </div>
-              ))
+              <ol className="space-y-2">
+                {leaderboard.slice(0, 25).map((entry, index) => (
+                  <li
+                    key={index}
+                    className={`flex items-center justify-between p-4 rounded-lg ${
+                      entry.timestamp === currentPlayerEntry?.timestamp
+                        ? "bg-blue-100 border-2 border-blue-500"
+                        : "bg-white"
+                    }`}
+                  >
+                    <div className="flex items-center space-x-4">
+                      <span
+                        className={`text-2xl font-bold ${
+                          index === 0
+                            ? "text-yellow-500"
+                            : index === 1
+                              ? "text-gray-400"
+                              : index === 2
+                                ? "text-orange-600"
+                                : "text-gray-500"
+                        }`}
+                      >
+                        #{index + 1}
+                      </span>
+                      <span className="font-semibold text-gray-800">{entry.name}</span>
+                    </div>
+                    <span className="text-xl font-bold text-blue-600">{entry.score}</span>
+                  </li>
+                ))}
+              </ol>
             )}
           </div>
         </div>

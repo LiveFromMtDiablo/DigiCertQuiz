@@ -16,6 +16,7 @@ import {
   classifyNameConflict,
   ELIGIBILITY_CHECKING_MESSAGE,
   ELIGIBILITY_ERROR_MESSAGE,
+  AUTH_START_ERROR_MESSAGE,
 } from "../utils/quizEligibility";
 import {
   isDevFingerprintResetEnabled,
@@ -507,14 +508,19 @@ export default function QuizGame({
   useEffect(() => {
     if (screen !== "question" || showFeedback || !questionDeadlineAt) return undefined;
 
+    let lastSyncedTimeLeft = timeLeft;
     const syncTimeLeft = () => {
-      setTimeLeft(Math.max(0, Math.ceil((questionDeadlineAt - Date.now()) / 1000)));
+      const nextTimeLeft = Math.max(0, Math.ceil((questionDeadlineAt - Date.now()) / 1000));
+      if (nextTimeLeft !== lastSyncedTimeLeft) {
+        lastSyncedTimeLeft = nextTimeLeft;
+        setTimeLeft(nextTimeLeft);
+      }
     };
 
     syncTimeLeft();
     const timer = setInterval(syncTimeLeft, 250);
     return () => clearInterval(timer);
-  }, [screen, showFeedback, questionDeadlineAt]);
+  }, [questionDeadlineAt, screen, showFeedback, timeLeft]);
 
   useEffect(() => {
     if (screen !== "question" || showFeedback || timeLeft !== 0) return undefined;
@@ -532,7 +538,7 @@ export default function QuizGame({
       updatedAt: Date.now(),
     });
     return undefined;
-  }, [currentQuestion, screen, showFeedback, timeLeft, totalScore]);
+  }, [currentQuestion, questionDeadlineAt, screen, showFeedback, timeLeft, totalScore]);
 
   useEffect(() => {
     if (screen !== "question" || !gameQuestions || alreadySubmitted) return undefined;
@@ -620,7 +626,11 @@ export default function QuizGame({
     let shuffledQuestions;
     try {
       shuffledQuestions = shuffleQuestionsAndOptions(questions);
-    } catch (_) {
+    } catch (error) {
+      logSilent("quiz.start.shuffleQuestions", error, {
+        quizId,
+        questionCount: questions.length,
+      });
       shuffledQuestions = questions.slice();
     }
 
@@ -741,6 +751,11 @@ export default function QuizGame({
         return;
       }
 
+      if (response.status === 401) {
+        setError(AUTH_START_ERROR_MESSAGE);
+        return;
+      }
+
       // If the new rules have not been published yet, keep the local-only protection in place.
       if (ownAttempt.res && (ownAttempt.res.status === 401 || ownAttempt.res.status === 403)) {
         console.warn("Server-side attempt rules are not available yet; falling back to local resume only.");
@@ -776,7 +791,7 @@ export default function QuizGame({
       }
     } catch (err) {
       console.error("Error creating attempt:", err);
-      setError("Could not start the quiz right now. Please try again.");
+      setError(err?.status === 401 ? AUTH_START_ERROR_MESSAGE : "Could not start the quiz right now. Please try again.");
     } finally {
       setIsStartingAttempt(false);
     }

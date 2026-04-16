@@ -1,3 +1,5 @@
+import { logSilent } from "./logging";
+
 export const DEV_FINGERPRINT_SEED_KEY = "devFingerprintSeed";
 
 function resolveStorage(storage) {
@@ -85,7 +87,12 @@ export function rotateDevFingerprintSeed({
 
     keysToRemove.forEach((key) => storage.removeItem(key));
     storage.setItem(seedKey, nextSeed);
-  } catch (_) {}
+  } catch (error) {
+    logSilent("deviceFingerprint.rotateDevFingerprintSeed", error, {
+      authStorageKey: authStorageKey || null,
+      seedKey,
+    });
+  }
 
   return nextSeed;
 }

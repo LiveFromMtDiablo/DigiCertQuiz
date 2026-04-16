@@ -132,11 +132,19 @@ export default function IntroScreen({
         )}
 
         <div className="space-y-4">
+          <label
+            htmlFor="quiz-player-name"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Display name
+          </label>
           <input
+            id="quiz-player-name"
             type="text"
             value={playerName}
             onChange={(event) => onPlayerNameChange(event.target.value)}
             placeholder="Enter your name to start"
+            autoComplete="name"
             className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={alreadySubmitted}
           />

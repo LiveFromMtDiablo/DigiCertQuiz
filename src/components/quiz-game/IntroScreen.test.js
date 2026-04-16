@@ -46,4 +46,12 @@ describe("IntroScreen", () => {
 
     expect((markup.match(/checking quiz eligibility/gi) || []).length).toBe(1);
   });
+
+  it("renders a proper label for the player name input", () => {
+    const markup = renderIntroScreen();
+
+    expect(markup).toContain('for="quiz-player-name"');
+    expect(markup).toContain('id="quiz-player-name"');
+    expect(markup).toContain("Display name");
+  });
 });

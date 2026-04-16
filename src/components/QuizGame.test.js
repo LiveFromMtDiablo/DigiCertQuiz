@@ -741,6 +741,35 @@ describe("QuizGame", () => {
     );
   });
 
+  it("gracefully swallows completed-fingerprint eligibility lookup permission errors", async () => {
+    installFetchMock(({ url, method }) => {
+      if (method === "GET" && url.includes(`/fingerprints/${QUIZ_ID}/`)) {
+        return jsonResponse("permission denied", { ok: false, status: 403 });
+      }
+      return undefined;
+    });
+
+    await renderQuizGame();
+    await waitFor(() =>
+      global.fetch.mock.calls.some(([url]) =>
+        String(url).includes(`/fingerprints/${QUIZ_ID}/`)
+      )
+    );
+    await waitFor(() => Boolean(getButton("Start Quiz")));
+
+    expect(container.textContent).not.toContain(
+      "We couldn't verify quiz eligibility right now."
+    );
+
+    await changeName("Taylor");
+    await waitForStartButtonEnabled();
+    await clickButton("Start Quiz");
+
+    await waitFor(() =>
+      container.textContent.includes("Question 1 of 2")
+    );
+  });
+
   it("rejects invalid player names before starting", async () => {
     installFetchMock();
 
@@ -948,6 +977,29 @@ describe("QuizGame", () => {
       "Server-side attempt rules are not available yet; falling back to local resume only."
     );
     expect(localStorage.getItem(`quizAttempt:${QUIZ_ID}`)).toBeTruthy();
+  });
+
+  it("surfaces an auth-specific error when attempt reservation loses session validity", async () => {
+    installFetchMock(({ url, method, options }) => {
+      if (
+        method === "PATCH" &&
+        url === `${DB_URL}/.json?auth=${AUTH.idToken}` &&
+        JSON.parse(options.body || "{}")[`attempts/${QUIZ_ID}/${AUTH.uid}`]
+      ) {
+        return jsonResponse("unauthorized", { ok: false, status: 401 });
+      }
+      return undefined;
+    });
+
+    await startQuiz("Taylor");
+
+    await waitFor(() =>
+      container.textContent.includes(
+        "We couldn't verify your session while starting the quiz."
+      )
+    );
+
+    expect(container.textContent).not.toContain("Question 1 of 2");
   });
 
   it("falls back to a direct leaderboard write when indexed score submission is forbidden", async () => {
