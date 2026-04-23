@@ -50,7 +50,8 @@
       "Bash(python3 -c \":*)",
       "Bash(python3:*)",
       "WebFetch(domain:knowledge.digicert.com)",
-      "WebFetch(domain:en.wikipedia.org)"
+      "WebFetch(domain:en.wikipedia.org)",
+      "WebFetch(domain:dev.digicert.com)"
     ],
     "deny": [],
     "ask": []
