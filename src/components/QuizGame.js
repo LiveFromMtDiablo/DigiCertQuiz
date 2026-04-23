@@ -102,7 +102,7 @@ export default function QuizGame({
   const [eligibilityStatus, setEligibilityStatus] = useState("checking");
   const [identityRefreshNonce, setIdentityRefreshNonce] = useState(0);
 
-  function markQuizSubmitted() {
+  const markQuizSubmitted = useCallback(() => {
     setAlreadySubmitted(true);
     try {
       if (typeof localStorage !== "undefined") {
@@ -111,7 +111,7 @@ export default function QuizGame({
     } catch (error) {
       logSilent("quiz.save.markSubmitted", error, { quizId });
     }
-  }
+  }, [quizId]);
 
   // Secure RNG and shuffle helpers (per-session order randomization)
   function secureRandomInt(maxExclusive) {
@@ -190,15 +190,8 @@ export default function QuizGame({
     return shuffleArray(remapped);
   }
 
-  function restoreStoredAttempt(attempt) {
-    const activeQuestions = Array.isArray(attempt?.gameQuestions)
-      ? attempt.gameQuestions
-      : null;
-    if (!isValidQuestionSet(activeQuestions, { expectedLength: questions.length })) {
-      clearStoredAttempt(quizId);
-      return false;
-    }
-
+  const restoreAttemptState = useCallback(
+    ({ activeQuestions, attempt, playerName: nextPlayerName, resumeMessage }) => {
     const safeQuestionIndex = Math.min(
       Math.max(0, Number(attempt.currentQuestion) || 0),
       activeQuestions.length - 1
@@ -213,7 +206,7 @@ export default function QuizGame({
     });
 
     mergeQuizState({
-      playerName: typeof attempt.playerName === "string" ? attempt.playerName : "",
+      playerName: nextPlayerName,
       gameQuestions: activeQuestions,
       currentQuestion: safeQuestionIndex,
       selectedAnswer:
@@ -228,54 +221,47 @@ export default function QuizGame({
       timeLeft: restoredTimeLeft,
       screen: "question",
       error: "",
-      resumeNotice: "Your in-progress quiz was restored. Refreshing will not restart it.",
+      resumeNotice: resumeMessage,
+    });
+  }, [maxTime, mergeQuizState]);
+
+  const restoreStoredAttempt = useCallback((attempt) => {
+    const activeQuestions = Array.isArray(attempt?.gameQuestions)
+      ? attempt.gameQuestions
+      : null;
+    if (!isValidQuestionSet(activeQuestions, { expectedLength: questions.length })) {
+      clearStoredAttempt(quizId);
+      return false;
+    }
+
+    restoreAttemptState({
+      activeQuestions,
+      attempt,
+      playerName: typeof attempt.playerName === "string" ? attempt.playerName : "",
+      resumeMessage:
+        "Your in-progress quiz was restored. Refreshing will not restart it.",
     });
     return true;
-  }
+  }, [questions.length, quizId, restoreAttemptState]);
 
-  function resetGameState(nextScreen = "intro") {
+  const resetGameState = useCallback((nextScreen = "intro") => {
     resetQuizState(nextScreen);
-  }
+  }, [resetQuizState]);
 
-  function restoreServerAttempt(attempt) {
+  const restoreServerAttempt = useCallback((attempt) => {
     const activeQuestions = parseQuestionSet(attempt?.questionSet, {
       expectedLength: questions.length,
     });
     if (!activeQuestions) return false;
 
-    const safeQuestionIndex = Math.min(
-      Math.max(0, Number(attempt.currentQuestion) || 0),
-      activeQuestions.length - 1
-    );
-    const storedDeadlineAt =
-      typeof attempt.questionDeadlineAt === "number" ? attempt.questionDeadlineAt : null;
-    const restoredTimeLeft = computeRestoredTimeLeft({
-      showFeedback: Boolean(attempt.showFeedback),
-      timeLeft: attempt.timeLeft,
-      questionDeadlineAt: storedDeadlineAt,
-      maxTime,
-    });
-
-    mergeQuizState({
+    restoreAttemptState({
+      activeQuestions,
+      attempt,
       playerName: typeof attempt.name === "string" ? attempt.name : "",
-      gameQuestions: activeQuestions,
-      currentQuestion: safeQuestionIndex,
-      selectedAnswer:
-        typeof attempt.selectedAnswer === "number" ? attempt.selectedAnswer : null,
-      showFeedback: Boolean(attempt.showFeedback),
-      isCorrect: Boolean(attempt.isCorrect),
-      totalScore: Math.max(0, Number(attempt.totalScore) || 0),
-      finalScoreValue: null,
-      attemptCreatedAt:
-        typeof attempt.createdAt === "number" ? attempt.createdAt : Date.now(),
-      questionDeadlineAt: Boolean(attempt.showFeedback) ? null : storedDeadlineAt,
-      timeLeft: restoredTimeLeft,
-      screen: "question",
-      error: "",
-      resumeNotice: "Your in-progress quiz was restored from the server.",
+      resumeMessage: "Your in-progress quiz was restored from the server.",
     });
     return true;
-  }
+  }, [questions.length, restoreAttemptState]);
 
   async function getAttemptIdentity() {
     const { uid, idToken } = await getValidAuth();
@@ -286,7 +272,7 @@ export default function QuizGame({
     return { uid, idToken, fp, fpMachine };
   }
 
-  async function syncCurrentServerAttempt(snapshot) {
+  const syncCurrentServerAttempt = useCallback(async (snapshot) => {
     try {
       const { uid, idToken } = await getValidAuth();
       const res = await syncServerAttemptRequest({
@@ -301,7 +287,7 @@ export default function QuizGame({
     } catch (err) {
       console.warn("Attempt sync failed:", err);
     }
-  }
+  }, [quizId]);
 
   // Load leaderboard for this quiz
   const loadLeaderboard = useCallback(async () => {
@@ -312,7 +298,6 @@ export default function QuizGame({
         quizId,
         idToken,
       });
-      try { console.debug('[leaderboard]', quizId, 'entries:', leaderboardArray.length); } catch (_) {}
       setLeaderboard(leaderboardArray);
       setLoading(false);
     } catch (err) {
@@ -322,7 +307,7 @@ export default function QuizGame({
       );
       setLoading(false);
     }
-  }, [quizId]);
+  }, [quizId, setError]);
 
   const saveScore = useLeaderboardSubmission({
     quizId,
@@ -345,34 +330,27 @@ export default function QuizGame({
   }, [screen, loadLeaderboard]);
 
   useEffect(() => {
+    let cancelled = false;
+
     setEligibilityStatus("checking");
     const preservedDevResetNotice = devResetNotice;
     resetGameState("intro");
     if (preservedDevResetNotice) {
       setDevResetNotice(preservedDevResetNotice);
     }
-    restoreStoredAttempt(loadStoredAttempt(quizId));
-  }, [identityRefreshNonce, quizId]);
-
-  // Detect if the user has already submitted a score for this quiz
-  useEffect(() => {
     try {
       const flag = typeof localStorage !== "undefined" && localStorage.getItem(`submitted:${quizId}`);
       setAlreadySubmitted(Boolean(flag));
     } catch (_) {
       setAlreadySubmitted(false);
     }
-  }, [identityRefreshNonce, quizId]);
-
-  // Also check the server for an existing score or resumable attempt for this uid
-  useEffect(() => {
-    let cancelled = false;
-    setAlreadySubmitted(false);
     setError("");
+
+    const localAttempt = loadStoredAttempt(quizId);
+    const restoredLocalAttempt = restoreStoredAttempt(localAttempt);
 
     (async () => {
       try {
-        const localAttempt = loadStoredAttempt(quizId);
         const { uid, idToken } = await getValidAuth();
         if (cancelled) return;
         const fp = await getDeviceFingerprint({ salt: quizId });
@@ -453,7 +431,9 @@ export default function QuizGame({
         }
 
         if (canonicalAttempt?.source === "local") {
-          restoreStoredAttempt(canonicalAttempt.attempt);
+          if (!restoredLocalAttempt) {
+            restoreStoredAttempt(canonicalAttempt.attempt);
+          }
         } else if (canonicalAttempt?.attempt) {
           if (localAttempt && canonicalAttempt.source !== "local") {
             clearStoredAttempt(quizId);
@@ -501,14 +481,23 @@ export default function QuizGame({
     return () => {
       cancelled = true;
     };
-  }, [identityRefreshNonce, quizId]);
+  }, [
+    devResetNotice,
+    identityRefreshNonce,
+    quizId,
+    resetGameState,
+    restoreServerAttempt,
+    restoreStoredAttempt,
+    setDevResetNotice,
+    setError,
+  ]);
 
   // Note: name uniqueness validation is performed on Start to avoid blocking typing
 
   useEffect(() => {
     if (screen !== "question" || showFeedback || !questionDeadlineAt) return undefined;
 
-    let lastSyncedTimeLeft = timeLeft;
+    let lastSyncedTimeLeft = null;
     const syncTimeLeft = () => {
       const nextTimeLeft = Math.max(0, Math.ceil((questionDeadlineAt - Date.now()) / 1000));
       if (nextTimeLeft !== lastSyncedTimeLeft) {
@@ -520,7 +509,7 @@ export default function QuizGame({
     syncTimeLeft();
     const timer = setInterval(syncTimeLeft, 250);
     return () => clearInterval(timer);
-  }, [questionDeadlineAt, screen, showFeedback, timeLeft]);
+  }, [questionDeadlineAt, screen, setTimeLeft, showFeedback]);
 
   useEffect(() => {
     if (screen !== "question" || showFeedback || timeLeft !== 0) return undefined;
@@ -538,7 +527,14 @@ export default function QuizGame({
       updatedAt: Date.now(),
     });
     return undefined;
-  }, [currentQuestion, questionDeadlineAt, screen, showFeedback, timeLeft, totalScore]);
+  }, [
+    currentQuestion,
+    screen,
+    showFeedback,
+    syncCurrentServerAttempt,
+    timeLeft,
+    totalScore,
+  ]);
 
   useEffect(() => {
     if (screen !== "question" || !gameQuestions || alreadySubmitted) return undefined;
