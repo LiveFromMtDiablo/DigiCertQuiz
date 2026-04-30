@@ -46,6 +46,7 @@ const ALL_QUIZ_IDS = [
   "week-22-digicert-history-part-2",
   "week-23-pqc",
   "week-24-email-trust",
+  "week-25-c2pa",
 ];
 
 function getArgValue(flag) {
