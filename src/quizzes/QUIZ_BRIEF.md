@@ -34,6 +34,27 @@ Good patterns include:
 - `Which protocol / platform / standard...`
 - `What happens when...`
 
+## Distractor Strategy
+
+Distractors should make a thoughtful employee pause for a second, not laugh them out of the question.
+
+Strong distractors usually come from nearby truths:
+
+- a real adjacent product capability that answers a different question
+- a narrower version of the correct answer
+- a common misconception in the topic area
+- a plausible customer use case that is related but not primary
+- a real standard, protocol, or platform that belongs in the neighborhood but does not fit the prompt
+
+Avoid distractors that make the correct answer obvious by being unserious, anti-value, or outside DigiCert's world. A wrong answer should still sound like something a credible technology company might say on purpose.
+
+Before shipping, check each option by asking:
+
+- Is this wrong because it is less precise, narrower, or aimed at a different use case?
+- Would someone with partial knowledge of the topic plausibly consider it?
+- Does it avoid cartoonish claims, fake product categories, and "we made the process worse" wording?
+- Are all options similar enough in length, specificity, and tone that the correct answer does not stand out visually?
+
 ## Content Priorities
 
 When choosing topics and angles, prioritize:
