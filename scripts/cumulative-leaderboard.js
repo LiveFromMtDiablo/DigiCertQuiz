@@ -47,6 +47,7 @@ const ALL_QUIZ_IDS = [
   "week-23-pqc",
   "week-24-email-trust",
   "week-25-c2pa",
+  "week-26-multi-cdn-dns",
 ];
 
 function getArgValue(flag) {
