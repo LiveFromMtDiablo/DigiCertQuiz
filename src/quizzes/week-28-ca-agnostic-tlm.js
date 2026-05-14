@@ -9,7 +9,7 @@ const quiz = {
       question:
         "Why would an enterprise security team adopt a CA-agnostic certificate platform instead of relying on each CA's native management console?",
       options: [
-        "To normalize certificates from each connected CA into a unified DigiCert format that downstream systems can consume consistently",
+        "To centralize domain and organization validation across every connected CA so one verification record can be reused for issuance from any issuer",
         "To publish a single revocation feed that combines status from every connected CA into one endpoint clients can poll",
         "To run a single operational workflow for renewal, policy enforcement, and audit that covers the organization's full certificate estate",
         "To override each connected CA's cryptographic constraints so every issued certificate uses the parent organization's preferred algorithms",
@@ -23,7 +23,7 @@ const quiz = {
         "It focuses on certificates issued from DigiCert profiles and surfaces third-party certs through separate connector dashboards",
         "It monitors public and private trust certificates discovered, imported, or issued in the account from any CA vendor",
         "It indexes all known certificates but defers renewal and revocation actions to each issuing CA's native portal",
-        "It tracks certificates from configured connectors and lists sensor-discovered certs in a separate scan view until they are claimed",
+        "It unifies certificates from connectors, sensor scans, and CSV imports into one view but limits renewal and policy actions to those originating from DigiCert-managed profiles",
       ],
       correctAnswer: 1,
     },
@@ -55,7 +55,7 @@ const quiz = {
       options: [
         "It cross-signs the acquired CA's certificates with the parent organization's intermediate so the merged estate chains back to a single trust root",
         "It embeds the acquired CA's native administration portal inside Trust Lifecycle Manager so administrators keep the same workflows they used before the acquisition",
-        "Acquired-CA certificates are enrolled in the parent's automation profiles immediately, so renewal and policy enforcement continue without reissue or migration",
+        "Acquired-CA certificates can be enrolled in the parent organization's automation profiles through the existing connector, so renewal and policy enforcement continue without reissue or migration",
         "Trust Lifecycle Manager begins issuing certificate renewals for the acquired estate directly, replacing the acquired CA as the signing authority going forward",
       ],
       correctAnswer: 2,

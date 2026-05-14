@@ -51,7 +51,8 @@
       "Bash(python3:*)",
       "WebFetch(domain:knowledge.digicert.com)",
       "WebFetch(domain:en.wikipedia.org)",
-      "WebFetch(domain:dev.digicert.com)"
+      "WebFetch(domain:dev.digicert.com)",
+      "mcp__Claude_Preview__preview_start"
     ],
     "deny": [],
     "ask": []
