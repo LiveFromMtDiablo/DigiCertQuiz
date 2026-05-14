@@ -38,22 +38,39 @@ Good patterns include:
 
 Distractors should make a thoughtful employee pause for a second, not laugh them out of the question.
 
-Strong distractors usually come from nearby truths:
+**Ground rule: every distractor must be factually wrong as a description of the product or topic.** A "narrower truth" — a real capability the product has, just not the headline one — still competes with the correct answer and breaks the question's definitiveness. The craft is making a wrong claim *sound* like a real, plausible capability nearby.
 
-- a real adjacent product capability that answers a different question
-- a narrower version of the correct answer
-- a common misconception in the topic area
-- a plausible customer use case that is related but not primary
-- a real standard, protocol, or platform that belongs in the neighborhood but does not fit the prompt
+Strong distractors come from nearby-but-wrong territory:
 
-Avoid distractors that make the correct answer obvious by being unserious, anti-value, or outside DigiCert's world. A wrong answer should still sound like something a credible technology company might say on purpose.
+- **A capability the product does not have, that sounds like one it might.** Example: "TLM cross-signs certificates from connected CAs" — cross-signing is real PKI vocabulary, but it is a CA function, not a management-layer one.
+- **A common misconception in the topic area.** Example: "CA-agnostic platforms consolidate everything onto one CA over time" — a wrong belief many readers hold about multi-CA management.
+- **A real action attributed to the wrong actor.** Example: "TLM signs certificate renewals directly" — real action, wrong system; TLM orchestrates issuance through connected CAs rather than signing itself.
+- **A real concept applied to the wrong context.** Example: "TLM embeds each source CA's native portal inside its own UI" — real architectural pattern in other tools, not how TLM is built.
+- **A real capability with the wrong outcome attached.** Example: "TLM sensors convert discovered certificates into DigiCert-issued replacements" — sensors are real, but they discover, not convert.
+
+A useful sharpening test: would a thoughtful customer plausibly *believe* this is how the product works, even though it isn't? If yes, the distractor is doing its job. If a customer who knows the product would nod along ("yes, the platform really does that"), the distractor is too true and needs sharpening.
+
+Common ways distractors give themselves away:
+
+- **Anti-value framing.** Verbs like *eliminate*, *restrict*, *leave behind*, or *defer* signal "wrong" even when wrapped in plausible language. A distractor that subtracts a feature the platform is known for ("eliminate the need for private CAs" on a multi-CA platform) reads as wrong on first scan.
+- **Wrong domain.** A security or operations question with a distractor about pricing, procurement, or commercial routing lives outside the question's frame and gets dismissed without engagement. Keep every option in the same operational domain as the correct answer.
+- **Invented categories.** Fabricated product types or made-up technical terms (e.g., "CSR translation layer") read as fiction. Anchor distractors to real, recognizable concepts and named products.
+- **Cartoonish claims.** "We made the process worse" wording, joke answers, anti-customer outcomes.
+
+A wrong answer should still sound like something a credible technology company might say on purpose.
 
 Before shipping, check each option by asking:
 
-- Is this wrong because it is less precise, narrower, or aimed at a different use case?
+- Is this wrong in a precise way — misstating a mechanism, attributing a capability to the wrong system, or applying a real concept to the wrong context?
 - Would someone with partial knowledge of the topic plausibly consider it?
 - Does it avoid cartoonish claims, fake product categories, and "we made the process worse" wording?
 - Are all options similar enough in length, specificity, and tone that the correct answer does not stand out visually?
+
+Also watch for structural tells that betray the answer:
+
+- **Stem echo.** If the stem says "CA-agnostic" and the correct answer says "regardless of which CA issued it," the answer is leaking through the wording. Rephrase so the correct option does not repeat the stem's key term.
+- **Comprehensive-vs-partial pattern.** If every distractor describes one capability and the correct answer lists *all of them*, readers learn to pick the broadest option. Vary distractor scope so this contrast is not structural across the quiz.
+- **Position bias.** Distribute correct answers across all four positions over the course of the quiz. Do not anchor on index `0`.
 
 ## Content Priorities
 
@@ -78,6 +95,11 @@ That means:
 - avoid ultra-obscure implementation details
 - avoid requiring memorization of minor internal facts unless they are widely known or recently highlighted
 - prefer product positioning, key capabilities, important distinctions, notable standards, major dates, real-world use cases, and recent developments
+
+Two reframings to keep handy when a question feels too narrow:
+
+- **Roster → category.** A question that asks "which of these is in our docs" or "which list contains X" tests memorization. Reframe to test the *category* ("which group are all certificate authorities?") instead of the *roster* ("which connectors are documented?"). The answer stays specific; the path to it shifts from recall to recognition.
+- **Internal schema → business scenario.** A question that tests the internal structure of a feature (what fields a profile contains, what config options exist) usually fails the outside-this-team employee test. Reframe as a concrete scenario — an acquisition, an audit, a migration — so the answer is the business outcome, not the schema.
 
 ## Fun Dial
 
