@@ -25,6 +25,7 @@ import week24 from "./week-24-email-trust";
 import week25 from "./week-25-c2pa";
 import week26 from "./week-26-multi-cdn-dns";
 import week27 from "./week-27-digicert-history-part-3";
+import week28 from "./week-28-ca-agnostic-tlm";
 
 export const quizzes = {
   [week1.id]: week1,
@@ -54,6 +55,7 @@ export const quizzes = {
   [week25.id]: week25,
   [week26.id]: week26,
   [week27.id]: week27,
+  [week28.id]: week28,
 };
 
 export const currentQuizId = week27.id;
