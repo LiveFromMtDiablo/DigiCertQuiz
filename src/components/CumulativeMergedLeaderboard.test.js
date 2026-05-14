@@ -76,7 +76,9 @@ describe("CumulativeMergedLeaderboard", () => {
 
     await renderComponent();
 
-    await waitFor(() => container.textContent.includes("Cumulative Leaderboard"));
+    await waitFor(() =>
+      container.textContent.includes("Q2 FY26 Cumulative Leaderboard")
+    );
 
     expect(container.textContent).toContain('Pat "PJ" Jones');
     expect(container.textContent).toContain("Lee, Jr.");
